@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <imports>
+        <import resource="synchronizers.xml"/>
+        <import resource="indexers.xml"/>
+    </imports>
+
+    <services>
+        <service id="Gally\ShopwarePlugin\Service\Configuration">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Api\Authentication">
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Api\Client">
+            <argument type="service" id="Gally\ShopwarePlugin\Api\Authentication" />
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="logger"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Command\StructureSync">
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
+            <tag name="console.command"/>
+        </service>
+        <service id="Gally\ShopwarePlugin\Command\Index">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
+            <tag name="console.command"/>
+        </service>
+    </services>
+</container>

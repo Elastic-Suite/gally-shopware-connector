@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="Gally\ShopwarePlugin\Indexer\AbstractIndexer" abstract="true">
+            <argument key="$configuration" type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument key="$client" type="service" id="Gally\ShopwarePlugin\Api\Client" />
+            <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
+            <argument key="$localizedCatalogSynchronizer" type="service" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
+            <argument key="$entityRepository" type="service" id="category.repository" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\ProductIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
+            <argument key="$entityRepository" type="service" id="product.repository" />
+        </service>
+    </services>
+</container>

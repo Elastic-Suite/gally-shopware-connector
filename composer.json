@@ -1,0 +1,39 @@
+{
+    "name": "gally/shopware-plugin",
+    "description": "Shopware connector for Gally",
+    "type": "shopware-platform-plugin",
+    "license": "MIT",
+    "extra": {
+        "shopware-plugin-class": "Gally\\ShopwarePlugin\\GallyPlugin",
+        "author": "Gally Team",
+        "label": {
+            "en-GB": "Gally Plugin"
+        }
+    },
+    "require": {
+        "php": ">= 7.2",
+        "gally/gally-php-rest-sdk": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~8.3.4",
+        "phpstan/phpstan": "^0.12.18",
+        "shopware/core": "*",
+        "shopware/storefront": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gally\\ShopwarePlugin\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gally\\ShopwarePlugin\\Tests\\": "tests/"
+        }
+    },
+    "repositories": {
+        "elastic-suite/gally-php-rest-sdk": {
+            "type": "git",
+            "url": "git@github.com:Elastic-Suite/gally-php-rest-sdk.git"
+        }
+    }
+}

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/master/src/Core/System/SystemConfig/Schema/config.xsd">
+    <card>
+        <title>#GallyPLugin# Settings</title>
+
+        <input-field type="bool">
+            <name>active</name>
+            <label>Active</label>
+        </input-field>
+
+        <input-field type="text">
+            <name>baseurl</name>
+            <label>Gally base url</label>
+        </input-field>
+
+        <input-field type="text">
+            <name>user</name>
+            <label>Gally user email</label>
+        </input-field>
+
+        <input-field type="password">
+            <name>password</name>
+            <label>Gally user password</label>
+        </input-field>
+    </card>
+</config>
