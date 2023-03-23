@@ -3,13 +3,11 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Synchronizer;
 
-use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\ModelInterface;
-use Gally\Rest\Model\SourceFieldLabel;
 use Gally\Rest\Model\SourceFieldOption;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
 use Gally\Rest\Model\SourceFieldSourceFieldApi;
-use Gally\ShopwarePlugin\Api\Client;
+use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 
@@ -19,7 +17,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 
     public function __construct(
         Configuration $configuration,
-        Client $client,
+        RestClient $client,
         string $entityClass,
         string $getCollectionMethod,
         string $createEntityMethod,

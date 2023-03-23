@@ -6,7 +6,7 @@ namespace Gally\ShopwarePlugin\Indexer;
 use Gally\Rest\Api\IndexApi;
 use Gally\Rest\Api\IndexDocumentApi;
 use Gally\Rest\Model\IndexCreate;
-use Gally\ShopwarePlugin\Api\Client;
+use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer;
 use Shopware\Core\Framework\Api\Context\SystemSource;
@@ -20,7 +20,7 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 abstract class AbstractIndexer
 {
     private Configuration $configuration;
-    private Client $client;
+    private RestClient $client;
     private EntityRepository $salesChannelRepository;
     private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer;
 
@@ -28,7 +28,7 @@ abstract class AbstractIndexer
 
     public function __construct(
         Configuration $configuration,
-        Client $client,
+        RestClient $client,
         EntityRepository $salesChannelRepository,
         LocalizedCatalogSynchronizer $localizedCatalogSynchronizer,
         EntityRepository $entityRepository

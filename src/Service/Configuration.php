@@ -21,7 +21,7 @@ class Configuration
 
     public function getBaseUrl(?int $salesChannelId = null): string
     {
-        return (string) $this->systemConfigService->get('GallyPlugin.config.baseurl', $salesChannelId);
+        return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl', $salesChannelId), '/');
     }
 
     public function getUser(?int $salesChannelId = null): string

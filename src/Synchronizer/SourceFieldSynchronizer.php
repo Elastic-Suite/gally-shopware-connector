@@ -6,7 +6,7 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\Metadata;
 use Gally\Rest\Model\ModelInterface;
 use Gally\Rest\Model\SourceFieldSourceFieldApi;
-use Gally\ShopwarePlugin\Api\Client;
+use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupTranslation\PropertyGroupTranslationEntity;
 use Shopware\Core\Content\Property\PropertyGroupCollection;
@@ -49,7 +49,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
 
     public function __construct(
         Configuration $configuration,
-        Client $client,
+        RestClient $client,
         string $entityClass,
         string $getCollectionMethod,
         string $createEntityMethod,

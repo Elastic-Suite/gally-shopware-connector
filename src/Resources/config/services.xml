@@ -12,15 +12,17 @@
         <service id="Gally\ShopwarePlugin\Service\Configuration">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
         </service>
+            <argument type="service" id="Gally\ShopwarePlugin\Api\GraphQlClient" />
 
         <service id="Gally\ShopwarePlugin\Api\Authentication">
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
         </service>
-        <service id="Gally\ShopwarePlugin\Api\Client">
+        <service id="Gally\ShopwarePlugin\Api\AbstractClient" abstract="true">
             <argument type="service" id="Gally\ShopwarePlugin\Api\Authentication" />
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument type="service" id="logger"/>
         </service>
+        <service id="Gally\ShopwarePlugin\Api\RestClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
 
         <service id="Gally\ShopwarePlugin\Command\StructureSync">
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />

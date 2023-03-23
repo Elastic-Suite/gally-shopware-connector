@@ -6,11 +6,11 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\Catalog;
 use Gally\Rest\Model\ModelInterface;
 use Gally\ShopwarePlugin\Api\Client;
+use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\System\Language\LanguageCollection;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelCollection;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
@@ -22,7 +22,7 @@ class CatalogSynchronizer extends AbstractSynchronizer
 
     public function __construct(
         Configuration $configuration,
-        Client $client,
+        RestClient $client,
         string $entityClass,
         string $getCollectionMethod,
         string $createEntityMethod,

@@ -6,40 +6,16 @@ namespace Gally\ShopwarePlugin\Api;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Psr\Log\LoggerInterface;
 
-class Client
+class RestClient extends AbstractClient
 {
-    private Authentication $authentication;
-    private Configuration $configuration;
-    private LoggerInterface $logger;
-    private ?string $token = null;
-
-    public function __construct(
-        Authentication $authentication,
-        Configuration $configuration,
-        LoggerInterface $logger
-    ){
-        $this->authentication = $authentication;
-        $this->configuration  = $configuration;
-        $this->logger         = $logger;
-        $this->debug          = false;
-    }
-
-    public function getAuthorizationToken(): string
-    {
-        if (null === $this->token) {
-            $this->token = $this->authentication->getAuthenticationToken();
-        }
-
-        return $this->token;
-    }
-
     public function query($endpoint, $operation, ...$input)
     {
         $config = \Gally\Rest\Configuration::getDefaultConfiguration()
             ->setApiKey('Authorization', $this->getAuthorizationToken())
             ->setApiKeyPrefix('Authorization', 'Bearer')
-            ->setHost(trim($this->configuration->getBaseUrl(), '/'));
+            ->setHost($this->configuration->getBaseUrl());
 
+        // TODO remove host header
         $apiInstance = new $endpoint(
             new \GuzzleHttp\Client(['verify' => false, 'headers' => ['Host' => 'gally.localhost']]),
             $config

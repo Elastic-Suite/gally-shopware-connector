@@ -6,7 +6,7 @@
     <services>
         <service id="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer" abstract="true">
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-            <argument type="service" id="Gally\ShopwarePlugin\Api\Client" />
+            <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
         </service>
         <service id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer">
             <argument key="$entityClass">\Gally\Rest\Api\LocalizedCatalogApi</argument>

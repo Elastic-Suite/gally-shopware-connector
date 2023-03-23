@@ -4,13 +4,13 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\ModelInterface;
-use Gally\ShopwarePlugin\Api\Client;
+use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 
 abstract class AbstractSynchronizer
 {
     protected Configuration $configuration;
-    protected Client $client;
+    protected RestClient $client;
     protected string $entityClass;
     protected string $getCollectionMethod;
     protected string $createEntityMethod;
@@ -19,7 +19,7 @@ abstract class AbstractSynchronizer
 
     public function __construct(
         Configuration $configuration,
-        Client $client,
+        RestClient $client,
         string $entityClass,
         string $getCollectionMethod,
         string $createEntityMethod,
