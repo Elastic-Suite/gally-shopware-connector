@@ -66,7 +66,7 @@ abstract class AbstractSynchronizer
                 $entity = $this->client->query(
                     $this->entityClass,
                     $this->patchEntityMethod,
-                    $existingEntity->getId(),
+                    $existingEntity->getId(), // @phpstan-ignore-line
                     $entity
                 );
             }

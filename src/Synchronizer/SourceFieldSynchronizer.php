@@ -227,31 +227,6 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         }
     }
 
-    private function syncProperties(Metadata $metadata, PropertyGroupCollection $properties)
-    {
-        /** @var PropertyGroupEntity $property */
-        foreach ($properties as $property) {
-            $this->createEntityIfNotExists(
-                new SourceFieldSourceFieldApi([
-                    'metadata'       => '/metadata/' . $metadata->getId(),
-                    'code'           => $property->getId(),
-                    'defaultLabel'   => $property->getName(),
-                    'type'           => 'select',
-                    'isSearchable'   => false,
-                    'weight'         => 1,
-                    'isSpellchecked' => false,
-                    'isFilterable'   => $property->getFilterable(),
-                    'isSortable'     => false,
-                    'isUsedForRules' => false,
-                ])
-            );
-
-            foreach ($property->getOptions() as $option) {
-                print($option->getName());
-            }
-        }
-    }
-
     private function getGallyType(string $type): string
     {
         switch ($type) {

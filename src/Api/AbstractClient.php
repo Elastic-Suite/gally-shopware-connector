@@ -12,6 +12,7 @@ class AbstractClient
     protected Configuration $configuration;
     protected LoggerInterface $logger;
     protected ?string $token = null;
+    protected bool $debug;
 
     public function __construct(
         Authentication $authentication,

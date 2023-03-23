@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Indexer;
 use Gally\Rest\Api\IndexApi;
 use Gally\Rest\Api\IndexDocumentApi;
 use Gally\Rest\Model\IndexCreate;
+use Gally\Rest\Model\LocalizedCatalog;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer;
@@ -91,11 +92,13 @@ abstract class AbstractIndexer
 
     protected function createIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): string
     {
+        /** @var LocalizedCatalog $localizedCatalog */
+        $localizedCatalog = $this->localizedCatalogSynchronizer->getEntityByIdentity(
+            $salesChannel->getId() . $language->getId()
+        );
         $indexData = [
             'entityType' => $this->getEntityType(),
-            'localizedCatalog' => $this->localizedCatalogSynchronizer->getEntityByIdentity(
-                $salesChannel->getId() . $language->getId()
-            )->getCode(),
+            'localizedCatalog' => $localizedCatalog->getCode(),
         ];
 
         /** @var IndexCreate $index */

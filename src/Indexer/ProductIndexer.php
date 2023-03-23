@@ -30,6 +30,7 @@ class ProductIndexer extends AbstractIndexer
         $criteria->addSorting(new FieldSorting('autoIncrement', FieldSorting::ASCENDING));
         // Todo add pagination
         $products = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
+        /** @var ProductEntity $product */
         foreach ($products as $product) {
             /** @var ProductVisibilityEntity $visibility */
             foreach ($product->getVisibilities() as $visibility) {

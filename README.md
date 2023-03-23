@@ -40,11 +40,14 @@
   - [ ] Index media
 - [ ] Synchronize source field search conf
 - [ ] Search product
+  - Bug pagination 
+- [ ] Index product custom field
 - [ ] Build facet from ES response
 - [ ] Index manufacturer
 - [ ] Sync entity on post persist/update
 - [ ] Index entity on post persist/update
 - [ ] fetchAll entity perf ?
+- [ ] Unit test
 
 ## Todo gally
 

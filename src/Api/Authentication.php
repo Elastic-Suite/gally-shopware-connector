@@ -44,14 +44,14 @@ class Authentication
             throw new ApiException(
                 "[{$e->getCode()}] {$e->getMessage()}",
                 $e->getCode(),
-                $e->getResponse() ? $e->getResponse()->getHeaders() : null,
+                $e->getResponse() ? $e->getResponse()->getHeaders() : null, // @phpstan-ignore-line
                 $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null
             );
         }
 
         try {
-            $response = Utils::jsonDecode($responseJson->getBody()->getContents());
-            return (string) $response->token;
+            $response = Utils::jsonDecode($responseJson->getBody()->getContents(), true);
+            return (string) $response['token'];
         } catch (\Exception $e) {
             throw new \LogicException("Unable to fetch authorization token from Api response.");
         }

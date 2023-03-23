@@ -14,7 +14,8 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
     public function getIdentity(ModelInterface $entity): string
     {
         /** @var SourceFieldOptionLabel $entity */
-        return $entity->getSourceFieldOption() . $entity->getlocalizedCatalog();
+//        return $entity->getSourceFieldOption() . $entity->getlocalizedCatalog();
+        return 'toto';
     }
 
     public function synchronizeAll()

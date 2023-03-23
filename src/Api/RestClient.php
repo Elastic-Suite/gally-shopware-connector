@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Api;
 
-use Gally\ShopwarePlugin\Service\Configuration;
-use Psr\Log\LoggerInterface;
+use GuzzleHttp\Client;
 
 class RestClient extends AbstractClient
 {
@@ -17,7 +16,7 @@ class RestClient extends AbstractClient
 
         // TODO remove host header
         $apiInstance = new $endpoint(
-            new \GuzzleHttp\Client(['verify' => false, 'headers' => ['Host' => 'gally.localhost']]),
+            new Client(['verify' => false, 'headers' => ['Host' => 'gally.localhost']]),
             $config
         );
 
@@ -38,7 +37,6 @@ class RestClient extends AbstractClient
             $this->logger->info(print_r($input, true));
 
             throw $e;
-            $result = null;
         }
 
         return $result;

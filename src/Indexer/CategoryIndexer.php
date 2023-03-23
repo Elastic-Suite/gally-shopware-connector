@@ -31,6 +31,7 @@ class CategoryIndexer extends AbstractIndexer
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
         // Todo add pagination
         $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
+        /** @var CategoryEntity $category */
         foreach ($categories as $category) {
             yield $this->formatCategory($category);
         }

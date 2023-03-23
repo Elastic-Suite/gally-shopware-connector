@@ -12,7 +12,10 @@
         <service id="Gally\ShopwarePlugin\Service\Configuration">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
         </service>
+        <service id="Gally\ShopwarePlugin\Service\Searcher">
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument type="service" id="Gally\ShopwarePlugin\Api\GraphQlClient" />
+        </service>
 
         <service id="Gally\ShopwarePlugin\Api\Authentication">
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
@@ -23,6 +26,7 @@
             <argument type="service" id="logger"/>
         </service>
         <service id="Gally\ShopwarePlugin\Api\RestClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
+        <service id="Gally\ShopwarePlugin\Api\GraphQlClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
 
         <service id="Gally\ShopwarePlugin\Command\StructureSync">
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
@@ -33,6 +37,12 @@
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
             <tag name="console.command"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Subscriber\SearchSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Searcher" />
+            <tag name="kernel.event_subscriber" />
         </service>
     </services>
 </container>

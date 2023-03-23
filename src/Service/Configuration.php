@@ -21,16 +21,16 @@ class Configuration
 
     public function getBaseUrl(?int $salesChannelId = null): string
     {
-        return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl', $salesChannelId), '/');
+        return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl', (string) $salesChannelId), '/');
     }
 
     public function getUser(?int $salesChannelId = null): string
     {
-        return (string) $this->systemConfigService->get('GallyPlugin.config.user', $salesChannelId);
+        return (string) $this->systemConfigService->get('GallyPlugin.config.user', (string) $salesChannelId);
     }
 
     public function getPassword(?int $salesChannelId = null): string
     {
-        return (string) $this->systemConfigService->get('GallyPlugin.config.password', $salesChannelId);
+        return (string) $this->systemConfigService->get('GallyPlugin.config.password', (string) $salesChannelId);
     }
 }
