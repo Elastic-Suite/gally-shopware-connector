@@ -6,16 +6,18 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\ModelInterface;
 use Gally\Rest\Model\SourceFieldOption;
-use Gally\Rest\Model\SourceFieldOptionLabel;
+use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelWrite;
 
 class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
 {
     public function getIdentity(ModelInterface $entity): string
     {
-        /** @var SourceFieldOptionLabel $entity */
-//        return $entity->getSourceFieldOption() . $entity->getlocalizedCatalog();
-        return 'toto';
+        /** @var SourceFieldOptionLabelSourceFieldOptionLabelRead $entity */
+        $sourceField = is_string($entity->getSourceFieldOption())
+            ? $entity->getSourceFieldOption()
+            : '/source_field_options/' . $entity->getSourceFieldOption()->getId();
+        return $sourceField . $entity->getLocalizedCatalog();
     }
 
     public function synchronizeAll()

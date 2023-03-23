@@ -61,15 +61,18 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
             )
         );
 
-//        foreach ($option['label'] as $localeCode => $label) {
-//            $this->sourceFieldOptionLabelSynchronizer->synchronizeItem(
-//                [
-//                    'fieldOption' => $sourceFieldOption,
-//                    'localeCode' => str_replace('-', '_', $localeCode),
-//                    'label' => $label
-//                ]
-//            );
-//        }
+        $labels = is_array($option) ? $option['label'] : $option->getTranslations();
+        foreach ($labels as $localeCode => $label) {
+            $this->sourceFieldOptionLabelSynchronizer->synchronizeItem(
+                [
+                    'fieldOption' => $sourceFieldOption,
+                    'label' => is_string($label) ? $label : $label->getName(),
+                    'localeCode' =>  str_replace('-', '_', is_string($label)
+                        ? $localeCode
+                        : $label->getLanguage()->getLocale()->getCode()),
+                ]
+            );
+        }
 
         return $sourceFieldOption;
     }
