@@ -23,6 +23,14 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
     private array $entitiesToSync = ['category', 'product', 'manufacturer'];
     private array $staticFields = [
         'product' => [
+            'manufacturer' => 'text',
+        ],
+        'manufacturer' => [
+            'id' => 'text',
+            'name' => 'text',
+            'description' => 'text',
+            'link' => 'text',
+            'image' => 'text',
         ],
     ];
 
@@ -63,7 +71,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
     public function getIdentity(ModelInterface $entity): string
     {
         /** @var SourceFieldSourceFieldApi $entity */
-        return $entity->getCode();
+        return $entity->getMetadata() . $entity->getCode();
     }
 
     public function synchronizeAll()
@@ -128,15 +136,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         /** @var array|CustomFieldEntity|PropertyGroupEntity $field */
         $field = $params['field'];
 
-        $data = [
-            'metadata'       => '/metadata/' . $metadata->getId(),
-            'isSearchable'   => false,
-            'weight'         => 1,
-            'isSpellchecked' => false,
-            'isFilterable'   => false,
-            'isSortable'     => false,
-            'isUsedForRules' => false,
-        ];
+        $data = ['metadata' => '/metadata/' . $metadata->getId()];
 
         if (is_array($field)) {
             $data['code'] = $field['code'];

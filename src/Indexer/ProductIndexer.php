@@ -68,10 +68,13 @@ class ProductIndexer extends AbstractIndexer
     private function formatProduct(ProductEntity $product): array
     {
         $mediaPath = '';
-        /** @var MediaThumbnailEntity $thumbnail */
-        foreach ($product->getMedia()->getMedia()->first()->getThumbnails() as $thumbnail) {
-            if (400 == $thumbnail->getWidth()){
-                $mediaPath = $thumbnail->getUrl();
+
+        if ($product->getMedia()) {
+            /** @var MediaThumbnailEntity $thumbnail */
+            foreach ($product->getMedia()->getMedia()->first()->getThumbnails() as $thumbnail) {
+                if (400 == $thumbnail->getWidth()){
+                    $mediaPath = $thumbnail->getUrl();
+                }
             }
         }
 

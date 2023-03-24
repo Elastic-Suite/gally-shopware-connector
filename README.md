@@ -41,7 +41,7 @@
   - [X] Index category
   - [X] Index product
   - [ ] Index entity on post persist/update
-  - [ ] Index manufacturer
+  - [X] Index manufacturer
 - Search
   - [ ] Search product
     - [x] Full text search 

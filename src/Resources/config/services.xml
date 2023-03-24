@@ -36,6 +36,7 @@
         <service id="Gally\ShopwarePlugin\Command\Index">
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
             <tag name="console.command"/>
         </service>
 

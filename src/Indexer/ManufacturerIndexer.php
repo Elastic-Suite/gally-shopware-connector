@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Indexer;
 
 use Shopware\Core\Content\Category\CategoryEntity;
+use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
+use Shopware\Core\Content\Product\Aggregate\ProductManufacturer\ProductManufacturerEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
@@ -12,39 +14,32 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
-class CategoryIndexer extends AbstractIndexer
+class ManufacturerIndexer extends AbstractIndexer
 {
     public function getEntityType(): string
     {
-        return 'category';
+        return 'manufacturer';
     }
 
     public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): iterable
     {
         $criteria = new Criteria();
-        $criteria->addFilter(
-            new OrFilter([
-                new EqualsFilter('id', $salesChannel->getNavigationCategoryId()),
-                new ContainsFilter('path', $salesChannel->getNavigationCategoryId())
-            ])
-        );
-        $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
-        // Todo add pagination
-        $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
-        /** @var CategoryEntity $category */
-        foreach ($categories as $category) {
-            yield $this->formatCategory($category);
+        $criteria->addAssociations(['media']);
+        $manufacturers = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
+        /** @var ProductManufacturerEntity $manufacturer */
+        foreach ($manufacturers as $manufacturer) {
+            yield $this->formatManufacturer($manufacturer);
         }
     }
 
-    private function formatCategory(CategoryEntity $category): array
+    private function formatManufacturer(ProductManufacturerEntity $manufacturer): array
     {
         return [
-            'id' => $category->getId(),
-            'parentId' => $category->getParentId(),
-            'level' => $category->getLevel(),
-            'path' => trim(str_replace('|', '/', $category->getPath()) . $category->getId(), '/'),
-            'name' => $category->getName()
+            'id' => $manufacturer->getId(),
+            'name' => $manufacturer->getName(),
+            'description' => $manufacturer->getDescription(),
+            'image' => str_replace('http://localhost', '', $manufacturer->getMedia() ? $manufacturer->getMedia()->getUrl() : ''),
+            'link' => $manufacturer->getLink(),
         ];
     }
 }
