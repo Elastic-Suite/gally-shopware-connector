@@ -13,6 +13,13 @@ class Searcher
     private Configuration $configuration;
     private GraphQlClient $client;
 
+    private array $sortMapping = [
+        '_score' => '_score',
+        'product.cheapestPrice' => 'price__price',
+        'product.name' => 'name',
+        'product.sales' => '_score', // Todo : generate available sorting list from gally api
+    ];
+
     public function __construct(Configuration $configuration, GraphQlClient $client)
     {
         $this->configuration = $configuration;
@@ -21,12 +28,15 @@ class Searcher
 
     public function search(SalesChannelContext $context, Criteria $criteria)
     {
+        $sort = $criteria->getSorting()[0];
         $variables = [
             'requestType' => 'product_search',
             'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
             'search' => $criteria->getTerm(),
-            'sort' => [],
-            'currentPage' => $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit(),
+            'sort' => [
+                $this->sortMapping[$sort->getField()] => strtolower($sort->getDirection())
+            ], // Todo : get sorting from criteria
+            'currentPage' => $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1,
             'pageSize' => $criteria->getLimit(),
         ];
 
@@ -34,7 +44,8 @@ class Searcher
         $response = $response ? json_decode($response->getBody()->getContents(), true) : null;
 
         if (array_key_exists('errors', $response)) {
-            throw new ApiException(reset($response['errors'])['debugMessage']);
+            $firstError = reset($response['errors']);
+            throw new ApiException($firstError['debugMessage'] ?? $firstError['message']);
         }
 
         $productNumbers = [];

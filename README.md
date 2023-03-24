@@ -30,24 +30,30 @@
 
 ## Todo
 
-- [x] Synchronize catalogs 
-- [x] Synchronize metadata 
-- [x] Synchronize basic source field
-- [X] Sync source field label & options
-  - [ ] Index source field property label by locale
-- [X] Index category
-- [ ] Index product
-  - [ ] Index media
-- [ ] Synchronize source field search conf
-- [ ] Search product
-  - Bug pagination 
-- [ ] Index product custom field
-- [ ] Build facet from ES response
-- [ ] Index manufacturer
-- [ ] Sync entity on post persist/update
-- [ ] Index entity on post persist/update
-- [ ] fetchAll entity perf ?
+- Structure
+  - [x] Synchronize catalogs 
+  - [x] Synchronize metadata 
+  - [x] Synchronize basic source field
+  - [X] Sync source field label & options
+  - [ ] Synchronize source field search conf
+  - [ ] Sync entity on post persist/update
+- Index data
+  - [X] Index category
+  - [ ] Index product
+    - [ ] Index media
+    - [ ] index custom field
+  - [ ] Index entity on post persist/update
+  - [ ] Index manufacturer
+- Search
+  - [ ] Search product
+    - [x] Full text search 
+    - [x] Sort result with gally
+    - [ ] Filter result with gally
+    - [ ] Get facet from gally 
+    - [ ] Get sorting from gally
+- [ ] Autocomplete
 - [ ] Unit test
+- [ ] fetchAll entity on each sync may create perf issue ?
 
 ## Todo gally
 
