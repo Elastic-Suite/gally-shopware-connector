@@ -20,25 +20,10 @@ use Shopware\Core\System\CustomField\CustomFieldEntity;
 
 class SourceFieldSynchronizer extends AbstractSynchronizer
 {
-    // Todo get from conf
     private array $entitiesToSync = ['category', 'product', 'manufacturer'];
     private array $staticFields = [
-        'category' => [
-//            'id' => 'text', TODO don't need to create system source field
-//            'name' => 'text',
-//            'path' => 'text',
-//            'level' => 'number',
-//            'parentId' => 'string'
-        ],
         'product' => [
-//            'id' => 'int',
-//            'sku' => 'text',
-//            'category' => 'int',
-//            'name' => 'string',
-//            'price' => 'price',
-//            'image' => 'text',
-//            'stock' => 'stock'
-        ]
+        ],
     ];
 
     private EntityRepository $customFieldRepository;
@@ -154,7 +139,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         ];
 
         if (is_array($field)) {
-            $data['code'] = $data['defaultLabel'] = $field['code'];
+            $data['code'] = $field['code'];
             $data['type'] = $this->getGallyType($field['type']);
         } elseif (is_a($field, CustomFieldEntity::class)) {
             $labels = $field->getConfig()['label'] ?? [];
@@ -167,7 +152,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $options = $field->getOptions();
             $data['code'] = 'property_' . $field->getId(); // Prefix with property to avoid graphql error if field start with number
             $data['defaultLabel'] = $field->getName();
-            $data['type'] = $this->getGallyType('select');
+            $data['type'] = 'select';
         }
 
         $sourceField = $this->createOrUpdateEntity(new SourceFieldSourceFieldApi($data));
@@ -230,9 +215,6 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
     private function getGallyType(string $type): string
     {
         switch ($type) {
-            case 'entity':
-            case 'select':
-                return 'select';
             case 'number':
                 return 'float';
             case 'date':

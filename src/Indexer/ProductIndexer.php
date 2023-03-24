@@ -4,14 +4,13 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Indexer;
 
 use Shopware\Core\Content\Category\CategoryEntity;
-use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceEntity;
+use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityEntity;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
@@ -25,33 +24,62 @@ class ProductIndexer extends AbstractIndexer
 
     public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): iterable
     {
+        $context = $this->getContext($salesChannel, $language);
+
+        $batchSize = 1000;
         $criteria = new Criteria();
-        $criteria->addAssociations(['categories', 'prices', 'customFields', 'properties', 'properties.group', 'visibilities']);
+        $criteria->addAssociations(
+            [
+                'categories',
+                'prices',
+                'media',
+                'customFields',
+                'properties',
+                'properties.group',
+                'visibilities'
+            ]
+        );
         $criteria->addSorting(new FieldSorting('autoIncrement', FieldSorting::ASCENDING));
-        // Todo add pagination
-        $products = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
-        /** @var ProductEntity $product */
-        foreach ($products as $product) {
-            /** @var ProductVisibilityEntity $visibility */
-            foreach ($product->getVisibilities() as $visibility) {
-                // Todo manage visibility with filter
-                if (
-                    $visibility->getSalesChannelId() == $salesChannel->getId()
-                    && $visibility->getVisibility() == ProductVisibilityDefinition::VISIBILITY_ALL
-                ) {
-                    yield $this->formatProduct($product);
+        $criteria->setOffset(0);
+        $criteria->setLimit($batchSize);
+
+        $products = $this->entityRepository->search($criteria, $context);
+
+        while ($products->count()) {
+            /** @var ProductEntity $product */
+            foreach ($products as $product) {
+                /** @var ProductVisibilityEntity $visibility */
+                foreach ($product->getVisibilities() as $visibility) {
+                    // Todo manage visibility with filter
+                    if (
+                        $visibility->getSalesChannelId() == $salesChannel->getId()
+                        && $visibility->getVisibility() == ProductVisibilityDefinition::VISIBILITY_ALL
+                    ) {
+                        yield $this->formatProduct($product);
+                    }
                 }
             }
+
+            $criteria->setOffset($criteria->getOffset() + $batchSize);
+            $products = $this->entityRepository->search($criteria, $context);
         }
     }
 
     private function formatProduct(ProductEntity $product): array
     {
+        $mediaPath = '';
+        /** @var MediaThumbnailEntity $thumbnail */
+        foreach ($product->getMedia()->getMedia()->first()->getThumbnails() as $thumbnail) {
+            if (400 == $thumbnail->getWidth()){
+                $mediaPath = $thumbnail->getUrl();
+            }
+        }
+
         $data = [
             'id' => $product->getAutoIncrement(),
             'sku' => $product->getProductNumber(),
             'name' => $product->getName(),
-//            'image' => $product->getMedia()->first()
+            'image' => str_replace('http://localhost', '', $mediaPath), // Todo how to add base url in context
             'price' => $this->formatPrice($product),
             'stock' => [
                 'status' => $product->getStock() > 0, // Todo manage stock status
@@ -70,6 +98,10 @@ class ProductIndexer extends AbstractIndexer
                 'label' => $property->getName(),
                 'value' => $property->getId(),
             ];
+        }
+
+        foreach ($product->getCustomFields() as $code => $value) {
+            $data[$code] = $value;
         }
 
         return $data;

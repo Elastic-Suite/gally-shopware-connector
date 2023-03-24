@@ -39,9 +39,7 @@
   - [ ] Sync entity on post persist/update
 - Index data
   - [X] Index category
-  - [ ] Index product
-    - [ ] Index media
-    - [ ] index custom field
+  - [X] Index product
   - [ ] Index entity on post persist/update
   - [ ] Index manufacturer
 - Search
@@ -58,3 +56,4 @@
 ## Todo gally
 
 - [x] Bulk rest category (https://github.com/Elastic-Suite/gally-standard/pull/37)
+- [ ] Set product id as string ?

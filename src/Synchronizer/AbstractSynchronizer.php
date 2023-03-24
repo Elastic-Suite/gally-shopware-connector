@@ -37,9 +37,6 @@ abstract class AbstractSynchronizer
 
     abstract public function synchronizeAll();
 
-    /**
-     * Todo how to type params
-     */
     abstract public function synchronizeItem(array $params): ?ModelInterface;
 
     public function getEntityByIdentity(string $identity): ?ModelInterface
