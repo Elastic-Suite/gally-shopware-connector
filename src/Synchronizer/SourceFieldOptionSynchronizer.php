@@ -92,11 +92,10 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 
     public function fetchEntity(ModelInterface $entity): ?ModelInterface
     {
-        // Todo manage error
+        /** @var SourceFieldOptionSourceFieldOptionWrite $entity */
         $results = $this->client->query(...$this->buildFetchOneParams($entity));
         $filteredResults = [];
         /** @var SourceFieldOptionSourceFieldOptionWrite $result */
-        /** @var SourceFieldOptionSourceFieldOptionWrite $entity */
         foreach ($results as $result) {
             // It is not possible to search by source field option code in api.
             // So we need to get the good option after.

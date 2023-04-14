@@ -88,6 +88,7 @@ class SourceFieldLabelSynchronizer extends AbstractSynchronizer
 
     protected function buildFetchOneParams(ModelInterface $entity): array
     {
+        /** @var SourceFieldLabel $entity */
         return [
             $this->entityClass,
             $this->getCollectionMethod,

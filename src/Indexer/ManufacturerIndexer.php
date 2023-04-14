@@ -3,14 +3,9 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
-use Shopware\Core\Content\Category\CategoryEntity;
-use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Product\Aggregate\ProductManufacturer\ProductManufacturerEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
@@ -21,10 +16,13 @@ class ManufacturerIndexer extends AbstractIndexer
         return 'manufacturer';
     }
 
-    public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): iterable
+    public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language, array $documentIdsToReindex): iterable
     {
         $criteria = new Criteria();
         $criteria->addAssociations(['media']);
+        if (!empty($documentIdsToReindex)) {
+            $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
+        }
         $manufacturers = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
         /** @var ProductManufacturerEntity $manufacturer */
         foreach ($manufacturers as $manufacturer) {

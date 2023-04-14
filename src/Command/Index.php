@@ -35,9 +35,9 @@ class Index extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->categoryIndexer->index();
-        $this->productIndexer->index();
-        $this->manufacturerIndexer->index();
+        $this->categoryIndexer->reindex();
+        $this->productIndexer->reindex();
+        $this->manufacturerIndexer->reindex();
 
         return 0;
     }

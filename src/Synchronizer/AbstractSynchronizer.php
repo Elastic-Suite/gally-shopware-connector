@@ -82,7 +82,7 @@ abstract class AbstractSynchronizer
         return [
             $this->entityClass,
             $this->getCollectionMethod,
-            $entity->getCode()
+            $entity->getCode() // @phpstan-ignore-line
         ];
     }
 

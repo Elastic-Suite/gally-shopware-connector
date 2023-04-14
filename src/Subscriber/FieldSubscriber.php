@@ -11,6 +11,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\System\CustomField\Aggregate\CustomFieldSet\CustomFieldSetEntity;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\CustomField\CustomFieldEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -94,7 +95,7 @@ class FieldSubscriber implements EventSubscriberInterface
             $criteria = new Criteria();
             $criteria->addFilter(new EqualsFilter('id', $writeResult->getPrimaryKey()));
             $criteria->addAssociations(['customFields', 'relations']);
-            /** @var CustomFieldEntity $field */
+            /** @var CustomFieldSetEntity $fieldSet */
             $fieldSet = $this->customFieldSetRepository
                 ->search($criteria, Context::createDefaultContext())
                 ->getEntities()

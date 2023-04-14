@@ -11,6 +11,7 @@ use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
@@ -22,12 +23,15 @@ class ProductIndexer extends AbstractIndexer
         return 'product';
     }
 
-    public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): iterable
+    public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language, array $documentIdsToReindex): iterable
     {
         $context = $this->getContext($salesChannel, $language);
 
         $batchSize = 1000;
         $criteria = new Criteria();
+        if (!empty($documentIdsToReindex)) {
+            $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
+        }
         $criteria->addAssociations(
             [
                 'categories',
@@ -103,7 +107,7 @@ class ProductIndexer extends AbstractIndexer
             ];
         }
 
-        foreach ($product->getCustomFields() as $code => $value) {
+        foreach ($product->getCustomFields() ?: [] as $code => $value) {
             $data[$code] = $value;
         }
 

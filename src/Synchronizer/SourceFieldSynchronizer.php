@@ -209,10 +209,10 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
 
     public function fetchEntity(ModelInterface $entity): ?ModelInterface
     {
+        /** @var SourceFieldSourceFieldApi $entity */
         $results = $this->client->query(...$this->buildFetchOneParams($entity));
         $filteredResults = [];
         /** @var SourceFieldSourceFieldApi $result */
-        /** @var SourceFieldSourceFieldApi $entity */
         foreach ($results as $result) {
             // Search by source field code in api is a partial match,
             // to be sure to get the good sourceField we need to check that the code of the result

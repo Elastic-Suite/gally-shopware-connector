@@ -35,12 +35,12 @@
   - [x] Synchronize metadata 
   - [x] Synchronize basic source field
   - [X] Sync source field label & options
-  - [ ] Synchronize source field search conf
-  - [ ] Sync entity on post persist/update
+  - [X] ~~Synchronize source field search conf~~ (Manage on gally side)
+  - [X] Sync entity on post persist/update
 - Index data
   - [X] Index category
   - [X] Index product
-  - [ ] Index entity on post persist/update
+  - [X] Index entity on post persist/update
   - [X] Index manufacturer
 - Search
   - [ ] Search product
@@ -56,4 +56,4 @@
 ## Todo gally
 
 - [x] Bulk rest category (https://github.com/Elastic-Suite/gally-standard/pull/37)
-- [ ] Set product id as string ?
+- [X] Set product id as string 

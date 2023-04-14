@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Indexer;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
@@ -19,15 +20,19 @@ class CategoryIndexer extends AbstractIndexer
         return 'category';
     }
 
-    public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): iterable
+    public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language, array $documentIdsToReindex): iterable
     {
         $criteria = new Criteria();
-        $criteria->addFilter(
-            new OrFilter([
-                new EqualsFilter('id', $salesChannel->getNavigationCategoryId()),
-                new ContainsFilter('path', $salesChannel->getNavigationCategoryId())
-            ])
-        );
+        if (!empty($documentIdsToReindex)) {
+            $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
+        } else {
+            $criteria->addFilter(
+                new OrFilter([
+                    new EqualsFilter('id', $salesChannel->getNavigationCategoryId()),
+                    new ContainsFilter('path', $salesChannel->getNavigationCategoryId())
+                ])
+            );
+        }
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
         $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
         /** @var CategoryEntity $category */

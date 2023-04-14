@@ -5,9 +5,8 @@
     <services>
         <service id="Gally\ShopwarePlugin\Indexer\AbstractIndexer" abstract="true">
             <argument key="$configuration" type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-            <argument key="$client" type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
             <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
-            <argument key="$localizedCatalogSynchronizer" type="service" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
+            <argument key="$indexOperation" type="service" id="Gally\ShopwarePlugin\Service\IndexOperation" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="category.repository" />

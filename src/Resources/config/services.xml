@@ -16,6 +16,10 @@
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument type="service" id="Gally\ShopwarePlugin\Api\GraphQlClient" />
         </service>
+        <service id="Gally\ShopwarePlugin\Service\IndexOperation">
+            <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
+        </service>
 
         <service id="Gally\ShopwarePlugin\Api\Authentication">
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
@@ -57,6 +61,18 @@
             <argument type="service" id="custom_field.repository" />
             <argument type="service" id="custom_field_set.repository" />
             <argument type="service" id="property_group.repository" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Subscriber\ManufacturerSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Subscriber\CategorySubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Subscriber\ProductSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
             <tag name="kernel.event_subscriber" />
         </service>
     </services>

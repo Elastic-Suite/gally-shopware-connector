@@ -38,7 +38,6 @@ class SalesChannelSubscriber implements EventSubscriberInterface
             $criteria->addFilter(new EqualsFilter('id', $writeResult->getPrimaryKey()));
             $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
 
-            /** @var SalesChannelCollection $salesChannels */
             $salesChannel = $this->entityRepository
                 ->search($criteria, Context::createDefaultContext())
                 ->getEntities()

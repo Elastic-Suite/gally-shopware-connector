@@ -7,6 +7,8 @@ use GuzzleHttp\Client;
 
 class RestClient extends AbstractClient
 {
+    static $count = 0;
+
     public function query($endpoint, $operation, ...$input)
     {
         $config = \Gally\Rest\Configuration::getDefaultConfiguration()
@@ -25,6 +27,7 @@ class RestClient extends AbstractClient
                 $this->logger->info("Calling {$endpoint}->{$operation} : ");
                 $this->logger->info(print_r($input, true));
             }
+            self::$count ++;
             $result = $apiInstance->$operation(...$input);
             if ($this->debug === true) {
                 $this->logger->info("Result of {$endpoint}->{$operation} : ");

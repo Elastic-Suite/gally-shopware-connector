@@ -73,5 +73,14 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
 
         return $this->localizedCatalogByLocale[$localeCode] ?? [];
     }
+
+    public function getByIdentity(string $identifier): ?ModelInterface
+    {
+        if (!$this->allEntityHasBeenFetch) {
+            $this->fetchEntities();
+        }
+
+        return $this->entityByCode[$identifier] ?? null;
+    }
 }
 

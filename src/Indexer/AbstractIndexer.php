@@ -3,13 +3,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
-use Gally\Rest\Api\IndexApi;
-use Gally\Rest\Api\IndexDocumentApi;
-use Gally\Rest\Model\IndexCreate;
-use Gally\Rest\Model\LocalizedCatalog;
-use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
-use Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer;
+use Gally\ShopwarePlugin\Service\IndexOperation;
 use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -21,27 +16,24 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 abstract class AbstractIndexer
 {
     private Configuration $configuration;
-    private RestClient $client;
     private EntityRepository $salesChannelRepository;
-    private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer;
+    private IndexOperation $indexOperation;
 
     protected EntityRepository $entityRepository;
 
     public function __construct(
         Configuration $configuration,
-        RestClient $client,
         EntityRepository $salesChannelRepository,
-        LocalizedCatalogSynchronizer $localizedCatalogSynchronizer,
+        IndexOperation $indexOperation,
         EntityRepository $entityRepository
     ) {
         $this->configuration = $configuration;
-        $this->client = $client;
         $this->salesChannelRepository = $salesChannelRepository;
-        $this->localizedCatalogSynchronizer = $localizedCatalogSynchronizer;
+        $this->indexOperation = $indexOperation;
         $this->entityRepository = $entityRepository;
     }
 
-    public function index()
+    public function reindex(array $documentIdsToReindex = [])
     {
         $criteria = new Criteria();
         $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
@@ -58,29 +50,28 @@ abstract class AbstractIndexer
                 /** @var LanguageEntity $language */
                 foreach ($languages as $language) {
 
-                    // Todo manage partial reindex
-//                    try {
-//                        $index = $this->indexOperation->getIndexByName($this->typeName, $store);
-//                    } catch (\Exception $exception) {
-                        $indexName = $this->createIndex($salesChannel, $language);
-//                    }
+                    if (empty($documentIdsToReindex)) {
+                        $indexName = $this->indexOperation->createIndex($this->getEntityType(), $salesChannel, $language);
+                    } else {
+                        $indexName = $this->indexOperation->getIndexByName($this->getEntityType(), $salesChannel, $language);
+                    }
 
                     // Todo get from conf
                     $batchSize = 100;
 
                     $bulk = [];
-                    foreach ($this->getDocumentsToIndex($salesChannel, $language) as $document) {
+                    foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
                         $bulk[$document['id']] = json_encode($document);
                         if (count($bulk) >= $batchSize) {
-                            $this->executeBulk($indexName, $bulk);
+                            $this->indexOperation->executeBulk($indexName, $bulk);
                         }
                     }
                     if (count($bulk)) {
-                        $this->executeBulk($indexName, $bulk);
+                        $this->indexOperation->executeBulk($indexName, $bulk);
                     }
 
-                    $this->refreshIndex($indexName);
-                    $this->installIndex($indexName);
+                    $this->indexOperation->refreshIndex($indexName);
+                    $this->indexOperation->installIndex($indexName);
                 }
             }
         }
@@ -88,43 +79,7 @@ abstract class AbstractIndexer
 
     abstract public function getEntityType(): string;
 
-    abstract public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): iterable;
-
-    protected function createIndex(SalesChannelEntity $salesChannel, LanguageEntity $language): string
-    {
-        /** @var LocalizedCatalog $localizedCatalog */
-        $localizedCatalog = $this->localizedCatalogSynchronizer->getEntityByIdentity(
-            $salesChannel->getId() . $language->getId()
-        );
-        $indexData = [
-            'entityType' => $this->getEntityType(),
-            'localizedCatalog' => $localizedCatalog->getCode(),
-        ];
-
-        /** @var IndexCreate $index */
-        $index = $this->client->query(IndexApi::class, 'postIndexCollection', $indexData);
-
-        return $index->getName();
-    }
-
-    protected function refreshIndex(string $indexName)
-    {
-        $this->client->query(IndexApi::class, 'refreshIndexItem', $indexName, []);
-    }
-
-    protected function installIndex(string $indexName)
-    {
-        $this->client->query(IndexApi::class, 'installIndexItem', $indexName, []);
-    }
-
-    protected function executeBulk(string $indexName, array $documents)
-    {
-        return $this->client->query(
-            IndexDocumentApi::class,
-            'postIndexDocumentCollection',
-            ['indexName' => $indexName, 'documents' => $documents]
-        );
-    }
+    abstract public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language, array $documentIdsToReindex): iterable;
 
     protected function getContext(SalesChannelEntity $salesChannel, LanguageEntity $language): Context
     {
