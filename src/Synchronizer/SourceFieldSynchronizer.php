@@ -39,6 +39,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
     private MetadataSynchronizer $metadataSynchronizer;
     private SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer;
     private SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer;
+    private string $currentEntity;
 
     public function __construct(
         Configuration $configuration,
@@ -76,6 +77,10 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
 
     public function synchronizeAll()
     {
+        $this->fetchEntities();
+        $this->sourceFieldLabelSynchronizer->fetchEntities();
+        $this->sourceFieldOptionSynchronizer->fetchEntities();
+
         foreach ($this->entitiesToSync as $entity) {
             /** @var Metadata $metadata */
             $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity]);
@@ -132,6 +137,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
     {
         /** @var Metadata $metadata */
         $metadata = $params['metadata'];
+        $this->currentEntity = $metadata->getEntity();
 
         /** @var array|CustomFieldEntity|PropertyGroupEntity $field */
         $field = $params['field'];
@@ -177,39 +183,61 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         return $sourceField;
     }
 
-    protected function fetchEntities()
+    protected function buildFetchAllParams(int $page): array
     {
-        if (empty($this->entityById)) {
-            $currentPage = 1;
-            do {
-                $entities = $this->client->query(
-                    $this->entityClass,
-                    $this->getCollectionMethod,
-                    // Can't used named function argument in php7.4
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    $currentPage,
-                    30
-                );
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            $page,
+            self::FETCH_PAGE_SIZE,
+        ];
+    }
 
-                foreach ($entities as $entity) {
-                    $this->addEntityByIdentity($entity);
-                }
-                $currentPage++;
-            } while (count($entities) > 0);
+    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    {
+        $results = $this->client->query(...$this->buildFetchOneParams($entity));
+        $filteredResults = [];
+        /** @var SourceFieldSourceFieldApi $result */
+        /** @var SourceFieldSourceFieldApi $entity */
+        foreach ($results as $result) {
+            // Search by source field code in api is a partial match,
+            // to be sure to get the good sourceField we need to check that the code of the result
+            // is exactly the code of the sourceField.
+            if ($result->getCode() === $entity->getCode()) {
+                $filteredResults[] = $result;
+            }
         }
+        if (count($filteredResults) !== 1) {
+            return null;
+        }
+        return reset($filteredResults);
+    }
+
+    protected function buildFetchOneParams(ModelInterface $entity): array
+    {
+        /** @var SourceFieldSourceFieldApi $entity */
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            $entity->getCode(),
+            null,
+            null,
+            $this->currentEntity
+        ];
     }
 
     private function getGallyType(string $type): string

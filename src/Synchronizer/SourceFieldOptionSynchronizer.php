@@ -24,7 +24,14 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         string $patchEntityMethod,
         SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer
     ) {
-        parent::__construct($configuration, $client, $entityClass, $getCollectionMethod, $createEntityMethod, $patchEntityMethod);
+        parent::__construct(
+            $configuration,
+            $client,
+            $entityClass,
+            $getCollectionMethod,
+            $createEntityMethod,
+            $patchEntityMethod
+        );
         $this->sourceFieldOptionLabelSynchronizer = $sourceFieldOptionLabelSynchronizer;
     }
 
@@ -77,27 +84,52 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         return $sourceFieldOption;
     }
 
-    protected function fetchEntities()
+    public function fetchEntities(): void
     {
-        if (empty($this->entityById)) {
-            $currentPage = 1;
-            do {
-                $entities = $this->client->query(
-                    $this->entityClass,
-                    $this->getCollectionMethod,
-                    // Can't used named function argument in php7.4
-                    null,
-                    null,
-                    null,
-                    $currentPage,
-                    30
-                );
+        parent::fetchEntities();
+        $this->sourceFieldOptionLabelSynchronizer->fetchEntities();
+    }
 
-                foreach ($entities as $entity) {
-                    $this->addEntityByIdentity($entity);
-                }
-                $currentPage++;
-            } while (count($entities) > 0);
+    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    {
+        // Todo manage error
+        $results = $this->client->query(...$this->buildFetchOneParams($entity));
+        $filteredResults = [];
+        /** @var SourceFieldOptionSourceFieldOptionWrite $result */
+        /** @var SourceFieldOptionSourceFieldOptionWrite $entity */
+        foreach ($results as $result) {
+            // It is not possible to search by source field option code in api.
+            // So we need to get the good option after.
+            if ($result->getCode() === $entity->getCode()) {
+                $filteredResults[] = $result;
+            }
         }
+        if (count($filteredResults) !== 1) {
+            return null;
+        }
+        return reset($filteredResults);
+    }
+
+    protected function buildFetchAllParams(int $page): array
+    {
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            null,
+            null,
+            null,
+            $page,
+            self::FETCH_PAGE_SIZE,
+        ];
+    }
+
+    protected function buildFetchOneParams(ModelInterface $entity): array
+    {
+        /** @var SourceFieldOptionSourceFieldOptionWrite $entity */
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            $entity->getSourceField(),
+        ];
     }
 }

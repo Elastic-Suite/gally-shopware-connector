@@ -8,6 +8,7 @@ use Gally\Rest\Model\ModelInterface;
 use Gally\Rest\Model\SourceFieldOption;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelWrite;
+use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
 
 class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
 {
@@ -27,7 +28,7 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
 
     public function synchronizeItem(array $params): ?ModelInterface
     {
-        /** @var SourceFieldOption $option */
+        /** @var SourceFieldOptionSourceFieldOptionWrite $option */
         $option = $params['fieldOption'];
 
         /** @var string $localeCode */
@@ -52,29 +53,30 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
         return null;
     }
 
-    protected function fetchEntities()
+    protected function buildFetchAllParams(int $page): array
     {
-        if (empty($this->entityById)) {
-            $currentPage = 1;
-            do {
-                $entities = $this->client->query(
-                    $this->entityClass,
-                    $this->getCollectionMethod,
-                    // Can't used named function argument in php7.4
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    $currentPage,
-                    30
-                );
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            null,
+            null,
+            null,
+            null,
+            null,
+            $page,
+            self::FETCH_PAGE_SIZE,
+        ];
+    }
 
-                foreach ($entities as $entity) {
-                    $this->addEntityByIdentity($entity);
-                }
-                $currentPage++;
-            } while (count($entities) > 0);
-        }
+    protected function buildFetchOneParams(ModelInterface $entity): array
+    {
+        /** @var SourceFieldOptionLabelSourceFieldOptionLabelWrite $entity */
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            $entity->getLocalizedCatalog(),
+            null,
+            $entity->getSourceFieldOption(),
+        ];
     }
 }

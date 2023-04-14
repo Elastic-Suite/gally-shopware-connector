@@ -9,6 +9,8 @@ use Gally\ShopwarePlugin\Service\Configuration;
 
 abstract class AbstractSynchronizer
 {
+    protected const FETCH_PAGE_SIZE = 50;
+
     protected Configuration $configuration;
     protected RestClient $client;
     protected string $entityClass;
@@ -16,6 +18,7 @@ abstract class AbstractSynchronizer
     protected string $createEntityMethod;
     protected string $patchEntityMethod;
     protected array $entityByCode = [];
+    protected bool $allEntityHasBeenFetch = false;
 
     public function __construct(
         Configuration $configuration,
@@ -33,20 +36,54 @@ abstract class AbstractSynchronizer
         $this->patchEntityMethod = $patchEntityMethod;
     }
 
-    abstract  public function getIdentity(ModelInterface $entity): string;
-
     abstract public function synchronizeAll();
 
     abstract public function synchronizeItem(array $params): ?ModelInterface;
 
-    public function getEntityByIdentity(string $identity): ?ModelInterface
+    public function fetchEntities(): void
     {
-        if (empty($this->entityByCode)) {
-            // Load all entities to be able to check if the asked entity exists.
-            $this->fetchEntities();
-        }
+        $currentPage = 1;
+        do {
+            $entities = $this->client->query(...$this->buildFetchAllParams($currentPage));
 
-        return $this->entityByCode[$identity] ?? null;
+            foreach ($entities as $entity) {
+                $this->addEntityByIdentity($entity);
+            }
+            $currentPage++;
+        } while (count($entities) >= self::FETCH_PAGE_SIZE);
+        $this->allEntityHasBeenFetch = true;
+    }
+
+    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    {
+        $entities = $this->client->query(...$this->buildFetchOneParams($entity));
+        if (count($entities) !== 1) {
+            return null;
+        }
+        return reset($entities);
+    }
+
+    abstract protected function getIdentity(ModelInterface $entity): string;
+
+    protected function buildFetchAllParams(int $page): array
+    {
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            null,
+            null,
+            $page,
+            self::FETCH_PAGE_SIZE
+        ];
+    }
+
+    protected function buildFetchOneParams(ModelInterface $entity): array
+    {
+        return [
+            $this->entityClass,
+            $this->getCollectionMethod,
+            $entity->getCode()
+        ];
     }
 
     protected function createOrUpdateEntity(ModelInterface $entity): ModelInterface
@@ -55,7 +92,7 @@ abstract class AbstractSynchronizer
 
         if ($this->getIdentity($entity)) {
             // Check if entity already exists.
-            $existingEntity = $this->getEntityByIdentity($this->getIdentity($entity));
+            $existingEntity = $this->getEntityFromApi($entity);
             if (!$existingEntity) {
                 // Create it if needed. Also save it locally for later use.
                 $entity = $this->client->query($this->entityClass, $this->createEntityMethod, $entity);
@@ -73,14 +110,13 @@ abstract class AbstractSynchronizer
         return $this->entityByCode[$this->getIdentity($entity)];
     }
 
-    protected function fetchEntities()
+    protected function getEntityFromApi(ModelInterface $entity): ?ModelInterface
     {
-        if (empty( $this->entityById)) {
-            $entities = $this->client->query($this->entityClass, $this->getCollectionMethod);
-            foreach ($entities as $entity) {
-                $this->addEntityByIdentity($entity);
-            }
+        if ($this->allEntityHasBeenFetch) {
+            return $this->entityByCode[$this->getIdentity($entity)] ?? null;
         }
+
+        return $this->fetchEntity($entity);
     }
 
     protected function addEntityByIdentity(ModelInterface $entity)

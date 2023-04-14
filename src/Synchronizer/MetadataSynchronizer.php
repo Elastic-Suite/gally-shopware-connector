@@ -23,4 +23,13 @@ class MetadataSynchronizer extends AbstractSynchronizer
         /** @var Metadata $entity */
         return $entity->getEntity();
     }
+
+    protected function getEntityFromApi(ModelInterface $entity): ?ModelInterface
+    {
+        if (!$this->allEntityHasBeenFetch) {
+            $this->fetchEntities();
+        }
+
+        return $this->entityByCode[$this->getIdentity($entity)] ?? null;
+    }
 }

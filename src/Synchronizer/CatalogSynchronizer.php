@@ -50,6 +50,9 @@ class CatalogSynchronizer extends AbstractSynchronizer
 
     public function synchronizeAll()
     {
+        $this->fetchEntities();
+        $this->localizedCatalogSynchronizer->fetchEntities();
+
         $criteria = new Criteria();
         $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
 

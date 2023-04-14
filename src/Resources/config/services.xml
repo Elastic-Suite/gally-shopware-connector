@@ -46,5 +46,18 @@
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <tag name="kernel.event_subscriber" />
         </service>
+        <service id="Gally\ShopwarePlugin\Subscriber\SalesChannelSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
+            <argument type="service" id="sales_channel.repository" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Subscriber\FieldSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
+            <argument type="service" id="custom_field.repository" />
+            <argument type="service" id="custom_field_set.repository" />
+            <argument type="service" id="property_group.repository" />
+            <tag name="kernel.event_subscriber" />
+        </service>
     </services>
 </container>
