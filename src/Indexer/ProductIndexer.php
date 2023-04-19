@@ -8,6 +8,7 @@ use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityEntity;
 use Shopware\Core\Content\Product\ProductEntity;
+use Shopware\Core\Content\Product\SalesChannel\ProductAvailableFilter;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -32,6 +33,7 @@ class ProductIndexer extends AbstractIndexer
         if (!empty($documentIdsToReindex)) {
             $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
         }
+        $criteria->addFilter(new ProductAvailableFilter($salesChannel->getId()));
         $criteria->addAssociations(
             [
                 'categories',
@@ -52,18 +54,8 @@ class ProductIndexer extends AbstractIndexer
         while ($products->count()) {
             /** @var ProductEntity $product */
             foreach ($products as $product) {
-                /** @var ProductVisibilityEntity $visibility */
-                foreach ($product->getVisibilities() as $visibility) {
-                    // Todo manage visibility with filter
-                    if (
-                        $visibility->getSalesChannelId() == $salesChannel->getId()
-                        && $visibility->getVisibility() == ProductVisibilityDefinition::VISIBILITY_ALL
-                    ) {
-                        yield $this->formatProduct($product);
-                    }
-                }
+                yield $this->formatProduct($product);
             }
-
             $criteria->setOffset($criteria->getOffset() + $batchSize);
             $products = $this->entityRepository->search($criteria, $context);
         }
@@ -89,7 +81,7 @@ class ProductIndexer extends AbstractIndexer
             'image' => str_replace('http://localhost', '', $mediaPath), // Todo how to add base url in context
             'price' => $this->formatPrice($product),
             'stock' => [
-                'status' => $product->getStock() > 0, // Todo manage stock status
+                'status' => $product->getAvailableStock() > 0, // Todo manage stock status
                 'qty' => $product->getStock()
             ],
             'category' => $this->formatCategories($product),

@@ -6,15 +6,12 @@
     <imports>
         <import resource="synchronizers.xml"/>
         <import resource="indexers.xml"/>
+        <import resource="search.xml"/>
     </imports>
 
     <services>
         <service id="Gally\ShopwarePlugin\Service\Configuration">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Service\Searcher">
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-            <argument type="service" id="Gally\ShopwarePlugin\Api\GraphQlClient" />
         </service>
         <service id="Gally\ShopwarePlugin\Service\IndexOperation">
             <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
@@ -44,12 +41,6 @@
             <tag name="console.command"/>
         </service>
 
-        <service id="Gally\ShopwarePlugin\Subscriber\SearchSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Searcher" />
-            <argument type="service" id="Doctrine\DBAL\Connection"/>
-            <tag name="kernel.event_subscriber" />
-        </service>
         <service id="Gally\ShopwarePlugin\Subscriber\SalesChannelSubscriber">
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
             <argument type="service" id="sales_channel.repository" />
