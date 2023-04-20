@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Search;
 use Gally\ShopwarePlugin\Api\GraphQlClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class Adapter
@@ -30,18 +31,19 @@ class Adapter
 
     public function search(SalesChannelContext $context, Criteria $criteria): Result
     {
-        $sort = $criteria->getSorting()[0];
+        $sorts = $criteria->getSorting();
+        $sort = reset($sorts);
+        $navigationsIds = $criteria->getIds();
 
         return $this->resultBuilder->build(
             $this->client->query(
                 $this->getSearchQuery(),
                 [
-                    'requestType' => 'product_search',
+                    'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
                     'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
+                    'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
                     'search' => $criteria->getTerm(),
-                    'sort' => [
-                        $this->sortMapping[$sort->getField()] => strtolower($sort->getDirection())
-                    ], // Todo : get sorting from criteria
+                    'sort' => [ $sort->getField() => strtolower($sort->getDirection())],
                     'currentPage' => $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1,
                     'pageSize' => $criteria->getLimit(),
                 ]

@@ -28,7 +28,7 @@ class ResultBuilder
             (int) $response['paginationInfo']['totalCount'],
             $response['sortInfo']['current'][0]['field'],
             $response['sortInfo']['current'][0]['direction'],
-            $this->aggregationBuilder->build($response['aggregations'])
+            $this->aggregationBuilder->build($response['aggregations'] ?? [])
         );
     }
 
