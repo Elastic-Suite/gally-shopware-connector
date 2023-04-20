@@ -1,4 +1,10 @@
-# Gally Plugin
+# Gally Plugin for Shopware
+
+## :warning: Work In Progress
+
+This plugin is a work-in-progress, you can check what it does below in the Todo section. It's not suitable actually for production usage, so use it at your own risks.
+
+Of course, any contribution is welcome.
 
 ## Dev env 
 
