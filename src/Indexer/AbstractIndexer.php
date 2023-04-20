@@ -70,8 +70,10 @@ abstract class AbstractIndexer
                         $this->indexOperation->executeBulk($indexName, $bulk);
                     }
 
-                    $this->indexOperation->refreshIndex($indexName);
-                    $this->indexOperation->installIndex($indexName);
+                    if (empty($documentIdsToReindex)) {
+                        $this->indexOperation->refreshIndex($indexName);
+                        $this->indexOperation->installIndex($indexName);
+                    }
                 }
             }
         }

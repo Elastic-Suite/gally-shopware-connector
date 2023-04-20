@@ -13,6 +13,7 @@
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\ProductIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="product.repository" />
+            <argument key="$categoryRepository" type="service" id="category.repository" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="product_manufacturer.repository" />
