@@ -3,10 +3,11 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-        <service id="Gally\ShopwarePlugin\Search\AggregationBuilder">
+        <service id="Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder">
+            <argument type="service" id="Shopware\Core\Framework\DataAbstractionLayer\DefinitionInstanceRegistry"/>
         </service>
         <service id="Gally\ShopwarePlugin\Search\ResultBuilder">
-            <argument type="service" id="Gally\ShopwarePlugin\Search\AggregationBuilder" />
+            <argument type="service" id="Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder" />
         </service>
         <service id="Gally\ShopwarePlugin\Search\Adapter">
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
@@ -33,6 +34,13 @@
             <argument type="service" id="product_sorting.repository"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <argument type="service" id="event_dispatcher"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Search\ProductSearchBuilder"
+                 decorates="Shopware\Core\Content\Product\SearchKeyword\ProductSearchBuilderInterface"
+                 decoration-priority="-60000">
+            <argument type="service" id="Shopware\Elasticsearch\Product\ProductSearchBuilder.inner"/>
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
         </service>
     </services>
 </container>

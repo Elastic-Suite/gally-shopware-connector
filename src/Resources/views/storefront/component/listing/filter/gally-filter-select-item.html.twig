@@ -1,0 +1,17 @@
+{% sw_extends '@Storefront/storefront/component/listing/filter/filter-multi-select-list-item.html.twig' %}
+
+{% block component_filter_multi_select_list_item_checkbox_input %}
+    <input type="checkbox"
+           class="{{ formCheckInputClass }} filter-multi-select-checkbox"
+           data-label="{{ element.label }}"
+           value="{{ element.key }}"
+           id="{{ element.key }}">
+{% endblock %}
+
+{% block component_filter_multi_select_list_item_label_element %}
+<label class="filter-multi-select-item-label {{ formCheckLabelClass }}" for="{{ element.key }}">
+    {% block component_multi_select_list_item_label %}
+        {{ element.label }} ({{ element.count }})
+    {% endblock %}
+</label>
+{% endblock %}

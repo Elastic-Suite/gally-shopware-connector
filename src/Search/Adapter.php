@@ -6,6 +6,9 @@ namespace Gally\ShopwarePlugin\Search;
 use Gally\ShopwarePlugin\Api\GraphQlClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
@@ -14,13 +17,6 @@ class Adapter
     private Configuration $configuration;
     private GraphQlClient $client;
     private ResultBuilder $resultBuilder;
-
-    private array $sortMapping = [
-        '_score' => '_score',
-        'product.cheapestPrice' => 'price__price',
-        'product.name' => 'name',
-        'product.sales' => '_score', // Todo : generate available sorting list from gally api
-    ];
 
     public function __construct(Configuration $configuration, GraphQlClient $client, ResultBuilder $resultBuilder)
     {
@@ -34,6 +30,20 @@ class Adapter
         $sorts = $criteria->getSorting();
         $sort = reset($sorts);
         $navigationsIds = $criteria->getIds();
+        $filters = [];
+        foreach ($criteria->getPostFilters() as $filter) {
+            switch (get_class($filter)) {
+                case EqualsFilter::class:
+                    $filters[] = [$filter->getField() => ['eq' => $filter->getValue()]];
+                    break;
+                case EqualsAnyFilter::class:
+                    $filters[] = [$filter->getField() => ['in' => $filter->getValue()]];
+                    break;
+                case RangeFilter::class:
+                    $filters[] = [$filter->getField() => $filter->getParameters()];
+                    break;
+            }
+        }
 
         return $this->resultBuilder->build(
             $this->client->query(
@@ -43,11 +53,13 @@ class Adapter
                     'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
                     'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
                     'search' => $criteria->getTerm(),
-                    'sort' => [ $sort->getField() => strtolower($sort->getDirection())],
+                    'sort' => [$sort->getField() => strtolower($sort->getDirection())],
                     'currentPage' => $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1,
                     'pageSize' => $criteria->getLimit(),
+                    'filter' => $filters
                 ]
-            )
+            ),
+            $context
         );
     }
 
@@ -61,7 +73,8 @@ class Adapter
               \$currentCategoryId: String,
               \$pageSize: Int,
               \$search: String,
-              \$sort: ProductSortInput
+              \$sort: ProductSortInput,
+              \$filter: [ProductFieldFilterInput]
             ) {
               products (
                 requestType: \$requestType,
@@ -71,13 +84,15 @@ class Adapter
                 pageSize: \$pageSize,
                 search: \$search,
                 sort: \$sort,
-                filter: []
+                filter: \$filter
               ) {
                 collection { ... on Product { sku } }
                 paginationInfo { lastPage itemsPerPage totalCount }
                 sortInfo { current { field direction } }
                 aggregations {
+                  type
                   field
+                  label
                   count
                   hasMore
                   options { count label value }

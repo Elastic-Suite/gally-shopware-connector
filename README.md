@@ -52,9 +52,14 @@ Of course, any contribution is welcome.
   - [ ] Search product
     - [x] Full text search 
     - [x] Sort result with gally
-    - [ ] Filter result with gally
-    - [ ] Get facet from gally 
-    - [ ] Get sorting from gally
+    - [x] Filter result with gally
+    - [x] Get facet from gally 
+    - [x] Get sorting from gally
+    - [ ] aggregation free shipping
+    - [ ] aggregation manufacturer
+    - [ ] aggregation category
+    - [ ] aggregation render swatches
+    - [ ] category visbility
 - [ ] Autocomplete
 - [ ] Unit test
 - [ ] fetchAll entity on each sync may create perf issue ?

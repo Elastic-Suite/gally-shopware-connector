@@ -69,7 +69,7 @@ class Result
     /**
      * Get aggregations.
      */
-    public function getAggregation(): AggregationResultCollection
+    public function getAggregations(): AggregationResultCollection
     {
         return $this->aggregations;
     }

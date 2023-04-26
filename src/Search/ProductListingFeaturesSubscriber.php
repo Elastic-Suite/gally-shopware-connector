@@ -6,6 +6,8 @@ namespace Gally\ShopwarePlugin\Search;
 use Doctrine\DBAL\Connection;
 use Gally\Rest\Model\CategorySortingOption;
 use Gally\ShopwarePlugin\Service\Configuration;
+use Shopware\Core\Content\Cms\CmsPageEntity;
+use Shopware\Core\Content\Cms\Events\CmsPageLoadedEvent;
 use Shopware\Core\Content\Cms\SalesChannel\Struct\ProductListingStruct;
 use Shopware\Core\Content\Product\Events\ProductListingCollectFilterEvent;
 use Shopware\Core\Content\Product\Events\ProductListingCriteriaEvent;
@@ -24,7 +26,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Dbal\Common\RepositoryIterator;
 use Shopware\Core\Framework\DataAbstractionLayer\Doctrine\FetchModeHelper;
 use Shopware\Core\Framework\DataAbstractionLayer\Entity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityCollection;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Aggregation\Aggregation;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Aggregation\Bucket\FilterAggregation;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Aggregation\Bucket\TermsAggregation;
@@ -41,11 +43,11 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\MultiFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\Framework\Event\ShopwareEvent;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
-use Shopware\Storefront\Page\PageLoadedEvent;
 use Shopware\Storefront\Page\Search\SearchPage;
 use Shopware\Storefront\Page\Search\SearchPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -60,8 +62,8 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     private Configuration $configuration;
     private Adapter $searchAdapter;
     private SortOptionProvider $sortOptionProvider;
-    private EntityRepositoryInterface $optionRepository;
-    private EntityRepositoryInterface $sortingRepository;
+    private EntityRepository $optionRepository;
+    private EntityRepository $sortingRepository;
     private Connection $connection;
     private SystemConfigService $systemConfigService;
     private EventDispatcherInterface $dispatcher;
@@ -74,8 +76,8 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         Adapter $searchAdapter,
         SortOptionProvider $sortOptionProvider,
         Connection $connection,
-        EntityRepositoryInterface $optionRepository,
-        EntityRepositoryInterface $productSortingRepository,
+        EntityRepository $optionRepository,
+        EntityRepository $productSortingRepository,
         SystemConfigService $systemConfigService,
         EventDispatcherInterface $dispatcher
     ) {
@@ -101,13 +103,10 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                 ['setDefaultOrder', 200],
                 ['handleListingRequest', 50],
             ],
-//            ProductListingResultEvent::class => [
-//                ['handleResult', 50],
-//            ],
-//            ProductSearchResultEvent::class => [
-//                ['handleResult', 50],
-//            ],
             NavigationPageLoadedEvent::class =>[
+                ['handleResult', 50],
+            ],
+            CmsPageLoadedEvent::class =>[
                 ['handleResult', 50],
             ],
             SearchPageLoadedEvent::class =>[
@@ -134,13 +133,14 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         $context = $event->getSalesChannelContext();
 
 //        $this->handlePagination($request, $criteria, $event->getSalesChannelContext());
-        $this->handleFilters($request, $criteria, $context); // TODO
+        $this->handleFilters($request, $criteria, $context);
         $this->handleSorting($request, $criteria, $context);
 
         if ($this->configuration->isActive($context->getSalesChannel()->getId())) {
 
             if ($event instanceof ProductSearchCriteriaEvent) {
                 $criteria->setTerm($request->get('search'));
+                $criteria->setIds([$context->getSalesChannel()->getNavigationCategoryId()]);
             } else {
                 $criteria->setIds([$request->get('navigationId')]);
             }
@@ -164,14 +164,20 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function handleResult(PageLoadedEvent $event): void
+    public function handleResult(ShopwareEvent $event): void
     {
-        if ($event instanceof NavigationPageLoadedEvent) {
-//            return;
+        if ($event instanceof NavigationPageLoadedEvent || $event instanceof CmsPageLoadedEvent) {
+            /** @var CmsPageEntity $page */
+            $page = $event instanceof NavigationPageLoadedEvent
+                ? $event->getPage()->getCmsPage()
+                : $event->getResult()->first();
+
+            if ($page->getType() !== 'product_list') {
+                return;
+            }
+
             /** @var ProductListingStruct $listingContainer */
-            $listingContainer = $event->getPage()
-                ->getCmsPage()
-                ->getSections()
+            $listingContainer = $page->getSections()
                 ->getBlocks()
                 ->getSlots()
                 ->getSlot('content')
@@ -182,20 +188,29 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         }
 
         $listing = $listingContainer->getListing();
+
+
 //        $oldListing = clone $listing;
 
 //        $sortings = $listing->getCriteria()->getExtension('sortings');
 //        $listing->setAvailableSortings($sortings);
 
 //        // manufacturer,price,rating-exists,shipping-free-filter,properties,options
+
+        /** @var ProductListingResult $newListing */
         $newListing = ProductListingResult::createFrom(new EntitySearchResult(
             $listing->getEntity(),
             $this->gallyResults->getTotalResultCount(),
             $listing->getEntities(),
-            $listing->getAggregations(), // Todo : generate aggregations object from gally results
+//            $listing->getAggregations(),
+            $this->gallyResults->getAggregations(),
             $listing->getCriteria(),
             $listing->getContext()
         ));
+
+        foreach ($listing->getCurrentFilters() as $name => $filter) {
+            $newListing->addCurrentFilter($name, $filter);
+        }
 
         $listing->setLimit($this->limit);
         $listing->setLimit($this->offset);
@@ -213,23 +228,50 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 
     private function handleFilters(Request $request, Criteria $criteria, SalesChannelContext $context): void
     {
-        $criteria->addAssociation('manufacturer');
-
-        $filters = $this->getFilters($request, $context);
-
-        $aggregations = $this->getAggregations($request, $filters);
-
-        foreach ($aggregations as $aggregation) {
-            $criteria->addAggregation($aggregation);
+        $filters = $request->query->all();
+        if ($request->isMethod(Request::METHOD_POST)) {
+            $filters = $request->request->all();
         }
 
-        foreach ($filters as $filter) {
-            if ($filter->isFiltered()) {
-                $criteria->addPostFilter($filter->getFilter());
+        $filterData = [];
+        foreach ($filters as $field => $value) {
+            if (in_array($field, ['order', 'p', 'search', 'slots', 'no-aggregations'])) {
+                continue;
+            }
+
+            $data = [];
+            if (str_contains($field, '_min')) {
+                $field = str_replace('_min', '', $field);
+                $data = $filterData[$field] ?? $data;
+                $data['min'] = $value;
+            } elseif (str_contains($field, '_max')) {
+                $field = str_replace('_max', '', $field);
+                $data = $filterData[$field] ?? $data;
+                $data['max'] = $value;
+            } elseif (str_contains($field, '_bool')) {
+                $field = str_replace('_bool', '', $field);
+                $data = ['eq' => (bool) $value];
+            } elseif (str_contains($value, '|')) {
+                $data = ['in' => explode('|', $value)];
+            } else {
+                $data = ['eq' => $value];
+            }
+            $filterData[$field] = $data;
+        }
+
+        foreach ($filterData as $field => $data) {
+            if (isset($data['min']) || isset($data['max'])) {
+                $filterParams = [RangeFilter::GTE => (float) $data['min'] ?? 0];
+                if (isset($data['max'])) {
+                    $filterParams[RangeFilter::LTE] = (float) $data['max'];
+                }
+                $criteria->addPostFilter(new RangeFilter($field, $filterParams));
+            } elseif (isset($data['in'])) {
+                $criteria->addPostFilter(new EqualsAnyFilter($field, $data['in']));
+            } elseif (isset($data['eq'])) {
+                $criteria->addPostFilter(new EqualsFilter($field, $data['eq']));
             }
         }
-
-        $criteria->addExtension('filters', $filters);
     }
 
     /**
@@ -289,11 +331,6 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 
     private function handleSorting(Request $request, Criteria $criteria, SalesChannelContext $context): void
     {
-//        /** @var ProductSortingCollection $sortings */
-//        $sortings = $criteria->getExtension('sortings') ?? new ProductSortingCollection();
-//        $sortings->merge($this->getAvailableSortings($request, $context->getContext()));
-//        $criteria->addExtension('sortings', $sortings);
-
         /** @var ProductSortingCollection $sortings */
         $sortings = $criteria->getExtension('gally-sortings') ?? $this->getAvailableSortings();
         $currentSorting = $this->getCurrentSorting($sortings, $request);
@@ -364,9 +401,9 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     /**
      * @return list<string>
      */
-    private function collectOptionIds(ProductListingResultEvent $event): array
+    private function collectOptionIds(EntitySearchResult $listing): array
     {
-        $aggregations = $event->getResult()->getAggregations();
+        $aggregations = $listing->getAggregations();
 
         /** @var TermsResult|null $properties */
         $properties = $aggregations->get('properties');
@@ -380,15 +417,15 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         return array_unique(array_filter(array_merge($options, $properties)));
     }
 
-    private function groupOptionAggregations(ProductListingResultEvent $event): void
+    private function groupOptionAggregations(EntitySearchResult $listing): void
     {
-        $ids = $this->collectOptionIds($event);
+//        $ids = $this->collectOptionIds($listing);
+//
+//        if (empty($ids)) {
+//            return;
+//        }
 
-        if (empty($ids)) {
-            return;
-        }
-
-        $criteria = new Criteria($ids);
+        $criteria = new Criteria();
         $criteria->setLimit(500);
         $criteria->addAssociation('group');
         $criteria->addAssociation('media');
@@ -398,7 +435,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 
         $mergedOptions = new PropertyGroupOptionCollection();
 
-        $repositoryIterator = new RepositoryIterator($this->optionRepository, $event->getContext(), $criteria);
+        $repositoryIterator = new RepositoryIterator($this->optionRepository, $listing->getContext(), $criteria);
         while (($result = $repositoryIterator->fetch()) !== null) {
             /** @var PropertyGroupOptionCollection $entities */
             $entities = $result->getEntities();
@@ -411,7 +448,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         $grouped->sortByPositions();
         $grouped->sortByConfig();
 
-        $aggregations = $event->getResult()->getAggregations();
+        $aggregations = $listing->getAggregations();
 
         // remove id results to prevent wrong usages
         $aggregations->remove('properties');
@@ -688,6 +725,11 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 
 
 
+
+
+
+
+
     private function getProductNumberByIds(array $ids): array
     {
         // Todo : find a better way to get this mapping
@@ -709,11 +751,9 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         $criteria->setOffset(0);
         $criteria->resetAggregations();
         $criteria->resetFilters();
+        $criteria->resetPostFilters();
         $criteria->resetQueries();
         $criteria->resetSorting();
-
-//        if ($criteria->getSorting()[0]->getField() === '_score') {
-//        }
     }
 
     /**

@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Search;
 
 use Gally\Rest\ApiException;
+use Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder;
 use Psr\Http\Message\ResponseInterface;
+use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class ResultBuilder
 {
@@ -16,7 +18,7 @@ class ResultBuilder
         $this->aggregationBuilder = $aggregationBuilder;
     }
 
-    public function build(?ResponseInterface $response): Result
+    public function build(?ResponseInterface $response, SalesChannelContext $context): Result
     {
         $response = $response ? json_decode($response->getBody()->getContents(), true) : null;
 
@@ -28,7 +30,7 @@ class ResultBuilder
             (int) $response['paginationInfo']['totalCount'],
             $response['sortInfo']['current'][0]['field'],
             $response['sortInfo']['current'][0]['direction'],
-            $this->aggregationBuilder->build($response['aggregations'] ?? [])
+            $this->aggregationBuilder->build($response['aggregations'] ?? [], $context->getContext())
         );
     }
 
