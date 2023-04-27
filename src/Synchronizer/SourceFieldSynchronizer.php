@@ -17,13 +17,27 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\CustomField\CustomFieldCollection;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
+use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\Locale\LocaleEntity;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class SourceFieldSynchronizer extends AbstractSynchronizer
 {
     private array $entitiesToSync = ['category', 'product', 'manufacturer'];
     private array $staticFields = [
         'product' => [
-            'manufacturer' => 'text',
+            'manufacturer' => [
+                'type' => 'select',
+                'labelKey' => 'listing.filterManufacturerDisplayName'
+            ],
+            'free_shipping' => [
+                'type' => 'boolean',
+                'labelKey' => 'listing.filterFreeShippingDisplayName'
+            ],
+            'category' => [
+                'type' => 'category',
+                'labelKey' => 'general.categories'
+            ],
         ],
         'manufacturer' => [
             'id' => 'text',
@@ -40,6 +54,8 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
     private SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer;
     private SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer;
     private string $currentEntity;
+    private EntityRepository $languageRepository;
+    private TranslatorInterface $translator;
 
     public function __construct(
         Configuration $configuration,
@@ -52,7 +68,9 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         EntityRepository $propertyGroupRepository,
         MetadataSynchronizer $metadataSynchronizer,
         SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer,
-        SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer
+        SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer,
+        EntityRepository $languageRepository,
+        TranslatorInterface $translator
     ) {
         parent::__construct(
             $configuration,
@@ -67,6 +85,8 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         $this->metadataSynchronizer = $metadataSynchronizer;
         $this->sourceFieldLabelSynchronizer = $sourceFieldLabelSynchronizer;
         $this->sourceFieldOptionSynchronizer = $sourceFieldOptionSynchronizer;
+        $this->languageRepository = $languageRepository;
+        $this->translator = $translator;
     }
 
     public function getIdentity(ModelInterface $entity): string
@@ -90,11 +110,17 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $criteria->addAssociations(['customFieldSet', 'customFieldSet.relations']);
 
             // Static fields
-            foreach ($this->staticFields[$entity] ?? [] as $code => $type) {
+            foreach ($this->staticFields[$entity] ?? [] as $code => $data) {
+                $labels = [];
+                if (is_array($data)) {
+                    foreach ($this->getAllAvailableLocales() as $locale) {
+                        $labels[$locale] = $this->translator->trans($data['labelKey'], [], null, $locale);
+                    }
+                }
                 $this->synchronizeItem(
                     [
                         'metadata' => $metadata,
-                        'field' => ['code' => $code, 'type' => $type]
+                        'field' => ['code' => $code, 'type' => is_array($data) ? $data['type'] : $data, 'labels' => $labels]
                     ]
                 );
             }
@@ -146,7 +172,12 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
 
         if (is_array($field)) {
             $data['code'] = $field['code'];
-            $data['type'] = $this->getGallyType($field['type']);
+            $data['type'] = $field['type'];
+            $labels = $field['labels'] ?? [];
+            // Prevent to update system source field
+            if ($field['code'] !== 'category') {
+                $data['defaultLabel'] = empty($labels) ? $data['code'] : reset($labels);
+            }
         } elseif (is_a($field, CustomFieldEntity::class)) {
             $labels = $field->getConfig()['label'] ?? [];
             $options = $field->getConfig()['options'] ?? [];
@@ -238,6 +269,18 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             null,
             $this->currentEntity
         ];
+    }
+
+    private function getAllAvailableLocales(): iterable
+    {
+        $criteria = new Criteria();
+        $criteria->addAssociations(['locale']);
+        $languages = $this->languageRepository->search($criteria, Context::createDefaultContext());
+
+        /** @var LanguageEntity $language */
+        foreach ($languages as $language) {
+            yield $language->getLocale()->getCode();
+        }
     }
 
     private function getGallyType(string $type): string

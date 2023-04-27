@@ -63,6 +63,8 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
             null,
             null,
             null,
+            null,
+            null,
             $page,
             self::FETCH_PAGE_SIZE,
         ];

@@ -7,9 +7,14 @@ use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Service\IndexOperation;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
+use Shopware\Core\Content\Media\Pathname\UrlGenerator;
+use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
+use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityEntity;
+use Shopware\Core\Content\Product\ProductCollection;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\ProductAvailableFilter;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -25,6 +30,7 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 class ProductIndexer extends AbstractIndexer
 {
     private EntityRepository $categoryRepository;
+    private UrlGenerator $urlGenerator;
     private ?EntitySearchResult $categoryCollection = null;
 
     public function __construct(
@@ -32,11 +38,13 @@ class ProductIndexer extends AbstractIndexer
         EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
         EntityRepository $entityRepository,
-        EntityRepository $categoryRepository
+        EntityRepository $categoryRepository,
+        UrlGenerator $urlGenerator
     )
     {
         parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository);
         $this->categoryRepository = $categoryRepository;
+        $this->urlGenerator = $urlGenerator;
     }
 
     public function getEntityType(): string
@@ -47,32 +55,25 @@ class ProductIndexer extends AbstractIndexer
     public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language, array $documentIdsToReindex): iterable
     {
         $context = $this->getContext($salesChannel, $language);
-
-        $criteria = new Criteria();
-        $criteria->addFilter(
-            new OrFilter([
-                new EqualsFilter('id', $salesChannel->getNavigationCategoryId()),
-                new ContainsFilter('path', $salesChannel->getNavigationCategoryId())
-            ])
-        );
-        $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
-        $this->categoryCollection = $this->categoryRepository->search($criteria, $context);
+        $this->loadCategoryCollection($context, $salesChannel->getNavigationCategoryId());
 
         $batchSize = 1000;
         $criteria = new Criteria();
         if (!empty($documentIdsToReindex)) {
             $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
         }
-        $criteria->addFilter(new ProductAvailableFilter($salesChannel->getId()));
+        $criteria->addFilter(new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH));
         $criteria->addAssociations(
             [
                 'categories',
+                'manufacturer',
                 'prices',
                 'media',
                 'customFields',
                 'properties',
                 'properties.group',
-                'visibilities'
+                'visibilities',
+                'children',
             ]
         );
         $criteria->addSorting(new FieldSorting('autoIncrement', FieldSorting::ASCENDING));
@@ -84,48 +85,65 @@ class ProductIndexer extends AbstractIndexer
         while ($products->count()) {
             /** @var ProductEntity $product */
             foreach ($products as $product) {
-                yield $this->formatProduct($product);
+                $data = $this->formatProduct($product, $context);
+                // Remove option ids in key from data. (We need before them to avoid duplicated data.)
+                array_walk(
+                    $data,
+                    function (&$item, $key) {
+                        $item = (is_array($item) && $key !== 'stock') ? array_values($item) : $item;
+                    }
+                );
+                yield $data;
             }
             $criteria->setOffset($criteria->getOffset() + $batchSize);
             $products = $this->entityRepository->search($criteria, $context);
         }
     }
 
-    private function formatProduct(ProductEntity $product): array
+    private function loadCategoryCollection(Context $context, string $rootId): void
     {
-        $mediaPath = '';
+        $criteria = new Criteria();
+        $criteria->addFilter(
+            new OrFilter([
+                new EqualsFilter('id', $rootId),
+                new ContainsFilter('path', $rootId)
+            ])
+        );
+        $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
+        $this->categoryCollection = $this->categoryRepository->search($criteria, $context);
+    }
 
-        if ($product->getMedia()) {
-            /** @var MediaThumbnailEntity $thumbnail */
-            foreach ($product->getMedia()->getMedia()->first()->getThumbnails() as $thumbnail) {
-                if (400 == $thumbnail->getWidth()){
-                    $mediaPath = $thumbnail->getUrl();
-                }
-            }
-        }
-
+    private function formatProduct(ProductEntity $product, Context $context): array
+    {
         $data = [
             'id' => $product->getAutoIncrement(),
-            'sku' => $product->getProductNumber(),
-            'name' => $product->getName(),
-            'image' => str_replace('http://localhost', '', $mediaPath), // Todo how to add base url in context
+            'sku' => [$product->getProductNumber()],
+            'name' => [$product->getName()],
+            'image' => [$this->formatMedia($product)],
             'price' => $this->formatPrice($product),
             'stock' => [
                 'status' => $product->getAvailableStock() > 0, // Todo manage stock status
                 'qty' => $product->getStock()
             ],
             'category' => $this->formatCategories($product),
+            'manufacturer' => $this->formatManufacturer($product),
+            'free_shipping' => $product->getShippingFree()
         ];
 
+        $properties = array_merge(
+            $product->getProperties() ? iterator_to_array($product->getProperties()) : [],
+            $product->getOptions() ? iterator_to_array($product->getOptions()) : [],
+        );
+
         /** @var PropertyGroupOptionEntity $property */
-        foreach ($product->getProperties() as $property) {
+        foreach ($properties as $property) {
             $propertyId = 'property_' . $property->getGroupId();
             if (!array_key_exists($propertyId, $data)) {
                 $data[$propertyId] = [];
             }
-            $data[$propertyId][] = [
-                'label' => $property->getName(),
+            $data[$propertyId][$property->getId()] = [
                 'value' => $property->getId(),
+                'label' => $property->getName(),
             ];
         }
 
@@ -133,7 +151,23 @@ class ProductIndexer extends AbstractIndexer
             $data[$code] = $value;
         }
 
-        return $data;
+        if ($product->getChildCount()) {
+            /** @var ProductEntity $child */
+            foreach ($this->getChildren($product, $context) as $child) {
+                $childData = $this->formatProduct($child, $context);
+                $childData['children.sku'] = $childData['sku'];
+                unset($childData['id']);
+                unset($childData['sku']);
+                unset($childData['stock']);
+                unset($childData['price']);
+                foreach ($childData as $field => $value) {
+                    $data[$field] = array_merge($data[$field] ?? [], $value);
+                }
+            }
+        }
+
+        // Remove empty values
+        return array_filter($data, fn ($item) => !is_array($item) || !empty(array_filter($item)));
     }
 
     private function formatPrice(ProductEntity $product): array
@@ -149,6 +183,21 @@ class ProductIndexer extends AbstractIndexer
             ];
         }
         return $prices;
+    }
+
+    private function formatMedia(ProductEntity $product): string
+    {
+        if ($product->getMedia() && $product->getMedia()->count()) {
+            $media = $product->getMedia()->getMedia()->first();
+            /** @var MediaThumbnailEntity $thumbnail */
+            foreach ($media->getThumbnails() as $thumbnail) {
+                if (400 == $thumbnail->getWidth()){
+                    return $this->urlGenerator->getRelativeThumbnailUrl($media, $thumbnail);
+                }
+            }
+        }
+
+        return '';
     }
 
     private function formatCategories(ProductEntity $product): array
@@ -171,5 +220,39 @@ class ProductIndexer extends AbstractIndexer
             }
         }
         return array_values($categories);
+    }
+
+    private function formatManufacturer(ProductEntity $product): array
+    {
+        $manufacturer = $product->getManufacturer();
+        return $manufacturer
+            ? [
+                $manufacturer->getId() => [
+                    'value' => $manufacturer->getId(),
+                    'label' => $manufacturer->getName(),
+                ]
+            ]
+            : [];
+    }
+
+    private function getChildren(ProductEntity $product, Context $context): EntitySearchResult
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsAnyFilter('id', $product->getChildren()->getIds()));
+        $criteria->addAssociations(
+            [
+                'categories',
+                'prices',
+                'media',
+                'customFields',
+                'properties',
+                'properties.group',
+                'visibilities',
+                'options',
+            ]
+        );
+        $criteria->addSorting(new FieldSorting('autoIncrement', FieldSorting::ASCENDING));
+
+        return $this->entityRepository->search($criteria, $context);
     }
 }

@@ -55,9 +55,9 @@ Of course, any contribution is welcome.
     - [x] Filter result with gally
     - [x] Get facet from gally 
     - [x] Get sorting from gally
-    - [ ] aggregation free shipping
-    - [ ] aggregation manufacturer
-    - [ ] aggregation category
+    - [x] aggregation free shipping
+    - [X] aggregation manufacturer
+    - [X] aggregation category
     - [ ] aggregation render swatches
     - [ ] category visbility
 - [ ] Autocomplete

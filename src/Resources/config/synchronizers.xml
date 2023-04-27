@@ -59,6 +59,8 @@
             <argument type="service" key="$metadataSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
             <argument type="service" key="$sourceFieldLabelSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldLabelSynchronizer" />
             <argument type="service" key="$sourceFieldOptionSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionSynchronizer" />
+            <argument type="service" key="$languageRepository" id="language.repository" />
+            <argument type="service" key="$translator" id="translator" />
         </service>
     </services>
 </container>

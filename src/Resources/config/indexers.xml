@@ -14,6 +14,7 @@
         <service id="Gally\ShopwarePlugin\Indexer\ProductIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="product.repository" />
             <argument key="$categoryRepository" type="service" id="category.repository" />
+            <argument key="$urlGenerator" type="service" id="Shopware\Core\Content\Media\Pathname\UrlGeneratorInterface" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="product_manufacturer.repository" />

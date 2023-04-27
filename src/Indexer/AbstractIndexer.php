@@ -36,7 +36,7 @@ abstract class AbstractIndexer
     public function reindex(array $documentIdsToReindex = [])
     {
         $criteria = new Criteria();
-        $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
+        $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency', 'domains']);
 
         /** @var SalesChannelCollection $salesChannels */
         $salesChannels = $this->salesChannelRepository
