@@ -33,6 +33,7 @@ class CategoryIndexer extends AbstractIndexer
                 ])
             );
         }
+        $criteria->addFilter(new EqualsFilter('active', true));
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
         $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
         /** @var CategoryEntity $category */

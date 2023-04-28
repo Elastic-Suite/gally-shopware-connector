@@ -49,7 +49,7 @@ Of course, any contribution is welcome.
   - [X] Index entity on post persist/update
   - [X] Index manufacturer
 - Search
-  - [ ] Search product
+  - [X] Search product
     - [x] Full text search 
     - [x] Sort result with gally
     - [x] Filter result with gally
@@ -59,7 +59,7 @@ Of course, any contribution is welcome.
     - [X] aggregation manufacturer
     - [X] aggregation category
     - [ ] aggregation render swatches
-    - [ ] category visbility
+    - [X] category visbility
 - [ ] Autocomplete
 - [ ] Unit test
 - [ ] fetchAll entity on each sync may create perf issue ?
