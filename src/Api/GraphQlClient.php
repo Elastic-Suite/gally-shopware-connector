@@ -6,6 +6,9 @@ namespace Gally\ShopwarePlugin\Api;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Rest client used to call gally api on search request.
+ */
 class GraphQlClient extends AbstractClient
 {
     public function query(string $query, array $variables): ?ResponseInterface

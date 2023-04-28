@@ -9,8 +9,6 @@ use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Media\Pathname\UrlGenerator;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
-use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityEntity;
-use Shopware\Core\Content\Product\ProductCollection;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\ProductAvailableFilter;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
@@ -27,10 +25,12 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
+/**
+ * Format and index product entity data to gally.
+ */
 class ProductIndexer extends AbstractIndexer
 {
     private EntityRepository $categoryRepository;
-    private UrlGenerator $urlGenerator;
     private ?EntitySearchResult $categoryCollection = null;
 
     public function __construct(
@@ -38,13 +38,12 @@ class ProductIndexer extends AbstractIndexer
         EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
         EntityRepository $entityRepository,
-        EntityRepository $categoryRepository,
-        UrlGenerator $urlGenerator
+        UrlGenerator $urlGenerator,
+        EntityRepository $categoryRepository
     )
     {
-        parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository);
+        parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository, $urlGenerator);
         $this->categoryRepository = $categoryRepository;
-        $this->urlGenerator = $urlGenerator;
     }
 
     public function getEntityType(): string
@@ -62,7 +61,9 @@ class ProductIndexer extends AbstractIndexer
         if (!empty($documentIdsToReindex)) {
             $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
         }
-        $criteria->addFilter(new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH));
+        $criteria->addFilter(
+            new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH)
+        );
         $criteria->addAssociations(
             [
                 'categories',
@@ -86,7 +87,7 @@ class ProductIndexer extends AbstractIndexer
             /** @var ProductEntity $product */
             foreach ($products as $product) {
                 $data = $this->formatProduct($product, $context);
-                // Remove option ids in key from data. (We need before them to avoid duplicated data.)
+                // Remove option ids in key from data. (We need before them to avoid duplicated property values.)
                 array_walk(
                     $data,
                     function (&$item, $key) {
@@ -122,7 +123,7 @@ class ProductIndexer extends AbstractIndexer
             'image' => [$this->formatMedia($product)],
             'price' => $this->formatPrice($product),
             'stock' => [
-                'status' => $product->getAvailableStock() > 0, // Todo manage stock status
+                'status' => $product->getAvailableStock() > 0,
                 'qty' => $product->getStock()
             ],
             'category' => $this->formatCategories($product),
@@ -160,6 +161,7 @@ class ProductIndexer extends AbstractIndexer
                 unset($childData['sku']);
                 unset($childData['stock']);
                 unset($childData['price']);
+                unset($childData['free_shipping']);
                 foreach ($childData as $field => $value) {
                     $data[$field] = array_merge($data[$field] ?? [], $value);
                 }
@@ -174,13 +176,15 @@ class ProductIndexer extends AbstractIndexer
     {
         $prices = [];
         /** @var Price $price */
-        foreach ($product->getPrice() as $price) {
+        foreach ($product->getPrice() ?? [] as $price) {
+            $originalPrice = $price->getListPrice() ? $price->getListPrice()->getGross() : $price->getGross();
             $prices[] = [
                 'price' =>  $price->getGross(),
-                'original_price' => $price->getGross(), // Todo manage promo
+                'original_price' => $originalPrice,
                 'group_id' => 0,
-                'is_discounted' => false
+                'is_discounted' => $price->getGross() < $originalPrice
             ];
+
         }
         return $prices;
     }
@@ -203,11 +207,12 @@ class ProductIndexer extends AbstractIndexer
     private function formatCategories(ProductEntity $product): array
     {
         $categories = [];
+        /** @var array<string, string> $categoryIds */
         $categoryIds = $product->getCategories() ? $product->getCategories()->getIds() : [];
         /** @var CategoryEntity $productCategory */
         foreach ($product->getCategories() ?? [] as $productCategory) {
             foreach (array_merge([$productCategory->getId()], explode('|', $productCategory->getPath())) as $categoryId) {
-                /** @var CategoryEntity $category */
+                /** @var CategoryEntity|null $category */
                 $category = $this->categoryCollection->get($categoryId);
                 if ($category && $category->getActive()) {
                     $categories[$category->getId()] = [

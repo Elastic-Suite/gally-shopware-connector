@@ -7,6 +7,9 @@ use Gally\Rest\Model\ModelInterface;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 
+/**
+ * Synchronize shopware store structure with gally.
+ */
 abstract class AbstractSynchronizer
 {
     protected const FETCH_PAGE_SIZE = 50;
@@ -39,6 +42,11 @@ abstract class AbstractSynchronizer
     abstract public function synchronizeAll();
 
     abstract public function synchronizeItem(array $params): ?ModelInterface;
+
+    public function getEntityClass(): string
+    {
+        return $this->entityClass;
+    }
 
     public function fetchEntities(): void
     {
@@ -82,7 +90,7 @@ abstract class AbstractSynchronizer
         return [
             $this->entityClass,
             $this->getCollectionMethod,
-            $entity->getCode() // @phpstan-ignore-line
+            $this->getIdentity($entity),
         ];
     }
 

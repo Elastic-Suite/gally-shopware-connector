@@ -10,7 +10,10 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Utils;
 
-class Authentication
+/**
+ * Service which provide authentication token.
+ */
+class AuthenticationTokenProvider
 {
     private Configuration $config;
     private Client $client;

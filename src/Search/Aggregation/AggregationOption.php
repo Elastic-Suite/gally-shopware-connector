@@ -1,9 +1,13 @@
 <?php
+declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search\Aggregation;
 
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Bucket\Bucket;
 
+/**
+ * Gally aggregation option
+ */
 class AggregationOption extends Bucket
 {
     private string $label;

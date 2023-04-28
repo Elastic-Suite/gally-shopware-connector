@@ -6,29 +6,32 @@ namespace Gally\ShopwarePlugin\Api;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Abstract api client that manage authentication process.
+ */
 class AbstractClient
 {
-    protected Authentication $authentication;
+    protected AuthenticationTokenProvider $tokenProvider;
     protected Configuration $configuration;
     protected LoggerInterface $logger;
     protected ?string $token = null;
     protected bool $debug;
 
     public function __construct(
-        Authentication $authentication,
+        AuthenticationTokenProvider $tokenProvider,
         Configuration $configuration,
         LoggerInterface $logger
     ){
-        $this->authentication = $authentication;
-        $this->configuration  = $configuration;
-        $this->logger         = $logger;
-        $this->debug          = false;
+        $this->tokenProvider = $tokenProvider;
+        $this->configuration = $configuration;
+        $this->logger        = $logger;
+        $this->debug         = false;
     }
 
     public function getAuthorizationToken(): string
     {
         if (null === $this->token) {
-            $this->token = $this->authentication->getAuthenticationToken();
+            $this->token = $this->tokenProvider->getAuthenticationToken();
         }
 
         return $this->token;

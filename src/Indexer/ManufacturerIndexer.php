@@ -9,6 +9,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
+/**
+ * Format and index manufacturer entity data to gally.
+ */
 class ManufacturerIndexer extends AbstractIndexer
 {
     public function getEntityType(): string
@@ -36,8 +39,10 @@ class ManufacturerIndexer extends AbstractIndexer
             'id' => $manufacturer->getId(),
             'name' => $manufacturer->getName(),
             'description' => $manufacturer->getDescription(),
-            'image' => str_replace('http://localhost', '', $manufacturer->getMedia() ? $manufacturer->getMedia()->getUrl() : ''),
             'link' => $manufacturer->getLink(),
+            'image' =>  $manufacturer->getMedia()
+                ? $this->urlGenerator->getRelativeMediaUrl($manufacturer->getMedia())
+                : '',
         ];
     }
 }

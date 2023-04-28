@@ -4,16 +4,14 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\Catalog;
-use Gally\Rest\Model\CatalogCatalogRead;
 use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\ModelInterface;
-use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\System\Language\LanguageCollection;
 use Shopware\Core\System\Language\LanguageEntity;
-use Shopware\Core\System\SalesChannel\SalesChannelCollection;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
+/**
+ * Synchronize shopware sale channel languages with gally localizedCatalogs.
+ */
 class LocalizedCatalogSynchronizer extends AbstractSynchronizer
 {
     private array $localizedCatalogByLocale = [];

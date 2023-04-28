@@ -10,6 +10,9 @@ use Gally\Rest\Model\SourceFieldSourceFieldApi;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 
+/**
+ * Synchronize shopware custom field and property labels with gally source field labels.
+ */
 class SourceFieldLabelSynchronizer extends AbstractSynchronizer
 {
     protected LocalizedCatalogSynchronizer $localizedCatalogSynchronizer;

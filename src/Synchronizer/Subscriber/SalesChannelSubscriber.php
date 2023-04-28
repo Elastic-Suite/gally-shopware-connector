@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Gally\ShopwarePlugin\Subscriber;
+namespace Gally\ShopwarePlugin\Synchronizer\Subscriber;
 
 use Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer;
 use Shopware\Core\Framework\Context;
@@ -9,10 +9,12 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\System\SalesChannel\SalesChannelCollection;
 use Shopware\Core\System\SalesChannel\SalesChannelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Update gally catalog when sale channel has been updated from shopware side.
+ */
 class SalesChannelSubscriber implements EventSubscriberInterface
 {
     private CatalogSynchronizer $catalogSynchronizer;

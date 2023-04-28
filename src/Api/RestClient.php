@@ -3,31 +3,28 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Api;
 
+use Gally\Rest\Configuration;
 use GuzzleHttp\Client;
 
+/**
+ * Rest client used to call gally api on synchronization and indexing process.
+ */
 class RestClient extends AbstractClient
-{
-    static $count = 0;
-
-    public function query($endpoint, $operation, ...$input)
+{    public function query($endpoint, $operation, ...$input)
     {
-        $config = \Gally\Rest\Configuration::getDefaultConfiguration()
+        $config = Configuration::getDefaultConfiguration()
             ->setApiKey('Authorization', $this->getAuthorizationToken())
             ->setApiKeyPrefix('Authorization', 'Bearer')
             ->setHost($this->configuration->getBaseUrl());
 
-        // TODO remove host header
-        $apiInstance = new $endpoint(
-            new Client(['verify' => false, 'headers' => ['Host' => 'gally.localhost']]),
-            $config
-        );
+        // TODO add verify false only for dev env.
+        $apiInstance = new $endpoint(new Client(['verify' => false]), $config);
 
         try {
             if ($this->debug === true) {
                 $this->logger->info("Calling {$endpoint}->{$operation} : ");
                 $this->logger->info(print_r($input, true));
             }
-            self::$count ++;
             $result = $apiInstance->$operation(...$input);
             if ($this->debug === true) {
                 $this->logger->info("Result of {$endpoint}->{$operation} : ");

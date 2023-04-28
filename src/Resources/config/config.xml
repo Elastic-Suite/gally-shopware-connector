@@ -23,5 +23,21 @@
             <name>password</name>
             <label>Gally user password</label>
         </input-field>
+
+        <input-field type="int">
+            <name>categoryBatchSize</name>
+            <label>Category batch size</label>
+            <defaultValue>100</defaultValue>
+        </input-field>
+        <input-field type="int">
+            <name>productBatchSize</name>
+            <label>Product batch size</label>
+            <defaultValue>100</defaultValue>
+        </input-field>
+        <input-field type="int">
+            <name>manufacturerBatchSize</name>
+            <label>Manufacturer batch size</label>
+            <defaultValue>100</defaultValue>
+        </input-field>
     </card>
 </config>

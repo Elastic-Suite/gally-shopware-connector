@@ -12,8 +12,10 @@ use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
-use Smile\ElasticsuiteCore\Api\Index\IndexInterface;
 
+/**
+ * Indexer manager service.
+ */
 class IndexOperation
 {
     private RestClient $client;

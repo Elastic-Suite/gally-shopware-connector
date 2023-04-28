@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider">
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Api\AbstractClient" abstract="true">
+            <argument type="service" id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider" />
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="logger"/>
+        </service>
+        <service id="Gally\ShopwarePlugin\Api\RestClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
+        <service id="Gally\ShopwarePlugin\Api\GraphQlClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
+    </services>
+</container>

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Gally\ShopwarePlugin\Subscriber;
+namespace Gally\ShopwarePlugin\Synchronizer\Subscriber;
 
 use Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer;
 use Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer;
@@ -16,6 +16,9 @@ use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\CustomField\CustomFieldEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Update gally source field when related entity has been updated from shopware side.
+ */
 class FieldSubscriber implements EventSubscriberInterface
 {
     private SourceFieldSynchronizer $sourceFieldSynchronizer;

@@ -18,9 +18,11 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\CustomField\CustomFieldCollection;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\Language\LanguageEntity;
-use Shopware\Core\System\Locale\LocaleEntity;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/**
+ * Synchronize shopware custom fields and properties with gally source fields.
+ */
 class SourceFieldSynchronizer extends AbstractSynchronizer
 {
     private array $entitiesToSync = ['category', 'product', 'manufacturer'];

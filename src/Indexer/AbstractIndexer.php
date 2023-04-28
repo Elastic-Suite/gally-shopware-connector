@@ -5,6 +5,7 @@ namespace Gally\ShopwarePlugin\Indexer;
 
 use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Service\IndexOperation;
+use Shopware\Core\Content\Media\Pathname\UrlGenerator;
 use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -13,11 +14,15 @@ use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelCollection;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
+/**
+ * Abstract pagination and bulk mechanism to index entity data to gally.
+ */
 abstract class AbstractIndexer
 {
-    private Configuration $configuration;
-    private EntityRepository $salesChannelRepository;
-    private IndexOperation $indexOperation;
+    protected Configuration $configuration;
+    protected EntityRepository $salesChannelRepository;
+    protected IndexOperation $indexOperation;
+    protected UrlGenerator $urlGenerator;
 
     protected EntityRepository $entityRepository;
 
@@ -25,12 +30,14 @@ abstract class AbstractIndexer
         Configuration $configuration,
         EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
-        EntityRepository $entityRepository
+        EntityRepository $entityRepository,
+        UrlGenerator $urlGenerator
     ) {
         $this->configuration = $configuration;
         $this->salesChannelRepository = $salesChannelRepository;
         $this->indexOperation = $indexOperation;
         $this->entityRepository = $entityRepository;
+        $this->urlGenerator = $urlGenerator;
     }
 
     public function reindex(array $documentIdsToReindex = [])
@@ -56,9 +63,7 @@ abstract class AbstractIndexer
                         $indexName = $this->indexOperation->getIndexByName($this->getEntityType(), $salesChannel, $language);
                     }
 
-                    // Todo get from conf
-                    $batchSize = 100;
-
+                    $batchSize = $this->configuration->getBatchSize($this->getEntityType(), $salesChannel->getId());
                     $bulk = [];
                     foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
                         $bulk[$document['id']] = json_encode($document);

@@ -4,23 +4,22 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Search;
 
 use Gally\ShopwarePlugin\Api\GraphQlClient;
-use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
+/**
+ * Gally search adapter.
+ */
 class Adapter
 {
-    private Configuration $configuration;
     private GraphQlClient $client;
     private ResultBuilder $resultBuilder;
 
-    public function __construct(Configuration $configuration, GraphQlClient $client, ResultBuilder $resultBuilder)
+    public function __construct(GraphQlClient $client, ResultBuilder $resultBuilder)
     {
-        $this->configuration = $configuration;
         $this->client = $client;
         $this->resultBuilder = $resultBuilder;
     }
@@ -45,7 +44,10 @@ class Adapter
             }
         }
 
+        $currentPage = $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
+
         return $this->resultBuilder->build(
+            $context,
             $this->client->query(
                 $this->getSearchQuery(),
                 [
@@ -54,12 +56,12 @@ class Adapter
                     'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
                     'search' => $criteria->getTerm(),
                     'sort' => [$sort->getField() => strtolower($sort->getDirection())],
-                    'currentPage' => $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1,
+                    'currentPage' => $currentPage,
                     'pageSize' => $criteria->getLimit(),
                     'filter' => $filters
                 ]
             ),
-            $context
+            $currentPage
         );
     }
 
@@ -86,7 +88,7 @@ class Adapter
                 sort: \$sort,
                 filter: \$filter
               ) {
-                collection { ... on Product { sku } }
+                collection { ... on Product { sku source } }
                 paginationInfo { lastPage itemsPerPage totalCount }
                 sortInfo { current { field direction } }
                 aggregations {

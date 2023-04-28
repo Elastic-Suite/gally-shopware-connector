@@ -9,6 +9,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Decorate the native product search builder to prevent shopware to run the search in mysql.
+ */
 class ProductSearchBuilder implements ProductSearchBuilderInterface
 {
     private ProductSearchBuilderInterface $decorated;
@@ -28,7 +31,7 @@ class ProductSearchBuilder implements ProductSearchBuilderInterface
             $this->decorated->build($request, $criteria, $context);
         }
 
-        // Criteria building is managed in
+        // For gally search criteria building is managed in
         // \Gally\ShopwarePlugin\Search\ProductListingFeaturesSubscriber::handleListingRequest
     }
 }

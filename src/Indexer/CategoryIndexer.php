@@ -13,6 +13,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
+/**
+ * Format and index category entity data to gally.
+ */
 class CategoryIndexer extends AbstractIndexer
 {
     public function getEntityType(): string

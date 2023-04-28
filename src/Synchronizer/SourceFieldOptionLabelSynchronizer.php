@@ -5,20 +5,25 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\ModelInterface;
-use Gally\Rest\Model\SourceFieldOption;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelWrite;
+use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
 
+/**
+ * Synchronize shopware custom field and property option labels with gally source field option labels.
+ */
 class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
 {
     public function getIdentity(ModelInterface $entity): string
     {
-        /** @var SourceFieldOptionLabelSourceFieldOptionLabelRead $entity */
-        $sourceField = is_string($entity->getSourceFieldOption())
-            ? $entity->getSourceFieldOption()
-            : '/source_field_options/' . $entity->getSourceFieldOption()->getId();
-        return $sourceField . $entity->getLocalizedCatalog();
+        /** @var SourceFieldOptionLabelSourceFieldOptionLabelRead|SourceFieldOptionLabelSourceFieldOptionLabelWrite $entity */
+        /** @var SourceFieldOptionSourceFieldOptionLabelRead|string $sourceFieldOption */
+        $sourceFieldOption = $entity->getSourceFieldOption();
+        $sourceFieldOption = is_string($sourceFieldOption)
+            ? $sourceFieldOption
+            : '/source_field_options/' . $sourceFieldOption->getId(); // @phpstan-ignore-line
+        return $sourceFieldOption . $entity->getLocalizedCatalog();
     }
 
     public function synchronizeAll()

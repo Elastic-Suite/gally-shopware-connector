@@ -5,7 +5,6 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\Catalog;
 use Gally\Rest\Model\ModelInterface;
-use Gally\ShopwarePlugin\Api\Client;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Framework\Context;
@@ -15,6 +14,9 @@ use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelCollection;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
+/**
+ * Synchronize shopware sale channels with gally catalogs and localizedCatalogs.
+ */
 class CatalogSynchronizer extends AbstractSynchronizer
 {
     private EntityRepository $entityRepository;

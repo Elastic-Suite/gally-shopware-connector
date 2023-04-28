@@ -8,14 +8,13 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Aggreg
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Bucket\Bucket;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Bucket\BucketResult;
 
+/**
+ * Build aggregation object from gally raw response.
+ */
 class AggregationBuilder
 {
-    public function build(
-        array $rawAggregationData,
-//        EntityDefinition $definition,
-       /* Criteria $criteria, */Context $context/*, array $result*/
-    ): AggregationResultCollection {
-
+    public function build(array $rawAggregationData): AggregationResultCollection
+    {
         $aggregationCollection = new AggregationResultCollection();
         $aggregations = [];
 

@@ -5,6 +5,9 @@ namespace Gally\ShopwarePlugin\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
+/**
+ * Configuration provider service.
+ */
 class Configuration
 {
     private SystemConfigService $systemConfigService;
@@ -19,21 +22,24 @@ class Configuration
         return (bool) $this->systemConfigService->get('GallyPlugin.config.active', $salesChannelId);
     }
 
-    public function getBaseUrl(?int $salesChannelId = null): string
+    public function getBaseUrl(?string $salesChannelId = null): string
     {
-        $salesChannelId = $salesChannelId ? (string) $salesChannelId : $salesChannelId;
         return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl', $salesChannelId), '/');
     }
 
-    public function getUser(?int $salesChannelId = null): string
+    public function getUser(?string $salesChannelId = null): string
     {
-        $salesChannelId = $salesChannelId ? (string) $salesChannelId : $salesChannelId;
         return (string) $this->systemConfigService->get('GallyPlugin.config.user', $salesChannelId);
     }
 
-    public function getPassword(?int $salesChannelId = null): string
+    public function getPassword(?string $salesChannelId = null): string
     {
-        $salesChannelId = $salesChannelId ? (string) $salesChannelId : $salesChannelId;
         return (string) $this->systemConfigService->get('GallyPlugin.config.password', $salesChannelId);
+    }
+
+    public function getBatchSize(string $entityType, ?string $salesChannelId = null): int
+    {
+        $configKey = "GallyPlugin.config.{$entityType}BatchSize";
+        return (int) $this->systemConfigService->get($configKey, $salesChannelId);
     }
 }

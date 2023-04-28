@@ -21,6 +21,7 @@
             <argument key="$patchEntityMethod">patchCatalogItem</argument>
             <argument type="service" key="$entityRepository" id="sales_channel.repository" />
             <argument type="service" key="$localizedCatalogSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
+            <tag name="gally.entity.synchronizer" priority="100"/>
         </service>
         <service id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer">
             <argument key="$entityClass">\Gally\Rest\Api\MetadataApi</argument>
@@ -61,6 +62,21 @@
             <argument type="service" key="$sourceFieldOptionSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionSynchronizer" />
             <argument type="service" key="$languageRepository" id="language.repository" />
             <argument type="service" key="$translator" id="translator" />
+            <tag name="gally.entity.synchronizer" priority="80"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Synchronizer\Subscriber\SalesChannelSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
+            <argument type="service" id="sales_channel.repository" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Synchronizer\Subscriber\FieldSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
+            <argument type="service" id="custom_field.repository" />
+            <argument type="service" id="custom_field_set.repository" />
+            <argument type="service" id="property_group.repository" />
+            <tag name="kernel.event_subscriber" />
         </service>
     </services>
 </container>

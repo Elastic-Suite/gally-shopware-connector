@@ -58,11 +58,16 @@ Of course, any contribution is welcome.
     - [x] aggregation free shipping
     - [X] aggregation manufacturer
     - [X] aggregation category
-    - [ ] aggregation render swatches
     - [X] category visbility
-- [ ] Autocomplete
-- [ ] Unit test
-- [ ] fetchAll entity on each sync may create perf issue ?
+    - [ ] aggregation render swatches
+    - [ ] aggregation has more
+    - [ ] category multi select (with gally we can't have multiple category in filter, on shopware we can't build non multiselect filters)
+- Config
+  - [ ] Hide or native useless configuration on shopware administration to avoid confusion on what can be made from gally side or shopware side.
+- Miscellaneous
+  - [ ] Autocomplete
+  - [ ] Unit test
+  - [ ] fetchAll entity on each sync may create perf issue ?
 
 ## Todo gally
 

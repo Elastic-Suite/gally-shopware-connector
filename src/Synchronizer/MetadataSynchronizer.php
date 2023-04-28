@@ -6,6 +6,9 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\Metadata;
 use Gally\Rest\Model\ModelInterface;
 
+/**
+ * Synchronize shopware entity with gally metadata.
+ */
 class MetadataSynchronizer extends AbstractSynchronizer
 {
     public function synchronizeAll()

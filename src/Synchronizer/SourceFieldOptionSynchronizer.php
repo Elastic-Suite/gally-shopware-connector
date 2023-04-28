@@ -4,13 +4,15 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\ModelInterface;
-use Gally\Rest\Model\SourceFieldOption;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
 use Gally\Rest\Model\SourceFieldSourceFieldApi;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 
+/**
+ * Synchronize shopware custom field and property options with gally source field options.
+ */
 class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 {
     protected SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer;
@@ -37,7 +39,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 
     public function getIdentity(ModelInterface $entity): string
     {
-        /** @var SourceFieldOption $entity */
+        /** @var SourceFieldOptionSourceFieldOptionWrite $entity */
         return $entity->getSourceField() . $entity->getCode();
     }
 

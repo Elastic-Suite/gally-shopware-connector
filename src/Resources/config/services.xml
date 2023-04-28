@@ -4,9 +4,11 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <imports>
-        <import resource="synchronizers.xml"/>
-        <import resource="indexers.xml"/>
-        <import resource="search.xml"/>
+        <import resource="services/api.xml"/>
+        <import resource="services/commands.xml"/>
+        <import resource="services/synchronizers.xml"/>
+        <import resource="services/indexers.xml"/>
+        <import resource="services/search.xml"/>
     </imports>
 
     <services>
@@ -16,55 +18,6 @@
         <service id="Gally\ShopwarePlugin\Service\IndexOperation">
             <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
-        </service>
-
-        <service id="Gally\ShopwarePlugin\Api\Authentication">
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Api\AbstractClient" abstract="true">
-            <argument type="service" id="Gally\ShopwarePlugin\Api\Authentication" />
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-            <argument type="service" id="logger"/>
-        </service>
-        <service id="Gally\ShopwarePlugin\Api\RestClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
-        <service id="Gally\ShopwarePlugin\Api\GraphQlClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
-
-        <service id="Gally\ShopwarePlugin\Command\StructureSync">
-            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
-            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
-            <tag name="console.command"/>
-        </service>
-        <service id="Gally\ShopwarePlugin\Command\Index">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
-            <tag name="console.command"/>
-        </service>
-
-        <service id="Gally\ShopwarePlugin\Subscriber\SalesChannelSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer" />
-            <argument type="service" id="sales_channel.repository" />
-            <tag name="kernel.event_subscriber" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Subscriber\FieldSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
-            <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
-            <argument type="service" id="custom_field.repository" />
-            <argument type="service" id="custom_field_set.repository" />
-            <argument type="service" id="property_group.repository" />
-            <tag name="kernel.event_subscriber" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Subscriber\ManufacturerSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
-            <tag name="kernel.event_subscriber" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Subscriber\CategorySubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
-            <tag name="kernel.event_subscriber" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Subscriber\ProductSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
-            <tag name="kernel.event_subscriber" />
         </service>
     </services>
 </container>
