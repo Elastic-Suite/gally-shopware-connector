@@ -2,14 +2,16 @@
 
 ## Usage
 
-- From the shopware bo, configure active and configure gally plugin
-- Run
+- From the shopware Back-Office, configure active and configure the Gally extension.
+- Run this commands from your Shopware instance. This commands must be runned only once to synchronize the structure.
     ```shell
-    docker composer exec shopware bash            # Connect to the shopware container
-    bin/console --no-debug gally:structure:sync   # Sync catalog et source field data with gally
-    bin/console --no-debug gally:index            # Index category and product entity to gally
+        bin/console --no-debug gally:structure:sync   # Sync catalog et source field data with gally
     ```
-- You should be able to see your product and source field from gally backend
+- Run a full index from Shopware to Gally. This command can be run only once. Afterwards, the modified products are automatically synchronized.
+    ```shell
+        bin/console --no-debug gally:index            # Index category and product entity to gally
+    ```
+- You should be able to see your product and source field in the Gally backend
 
 ## Dev env 
 
