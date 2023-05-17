@@ -1,10 +1,15 @@
 # Gally Plugin for Shopware
 
-## :warning: Work In Progress
+## Usage
 
-This plugin is a work-in-progress, you can check what it does below in the Todo section. It's not suitable actually for production usage, so use it at your own risks.
-
-Of course, any contribution is welcome.
+- From the shopware bo, configure active and configure gally plugin
+- Run
+    ```shell
+    docker composer exec shopware bash            # Connect to the shopware container
+    bin/console --no-debug gally:structure:sync   # Sync catalog et source field data with gally
+    bin/console --no-debug gally:index            # Index category and product entity to gally
+    ```
+- You should be able to see your product and source field from gally backend
 
 ## Dev env 
 
@@ -16,23 +21,6 @@ Of course, any contribution is welcome.
   https://redmine-projets.smile.fr/projects/gally-build/wiki/Shopware
 - Clone this project in `gally/shopware/src/custom/plugins/GallyPlugin`
 - Shopware should be available from http://shopware.localhost:1234/
-- You might need to increase magento max nesting field to `200` :
-`api/packages/gally-standard/src/Index/Helper/IndexSettings.php:158`
-```php
-  'mapping.total_fields.limit' => self::TOTAL_FIELD_LIMIT,
-+ 'mapping.nested_fields.limit' => 200
-```
-
-## Usage
-
-- From the shopware bo, configure active and configure gally plugin
-- Run
-    ```shell
-    docker composer exec shopware bash            # Connect to the shopware container
-    bin/console --no-debug gally:structure:sync   # Sync catalog et source field data with gally
-    bin/console --no-debug gally:index            # Index category and product entity to gally
-    ```
-- You should be able to see your product and source field from gally backend
 
 ## Todo
 
