@@ -1,18 +1,26 @@
 {
     "name": "gally/shopware-plugin",
     "description": "Shopware connector for Gally",
+    "homepage": "https://elasticsuite.io",
     "type": "shopware-platform-plugin",
-    "license": "MIT",
+    "license": "OSL-3.0",
+    "version: "1.0.0",
     "extra": {
         "shopware-plugin-class": "Gally\\ShopwarePlugin\\GallyPlugin",
         "author": "Gally Team",
         "label": {
-            "en-GB": "Gally Plugin"
+            "en-GB": "Gally Plugin",
+            "de-DE": "Gally Plugin"
+        },
+        "description": {
+            "de-DE": "Gally Plugin für Shopware",
+            "en-GB": "Gally Plugin for Shopware"
         }
     },
     "require": {
         "php": ">= 7.2",
-        "gally/gally-php-rest-sdk": "dev-master"
+        "gally/gally-php-rest-sdk": "dev-master",
+        "shopware/core": "^6.4.0"
     },
     "require-dev": {
         "phpunit/phpunit": "~8.3.4",
