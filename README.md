@@ -11,7 +11,9 @@
     ```shell
         bin/console --no-debug gally:index            # Index category and product entity to gally
     ```
-- You should be able to see your product and source field in the Gally backend
+- At this step, you should be able to see your product and source field in the Gally backend.
+- They should also appear in your Shopware frontend when searching or browsing categories.
+- And you're done !
 
 ## Dev env 
 
