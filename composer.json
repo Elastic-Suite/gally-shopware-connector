@@ -37,11 +37,5 @@
         "psr-4": {
             "Gally\\ShopwarePlugin\\Tests\\": "tests/"
         }
-    },
-    "repositories": {
-        "elastic-suite/gally-php-rest-sdk": {
-            "type": "git",
-            "url": "git@github.com:Elastic-Suite/gally-php-rest-sdk.git"
-        }
     }
 }
