@@ -19,7 +19,7 @@
     },
     "require": {
         "php": ">= 7.2",
-        "gally/gally-php-rest-sdk": "dev-master",
+        "gally/gally-php-rest-sdk": "~1.0.1",
         "shopware/core": "^6.4.0"
     },
     "require-dev": {
