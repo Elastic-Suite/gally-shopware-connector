@@ -21,7 +21,7 @@
             <tag name="kernel.event_subscriber"/>
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\Adapter" />
-            <argument type="service" id="Gally\ShopwarePlugin\Search\SortOptionProvider"/>
+            <argument type="service" id="Gally\ShopwarePlugin\Search\CriteriaBuilder" />
             <argument type="service" id="logger"/>
             <argument type="service" id="translator" />
         </service>
@@ -31,6 +31,10 @@
                  decoration-priority="-60000">
             <argument type="service" id="Shopware\Elasticsearch\Product\ProductSearchBuilder.inner"/>
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Search\CriteriaBuilder">
+            <argument type="service" id="Gally\ShopwarePlugin\Search\SortOptionProvider"/>
         </service>
     </services>
 </container>

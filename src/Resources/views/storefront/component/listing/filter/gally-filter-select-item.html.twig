@@ -9,9 +9,9 @@
 {% endblock %}
 
 {% block component_filter_multi_select_list_item_label_element %}
-<label class="filter-multi-select-item-label form-check-label" for="{{ element.id }}">
+<label class="filter-multi-select-item-label form-check-label" for="{{ element.key }}">
     {% block component_multi_select_list_item_label %}
-        {{ element.label }} ({{ element.count }})
+        {{ element.label }}
     {% endblock %}
 </label>
 {% endblock %}

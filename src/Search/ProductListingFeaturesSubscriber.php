@@ -7,47 +7,42 @@ use Gally\Rest\ApiException;
 use Gally\ShopwarePlugin\Model\Message;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Content\Cms\Aggregate\CmsBlock\CmsBlockEntity;
 use Shopware\Core\Content\Cms\CmsPageEntity;
 use Shopware\Core\Content\Cms\Events\CmsPageLoadedEvent;
 use Shopware\Core\Content\Cms\SalesChannel\Struct\ProductListingStruct;
 use Shopware\Core\Content\Product\Events\ProductListingCriteriaEvent;
 use Shopware\Core\Content\Product\Events\ProductSearchCriteriaEvent;
-use Shopware\Core\Content\Product\SalesChannel\Exception\ProductSortingNotFoundException;
 use Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingResult;
-use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\Framework\Event\ShopwareEvent;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
 use Shopware\Storefront\Page\Search\SearchPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 {
     private Configuration $configuration;
     private Adapter $searchAdapter;
-    private SortOptionProvider $sortOptionProvider;
+    private CriteriaBuilder $criteriaBuilder;
     private LoggerInterface $logger;
     private TranslatorInterface $translator;
 
     private ?Result $gallyResults = null;
-    private array $nonFilterParameters = ['order', 'p', 'search', 'slots', 'no-aggregations'];
 
     public function __construct(
         Configuration $configuration,
         Adapter $searchAdapter,
-        SortOptionProvider $sortOptionProvider,
+        CriteriaBuilder $criteriaBuilder,
         LoggerInterface $logger,
         TranslatorInterface $translator
     ) {
         $this->configuration = $configuration;
         $this->searchAdapter = $searchAdapter;
-        $this->sortOptionProvider = $sortOptionProvider;
+        $this->criteriaBuilder = $criteriaBuilder;
         $this->logger = $logger;
         $this->translator = $translator;
     }
@@ -83,31 +78,17 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     public function setDefaultOrder(ProductListingCriteriaEvent $event): void
     {
         $request = $event->getRequest();
-        $criteria = $event->getCriteria();
-        if (!$request->get('order')) {
-            $request->request->set('order', SortOptionProvider::DEFAULT_SEARCH_SORT);
-        }
-        $this->handleSorting($request, $criteria);
+        $context = $event->getSalesChannelContext();
+        $this->criteriaBuilder->build($request, $context, $event->getCriteria());
     }
 
     public function handleListingRequest(ProductListingCriteriaEvent $event): void
     {
         $request = $event->getRequest();
-        $criteria = $event->getCriteria();
         $context = $event->getSalesChannelContext();
-
-        $this->handleFilters($request, $criteria);
-        $this->handleSorting($request, $criteria);
+        $criteria = $this->criteriaBuilder->build($request, $context, $event->getCriteria());
 
         if ($this->configuration->isActive($context->getSalesChannel()->getId())) {
-
-            if ($event instanceof ProductSearchCriteriaEvent) {
-                $criteria->setTerm($request->get('search'));
-                $criteria->setIds([$context->getSalesChannel()->getNavigationCategoryId()]);
-            } else {
-                $criteria->setIds([$request->get('navigationId')]);
-            }
-
             // Search data from gally
             try {
                 $this->gallyResults = $this->searchAdapter->search($context, $criteria);
@@ -144,19 +125,24 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             return;
         }
 
-        /** @var ProductListingStruct $listingContainer */
-        $listingContainer = $page->getSections()->getBlocks()->getSlots()->getSlot('content')->getData();
-        /** @var ProductListingResult $productListing */
-        $productListing = $listingContainer->getListing();
+        /** @var CmsBlockEntity $block */
+        foreach ($page->getSections()->getBlocks() as $block) {
+            if ($block->getType() == 'product-listing') {
+                /** @var ProductListingStruct $listingContainer */
+                $listingContainer = $block->getSlots()->getSlot('content')->getData();
+                /** @var ProductListingResult $productListing */
+                $productListing = $listingContainer->getListing();
 
-        if (!$this->gallyResults) {
-            $productListing->addExtension(
-                'gally-message',
-                new Message('warning', $this->translator->trans('gally.listing.emptyResultMessage')));
-            return;
+                if (!$this->gallyResults) {
+                    $productListing->addExtension(
+                        'gally-message',
+                        new Message('warning', $this->translator->trans('gally.listing.emptyResultMessage')));
+                    return;
+                }
+
+                $listingContainer->setListing($this->gallyResults->getResultListing($productListing));
+            }
         }
-
-        $listingContainer->setListing($this->gallyResults->getResultListing($productListing));
     }
 
     public function handleSearchResult(SearchPageLoadedEvent $event): void
@@ -171,71 +157,6 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         }
 
         $event->getPage()->setListing($this->gallyResults->getResultListing($productListing));
-    }
-
-    private function handleFilters(Request $request, Criteria $criteria): void
-    {
-        $filters = $request->query->all();
-        if ($request->isMethod(Request::METHOD_POST)) {
-            $filters = $request->request->all();
-        }
-
-        $filterData = [];
-        foreach ($filters as $field => $value) {
-            if (in_array($field, $this->nonFilterParameters)) {
-                continue;
-            }
-
-            $data = [];
-            if (str_contains($field, '_min')) {
-                $field = str_replace('_min', '', $field);
-                $data = $filterData[$field] ?? $data;
-                $data['min'] = $value;
-            } elseif (str_contains($field, '_max')) {
-                $field = str_replace('_max', '', $field);
-                $data = $filterData[$field] ?? $data;
-                $data['max'] = $value;
-            } elseif (str_contains($field, '_bool')) {
-                $field = str_replace('_bool', '', $field);
-                $data = ['eq' => (bool) $value];
-            } elseif (str_contains($value, '|')) {
-                $data = ['in' => explode('|', $value)];
-            } else {
-                $data = ['eq' => $value];
-            }
-            $filterData[$field] = $data;
-        }
-
-        foreach ($filterData as $field => $data) {
-            if (isset($data['min']) || isset($data['max'])) {
-                $filterParams = [RangeFilter::GTE => (float) $data['min'] ?? 0];
-                if (isset($data['max'])) {
-                    $filterParams[RangeFilter::LTE] = (float) $data['max'];
-                }
-                $criteria->addPostFilter(new RangeFilter($field, $filterParams));
-            } elseif (isset($data['in'])) {
-                $criteria->addPostFilter(new EqualsAnyFilter($field, $data['in']));
-            } elseif (isset($data['eq'])) {
-                $criteria->addPostFilter(new EqualsFilter($field, $data['eq']));
-            }
-        }
-    }
-
-    private function handleSorting(Request $request, Criteria $criteria): void
-    {
-        /** @var ProductSortingCollection $sortings */
-        $sortings = $criteria->getExtension('gally-sortings') ?? $this->sortOptionProvider->getSortingOptions();
-        $currentSortKey = $request->get('order');
-        $currentSorting = $sortings->getByKey($currentSortKey);
-        if ($currentSorting === null) {
-            new ProductSortingNotFoundException($currentSortKey);
-        }
-
-        $criteria->resetSorting(); // Remove multiple default shopware sortings.
-        $criteria->addSorting(...$currentSorting->createDalSorting());
-        $criteria->addExtension('gally-sortings', $sortings);
-        // Clone collection to prevent adding shopware base sorting in this list.
-        $criteria->addExtension('sortings', clone $sortings);
     }
 
     /**

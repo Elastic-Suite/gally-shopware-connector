@@ -34,7 +34,8 @@
                     displayName: aggregation.name|trans|sw_sanitize,
                     displayType: 'nop',
                     pluginSelector: 'filter-property-select',
-                    propertyName: aggregation.name
+                    propertyName: aggregation.name,
+                    hasMore: aggregation.hasMore
                 } %}
             {% endif %}
         {% endfor %}

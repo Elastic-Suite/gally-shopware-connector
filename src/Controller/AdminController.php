@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Gally\ShopwarePlugin\Route;
+namespace Gally\ShopwarePlugin\Controller;
 
 use Gally\Rest\ApiException;
 use Gally\ShopwarePlugin\Api\AuthenticationTokenProvider;
@@ -13,9 +13,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
+ * Handle administration configuration button action.
+ *
  * @Route(defaults={"_routeScope"={"api"}})
  */
-class AdminRoute extends AbstractController
+class AdminController extends AbstractController
 {
     private AuthenticationTokenProvider $authenticationTokenProvider;
 

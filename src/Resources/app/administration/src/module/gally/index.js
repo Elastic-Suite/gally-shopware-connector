@@ -1,4 +1,5 @@
 
+import './component/gally-component/gally-alert';
 import './component/gally-component/gally-button';
 import GallyAction from './service/gally-action.service'
 

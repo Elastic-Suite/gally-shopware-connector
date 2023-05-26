@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
+use Gally\Rest\ApiException;
 use Gally\ShopwarePlugin\Api\GraphQlClient;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
@@ -29,21 +30,6 @@ class Adapter
         $sorts = $criteria->getSorting();
         $sort = reset($sorts);
         $navigationsIds = $criteria->getIds();
-        $filters = [];
-        foreach ($criteria->getPostFilters() as $filter) {
-            switch (get_class($filter)) {
-                case EqualsFilter::class:
-                    $filters[] = [$filter->getField() => ['eq' => $filter->getValue()]];
-                    break;
-                case EqualsAnyFilter::class:
-                    $filters[] = [$filter->getField() => ['in' => $filter->getValue()]];
-                    break;
-                case RangeFilter::class:
-                    $filters[] = [$filter->getField() => $filter->getParameters()];
-                    break;
-            }
-        }
-
         $currentPage = $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
 
         return $this->resultBuilder->build(
@@ -58,11 +44,31 @@ class Adapter
                     'sort' => [$sort->getField() => strtolower($sort->getDirection())],
                     'currentPage' => $currentPage,
                     'pageSize' => $criteria->getLimit(),
-                    'filter' => $filters
+                    'filter' => $this->getFiltersFromCriteria($criteria)
                 ]
             ),
             $currentPage
         );
+    }
+
+    public function viewMoreOption(SalesChannelContext $context, Criteria $criteria, string $aggregationField)
+    {
+        $navigationsIds = $criteria->getIds();
+        $response = $this->client->query(
+            $this->getViewMoreQuery(),
+            [
+                'aggregation' => $aggregationField,
+                'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
+                'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
+                'search' => $criteria->getTerm(),
+                'filter' => $this->getFiltersFromCriteria($criteria)
+            ]
+        );
+        $data = json_decode($response->getBody()->getContents(), true);
+        if (array_key_exists('errors', $data)) {
+            throw new ApiException(reset($data['errors'])['message']);
+        }
+        return $data['data']['viewMoreProductFacetOptions'];
     }
 
     private function getSearchQuery(): string
@@ -102,5 +108,49 @@ class Adapter
             }
           }
         GQL;
+    }
+
+    private function getViewMoreQuery(): string
+    {
+        return <<<GQL
+            query viewMoreProductFacetOptions (
+              \$aggregation: String!,
+              \$localizedCatalog: String!,
+              \$currentCategoryId: String,
+              \$search: String,
+              \$filter: [ProductFieldFilterInput]
+            ) {
+              viewMoreProductFacetOptions (
+                aggregation: \$aggregation,
+                localizedCatalog: \$localizedCatalog,
+                currentCategoryId: \$currentCategoryId,
+                search: \$search,
+                filter: \$filter
+              ) {
+                value
+                label
+                count
+            }
+          }
+        GQL;
+    }
+
+    private function getFiltersFromCriteria(Criteria $criteria): array
+    {
+        $filters = [];
+        foreach ($criteria->getPostFilters() as $filter) {
+            switch (get_class($filter)) {
+                case EqualsFilter::class:
+                    $filters[] = [$filter->getField() => ['eq' => $filter->getValue()]];
+                    break;
+                case EqualsAnyFilter::class:
+                    $filters[] = [$filter->getField() => ['in' => $filter->getValue()]];
+                    break;
+                case RangeFilter::class:
+                    $filters[] = [$filter->getField() => $filter->getParameters()];
+                    break;
+            }
+        }
+        return $filters;
     }
 }

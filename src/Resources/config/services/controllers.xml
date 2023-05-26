@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="Gally\ShopwarePlugin\Controller\AdminController" public="true">
+            <argument type="service" id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider" />
+            <argument type="tagged_iterator" tag="gally.entity.synchronizer"/>
+            <argument type="tagged_iterator" tag="gally.entity.indexer"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="Gally\ShopwarePlugin\Controller\ViewMoreFacetOptionController" public="true">
+            <argument type="service" id="Shopware\Storefront\Framework\Routing\RequestTransformer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Search\CriteriaBuilder" />
+            <argument type="service" id="Gally\ShopwarePlugin\Search\Adapter" />
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+    </services>
+</container>
