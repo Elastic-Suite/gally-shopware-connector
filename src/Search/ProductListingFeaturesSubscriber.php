@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
+use Gally\Rest\ApiException;
+use Gally\ShopwarePlugin\Model\Message;
 use Gally\ShopwarePlugin\Service\Configuration;
+use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\Cms\CmsPageEntity;
 use Shopware\Core\Content\Cms\Events\CmsPageLoadedEvent;
 use Shopware\Core\Content\Cms\SalesChannel\Struct\ProductListingStruct;
@@ -22,24 +25,31 @@ use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
 use Shopware\Storefront\Page\Search\SearchPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 {
     private Configuration $configuration;
     private Adapter $searchAdapter;
     private SortOptionProvider $sortOptionProvider;
-    private Result $gallyResults;
+    private LoggerInterface $logger;
+    private TranslatorInterface $translator;
 
+    private ?Result $gallyResults = null;
     private array $nonFilterParameters = ['order', 'p', 'search', 'slots', 'no-aggregations'];
 
     public function __construct(
         Configuration $configuration,
         Adapter $searchAdapter,
-        SortOptionProvider $sortOptionProvider
+        SortOptionProvider $sortOptionProvider,
+        LoggerInterface $logger,
+        TranslatorInterface $translator
     ) {
         $this->configuration = $configuration;
         $this->searchAdapter = $searchAdapter;
         $this->sortOptionProvider = $sortOptionProvider;
+        $this->logger = $logger;
+        $this->translator = $translator;
     }
 
     public static function getSubscribedEvents(): array
@@ -99,11 +109,16 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             }
 
             // Search data from gally
-            $this->gallyResults = $this->searchAdapter->search($context, $criteria);
+            try {
+                $this->gallyResults = $this->searchAdapter->search($context, $criteria);
+                // Create new criteria with gally result
+                $this->resetCriteria($criteria);
+                $productNumbers = array_keys($this->gallyResults->getProductNumbers());
+            } catch (ApiException $exception) {
+                $this->logger->error($exception->getMessage());
+                $productNumbers = [];
+            }
 
-            // Create new criteria with gally result
-            $this->resetCriteria($criteria);
-            $productNumbers = array_keys($this->gallyResults->getProductNumbers());
             $criteria->addFilter(
                 new OrFilter([
                     new EqualsAnyFilter('productNumber', $productNumbers),
@@ -133,12 +148,28 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         $listingContainer = $page->getSections()->getBlocks()->getSlots()->getSlot('content')->getData();
         /** @var ProductListingResult $productListing */
         $productListing = $listingContainer->getListing();
+
+        if (!$this->gallyResults) {
+            $productListing->addExtension(
+                'gally-message',
+                new Message('warning', $this->translator->trans('gally.listing.emptyResultMessage')));
+            return;
+        }
+
         $listingContainer->setListing($this->gallyResults->getResultListing($productListing));
     }
 
     public function handleSearchResult(SearchPageLoadedEvent $event): void
     {
         $productListing = $event->getPage()->getListing();
+
+        if (!$this->gallyResults) {
+            $productListing->addExtension(
+                'gally-message',
+                new Message('warning', $this->translator->trans('gally.listing.emptyResultMessage')));
+            return;
+        }
+
         $event->getPage()->setListing($this->gallyResults->getResultListing($productListing));
     }
 

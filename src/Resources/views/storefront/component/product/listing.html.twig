@@ -1,0 +1,12 @@
+{% sw_extends '@Storefront/storefront/component/product/listing.html.twig' %}
+
+{% block product_listing %}
+    {% set message = searchResult.extension('gally-message') %}
+    {%  if (message) %}
+        {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
+            type: message.type,
+            content: message.content
+        } %}
+    {% endif %}
+    {{ parent() }}
+{% endblock %}

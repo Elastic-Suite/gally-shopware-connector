@@ -22,10 +22,8 @@
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\Adapter" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\SortOptionProvider"/>
-            <argument type="service" id="property_group_option.repository"/>
-            <argument type="service" id="product_sorting.repository"/>
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
-            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="logger"/>
+            <argument type="service" id="translator" />
         </service>
 
         <service id="Gally\ShopwarePlugin\Search\ProductSearchBuilder"
