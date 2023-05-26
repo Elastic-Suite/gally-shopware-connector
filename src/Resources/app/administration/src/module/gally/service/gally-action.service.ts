@@ -17,7 +17,7 @@ export default class GallyAction {
     )
   }
 
-  synchronizeStructure() {
+  sync() {
     return this.callApi(`/gally/synchronize`)
   }
 
