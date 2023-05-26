@@ -2,12 +2,24 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/master/src/Core/System/SystemConfig/Schema/config.xsd">
     <card>
-        <title>#GallyPLugin# Settings</title>
+        <title>General</title>
 
         <input-field type="bool">
             <name>active</name>
             <label>Active</label>
         </input-field>
+
+        <component name="gally-button">
+            <name>structureSync</name>
+            <action>sync</action>
+        </component>
+        <component name="gally-button">
+            <name>index</name>
+            <action>index</action>
+        </component>
+    </card>
+    <card>
+        <title>Api setting</title>
 
         <input-field type="text">
             <name>baseurl</name>
@@ -23,6 +35,14 @@
             <name>password</name>
             <label>Gally user password</label>
         </input-field>
+
+        <component name="gally-button">
+            <name>testApi</name>
+            <action>test</action>
+        </component>
+    </card>
+    <card>
+        <title>Batch settings</title>
 
         <input-field type="int">
             <name>categoryBatchSize</name>

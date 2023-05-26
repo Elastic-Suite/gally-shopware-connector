@@ -22,19 +22,19 @@ class Configuration
         return (bool) $this->systemConfigService->get('GallyPlugin.config.active', $salesChannelId);
     }
 
-    public function getBaseUrl(?string $salesChannelId = null): string
+    public function getBaseUrl(): string
     {
-        return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl', $salesChannelId), '/');
+        return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl'), '/');
     }
 
-    public function getUser(?string $salesChannelId = null): string
+    public function getUser(): string
     {
-        return (string) $this->systemConfigService->get('GallyPlugin.config.user', $salesChannelId);
+        return (string) $this->systemConfigService->get('GallyPlugin.config.user');
     }
 
-    public function getPassword(?string $salesChannelId = null): string
+    public function getPassword(): string
     {
-        return (string) $this->systemConfigService->get('GallyPlugin.config.password', $salesChannelId);
+        return (string) $this->systemConfigService->get('GallyPlugin.config.password');
     }
 
     public function getBatchSize(string $entityType, ?string $salesChannelId = null): int

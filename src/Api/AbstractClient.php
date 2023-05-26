@@ -31,7 +31,11 @@ class AbstractClient
     public function getAuthorizationToken(): string
     {
         if (null === $this->token) {
-            $this->token = $this->tokenProvider->getAuthenticationToken();
+            $this->token = $this->tokenProvider->getAuthenticationToken(
+                $this->configuration->getBaseUrl(),
+                $this->configuration->getUser(),
+                $this->configuration->getPassword()
+            );
         }
 
         return $this->token;

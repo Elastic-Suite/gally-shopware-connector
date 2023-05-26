@@ -10,7 +10,8 @@ use GuzzleHttp\Client;
  * Rest client used to call gally api on synchronization and indexing process.
  */
 class RestClient extends AbstractClient
-{    public function query($endpoint, $operation, ...$input)
+{
+    public function query($endpoint, $operation, ...$input)
     {
         $config = Configuration::getDefaultConfiguration()
             ->setApiKey('Authorization', $this->getAuthorizationToken())

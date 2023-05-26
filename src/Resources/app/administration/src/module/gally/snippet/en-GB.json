@@ -1,0 +1,9 @@
+{
+  "GallyPlugin": {
+    "config": {
+      "structureSync": "Synchronize catalog structure with gally",
+      "index": "Index catalog content in gally",
+      "testApi": "Test api"
+    }
+  }
+}

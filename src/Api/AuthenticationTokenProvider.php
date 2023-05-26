@@ -15,30 +15,23 @@ use GuzzleHttp\Utils;
  */
 class AuthenticationTokenProvider
 {
-    private Configuration $config;
     private Client $client;
 
-    public function __construct(Configuration $config) {
-        $this->config = $config;
+    public function __construct() {
         $this->client = new Client();
     }
 
-    public function getAuthenticationToken()
+    public function getAuthenticationToken(string $baseUrl, string $user, string $password)
     {
         $resourcePath = '/authentication_token';
         $request = new Request(
             'POST',
-            trim($this->config->getBaseUrl(), '/') . $resourcePath,
+            trim($baseUrl, '/') . $resourcePath,
             [
                 'accept'       => 'application/json',
                 'Content-Type' => 'application/json',
             ],
-            Utils::jsonEncode(
-                [
-                    'email'    => $this->config->getUser(),
-                    'password' => $this->config->getPassword(),
-                ]
-            )
+            Utils::jsonEncode(['email' => $user, 'password' => $password,])
         );
 
         try {

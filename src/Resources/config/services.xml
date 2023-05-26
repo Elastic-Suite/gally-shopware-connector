@@ -19,5 +19,14 @@
             <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
         </service>
+
+        <service id="Gally\ShopwarePlugin\Route\AdminRoute" public="true">
+            <argument type="service" id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider" />
+            <argument type="tagged_iterator" tag="gally.entity.synchronizer"/>
+            <argument type="tagged_iterator" tag="gally.entity.indexer"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
     </services>
 </container>
