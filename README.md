@@ -52,7 +52,7 @@
     - [X] aggregation category
     - [X] category visbility
     - [ ] aggregation render swatches
-    - [ ] aggregation has more
+    - [X] aggregation has more
     - [ ] category multi select (with gally we can't have multiple category in filter, on shopware we can't build non multiselect filters)
 - Config
   - [ ] Hide or native useless configuration on shopware administration to avoid confusion on what can be made from gally side or shopware side.
