@@ -26,6 +26,7 @@ export default class GallyAction {
   }
 
   callApi(path: string, data: object = {}) {
+    data.salesChannelId = this.getCurrentSalesChannelId();
     return this.httpClient.post(
       path,
       data,
@@ -36,5 +37,9 @@ export default class GallyAction {
         }
       })
     ;
+  }
+
+  getCurrentSalesChannelId() {
+    return document.querySelector('.sw-sales-channel-switch').__vue__.salesChannelId;
   }
 }

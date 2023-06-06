@@ -5,6 +5,7 @@ namespace Gally\ShopwarePlugin\Api;
 
 use Gally\ShopwarePlugin\Service\Configuration;
 use Psr\Log\LoggerInterface;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Abstract api client that manage authentication process.
@@ -28,13 +29,13 @@ class AbstractClient
         $this->debug         = false;
     }
 
-    public function getAuthorizationToken(): string
+    public function getAuthorizationToken(SalesChannelEntity $salesChannel): string
     {
         if (null === $this->token) {
             $this->token = $this->tokenProvider->getAuthenticationToken(
-                $this->configuration->getBaseUrl(),
-                $this->configuration->getUser(),
-                $this->configuration->getPassword()
+                $this->configuration->getBaseUrl($salesChannel->getId()),
+                $this->configuration->getUser($salesChannel->getId()),
+                $this->configuration->getPassword($salesChannel->getId())
             );
         }
 

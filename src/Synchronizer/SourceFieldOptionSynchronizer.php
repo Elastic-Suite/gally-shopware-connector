@@ -9,6 +9,7 @@ use Gally\Rest\Model\SourceFieldSourceFieldApi;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Synchronize shopware custom field and property options with gally source field options.
@@ -43,12 +44,12 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         return $entity->getSourceField() . $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(SalesChannelEntity $salesChannel)
     {
         throw new \LogicException('Run source field synchronizer to sync all options');
     }
 
-    public function synchronizeItem(array $params): ?ModelInterface
+    public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface
     {
         /** @var SourceFieldSourceFieldApi $sourceField */
         $sourceField = $params['field'];
@@ -60,6 +61,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         $position = $params['position'];
 
         $sourceFieldOption = $this->createOrUpdateEntity(
+            $salesChannel,
             new SourceFieldOptionSourceFieldOptionWrite(
                 [
                     'sourceField'  => '/source_fields/' . $sourceField->getId() ,
@@ -73,6 +75,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         $labels = is_array($option) ? $option['label'] : $option->getTranslations();
         foreach ($labels as $localeCode => $label) {
             $this->sourceFieldOptionLabelSynchronizer->synchronizeItem(
+                $salesChannel,
                 [
                     'fieldOption' => $sourceFieldOption,
                     'label' => is_string($label) ? $label : $label->getName(),
@@ -86,16 +89,16 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         return $sourceFieldOption;
     }
 
-    public function fetchEntities(): void
+    public function fetchEntities(SalesChannelEntity $salesChannel): void
     {
-        parent::fetchEntities();
-        $this->sourceFieldOptionLabelSynchronizer->fetchEntities();
+        parent::fetchEntities($salesChannel);
+        $this->sourceFieldOptionLabelSynchronizer->fetchEntities($salesChannel);
     }
 
-    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    public function fetchEntity(SalesChannelEntity $salesChannel, ModelInterface $entity): ?ModelInterface
     {
         /** @var SourceFieldOptionSourceFieldOptionWrite $entity */
-        $results = $this->client->query(...$this->buildFetchOneParams($entity));
+        $results = $this->client->query($salesChannel, ...$this->buildFetchOneParams($entity));
         $filteredResults = [];
         /** @var SourceFieldOptionSourceFieldOptionWrite $result */
         foreach ($results as $result) {

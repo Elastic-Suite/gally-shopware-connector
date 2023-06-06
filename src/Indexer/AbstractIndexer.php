@@ -20,7 +20,6 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 abstract class AbstractIndexer
 {
     protected Configuration $configuration;
-    protected EntityRepository $salesChannelRepository;
     protected IndexOperation $indexOperation;
     protected UrlGenerator $urlGenerator;
 
@@ -28,58 +27,43 @@ abstract class AbstractIndexer
 
     public function __construct(
         Configuration $configuration,
-        EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
         EntityRepository $entityRepository,
         UrlGenerator $urlGenerator
     ) {
         $this->configuration = $configuration;
-        $this->salesChannelRepository = $salesChannelRepository;
         $this->indexOperation = $indexOperation;
         $this->entityRepository = $entityRepository;
         $this->urlGenerator = $urlGenerator;
     }
 
-    public function reindex(array $documentIdsToReindex = [])
+    public function reindex(SalesChannelEntity $salesChannel, array $documentIdsToReindex = [])
     {
-        $criteria = new Criteria();
-        $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency', 'domains']);
+        $languages = $salesChannel->getLanguages();
+        /** @var LanguageEntity $language */
+        foreach ($languages as $language) {
 
-        /** @var SalesChannelCollection $salesChannels */
-        $salesChannels = $this->salesChannelRepository
-            ->search($criteria, Context::createDefaultContext())
-            ->getEntities();
+            if (empty($documentIdsToReindex)) {
+                $indexName = $this->indexOperation->createIndex($salesChannel, $this->getEntityType(), $language);
+            } else {
+                $indexName = $this->indexOperation->getIndexByName($salesChannel, $this->getEntityType(), $language);
+            }
 
-        /** @var SalesChannelEntity $salesChannel */
-        foreach ($salesChannels as $salesChannel) {
-            if ($this->configuration->isActive($salesChannel->getId())) {
-                $languages = $salesChannel->getLanguages();
-                /** @var LanguageEntity $language */
-                foreach ($languages as $language) {
-
-                    if (empty($documentIdsToReindex)) {
-                        $indexName = $this->indexOperation->createIndex($this->getEntityType(), $salesChannel, $language);
-                    } else {
-                        $indexName = $this->indexOperation->getIndexByName($this->getEntityType(), $salesChannel, $language);
-                    }
-
-                    $batchSize = $this->configuration->getBatchSize($this->getEntityType(), $salesChannel->getId());
-                    $bulk = [];
-                    foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
-                        $bulk[$document['id']] = json_encode($document);
-                        if (count($bulk) >= $batchSize) {
-                            $this->indexOperation->executeBulk($indexName, $bulk);
-                        }
-                    }
-                    if (count($bulk)) {
-                        $this->indexOperation->executeBulk($indexName, $bulk);
-                    }
-
-                    if (empty($documentIdsToReindex)) {
-                        $this->indexOperation->refreshIndex($indexName);
-                        $this->indexOperation->installIndex($indexName);
-                    }
+            $batchSize = $this->configuration->getBatchSize($this->getEntityType(), $salesChannel->getId());
+            $bulk = [];
+            foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
+                $bulk[$document['id']] = json_encode($document);
+                if (count($bulk) >= $batchSize) {
+                    $this->indexOperation->executeBulk($salesChannel, $indexName, $bulk);
                 }
+            }
+            if (count($bulk)) {
+                $this->indexOperation->executeBulk($salesChannel, $indexName, $bulk);
+            }
+
+            if (empty($documentIdsToReindex)) {
+                $this->indexOperation->refreshIndex($salesChannel, $indexName);
+                $this->indexOperation->installIndex($salesChannel, $indexName);
             }
         }
     }

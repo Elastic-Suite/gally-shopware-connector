@@ -5,7 +5,6 @@
     <services>
         <service id="Gally\ShopwarePlugin\Indexer\AbstractIndexer" abstract="true">
             <argument key="$configuration" type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
-            <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
             <argument key="$indexOperation" type="service" id="Gally\ShopwarePlugin\Service\IndexOperation" />
             <argument key="$urlGenerator" type="service" id="Shopware\Core\Content\Media\Pathname\UrlGeneratorInterface" />
         </service>
@@ -23,16 +22,20 @@
             <tag name="gally.entity.indexer" priority="30"/>
         </service>
 
-        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ManufacturerSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\AbstractIndexerSubscriber" abstract="true">
+            <argument key="$configuration" type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ManufacturerSubscriber" parent="Gally\ShopwarePlugin\Indexer\Subscriber\AbstractIndexerSubscriber">
+            <argument key="$indexer" type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
             <tag name="kernel.event_subscriber" />
         </service>
-        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\CategorySubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\CategorySubscriber" parent="Gally\ShopwarePlugin\Indexer\Subscriber\AbstractIndexerSubscriber">
+            <argument key="$indexer" type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
             <tag name="kernel.event_subscriber" />
         </service>
-        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ProductSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ProductSubscriber" parent="Gally\ShopwarePlugin\Indexer\Subscriber\AbstractIndexerSubscriber">
+            <argument key="$indexer" type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
             <tag name="kernel.event_subscriber" />
         </service>
     </services>

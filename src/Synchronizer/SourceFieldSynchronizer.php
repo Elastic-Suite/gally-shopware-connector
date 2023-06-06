@@ -18,6 +18,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\CustomField\CustomFieldCollection;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -97,15 +98,15 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         return $entity->getMetadata() . $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(SalesChannelEntity $salesChannel)
     {
-        $this->fetchEntities();
-        $this->sourceFieldLabelSynchronizer->fetchEntities();
-        $this->sourceFieldOptionSynchronizer->fetchEntities();
+        $this->fetchEntities($salesChannel);
+        $this->sourceFieldLabelSynchronizer->fetchEntities($salesChannel);
+        $this->sourceFieldOptionSynchronizer->fetchEntities($salesChannel);
 
         foreach ($this->entitiesToSync as $entity) {
             /** @var Metadata $metadata */
-            $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity]);
+            $metadata = $this->metadataSynchronizer->synchronizeItem($salesChannel, ['entity' => $entity]);
 
             $criteria = new Criteria();
             $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', $entity));
@@ -120,6 +121,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                     }
                 }
                 $this->synchronizeItem(
+                    $salesChannel,
                     [
                         'metadata' => $metadata,
                         'field' => ['code' => $code, 'type' => is_array($data) ? $data['type'] : $data, 'labels' => $labels]
@@ -133,7 +135,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                 ->search($criteria, Context::createDefaultContext())
                 ->getEntities();
             foreach ($customFields as $customField) {
-                $this->synchronizeItem(['metadata' => $metadata, 'field' => $customField]);
+                $this->synchronizeItem($salesChannel, ['metadata' => $metadata, 'field' => $customField]);
             }
 
             // Property groups
@@ -155,13 +157,13 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                     ->getEntities();
 
                 foreach ($properties as $property) {
-                    $this->synchronizeItem(['metadata' => $metadata, 'field' => $property]);
+                    $this->synchronizeItem($salesChannel, ['metadata' => $metadata, 'field' => $property]);
                 }
             }
         }
     }
 
-    public function synchronizeItem(array $params): ?ModelInterface
+    public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface
     {
         /** @var Metadata $metadata */
         $metadata = $params['metadata'];
@@ -194,23 +196,29 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $data['type'] = 'select';
         }
 
-        $sourceField = $this->createOrUpdateEntity(new SourceFieldSourceFieldApi($data));
+        $sourceField = $this->createOrUpdateEntity($salesChannel, new SourceFieldSourceFieldApi($data));
 
         /** @var string|PropertyGroupTranslationEntity $label */
         foreach ($labels ?? [] as $localeCode => $label) {
-            $this->sourceFieldLabelSynchronizer->synchronizeItem([
-                'field' => $sourceField,
-                'localeCode' =>  str_replace('-', '_', is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()),
-                'label' => is_string($label) ? $label : $label->getName(),
-            ]);
+            $this->sourceFieldLabelSynchronizer->synchronizeItem(
+                $salesChannel,
+                [
+                    'field' => $sourceField,
+                    'localeCode' =>  str_replace('-', '_', is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()),
+                    'label' => is_string($label) ? $label : $label->getName(),
+                ]
+            );
         }
 
         foreach ($options ?? [] as $position => $option) {
-            $this->sourceFieldOptionSynchronizer->synchronizeItem([
-                'field' => $sourceField,
-                'option' => $option,
-                'position' => $position,
-            ]);
+            $this->sourceFieldOptionSynchronizer->synchronizeItem(
+                $salesChannel,
+                [
+                    'field' => $sourceField,
+                    'option' => $option,
+                    'position' => $position,
+                ]
+            );
         }
 
         return $sourceField;
@@ -240,10 +248,10 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         ];
     }
 
-    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    public function fetchEntity(SalesChannelEntity $salesChannel, ModelInterface $entity): ?ModelInterface
     {
         /** @var SourceFieldSourceFieldApi $entity */
-        $results = $this->client->query(...$this->buildFetchOneParams($entity));
+        $results = $this->client->query($salesChannel, ...$this->buildFetchOneParams($entity));
         $filteredResults = [];
         /** @var SourceFieldSourceFieldApi $result */
         foreach ($results as $result) {

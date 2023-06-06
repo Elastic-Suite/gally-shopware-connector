@@ -5,18 +5,19 @@ namespace Gally\ShopwarePlugin\Api;
 
 use Gally\Rest\Configuration;
 use GuzzleHttp\Client;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Rest client used to call gally api on synchronization and indexing process.
  */
 class RestClient extends AbstractClient
 {
-    public function query($endpoint, $operation, ...$input)
+    public function query(SalesChannelEntity $salesChannel, $endpoint, $operation, ...$input)
     {
         $config = Configuration::getDefaultConfiguration()
-            ->setApiKey('Authorization', $this->getAuthorizationToken())
+            ->setApiKey('Authorization', $this->getAuthorizationToken($salesChannel))
             ->setApiKeyPrefix('Authorization', 'Bearer')
-            ->setHost($this->configuration->getBaseUrl());
+            ->setHost($this->configuration->getBaseUrl($salesChannel->getId()));
 
         // TODO add verify false only for dev env.
         $apiInstance = new $endpoint(new Client(['verify' => false]), $config);

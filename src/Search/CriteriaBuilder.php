@@ -37,7 +37,7 @@ class CriteriaBuilder
         }
 
         $this->handleFilters($request, $criteria);
-        $this->handleSorting($request, $criteria);
+        $this->handleSorting($request, $context, $criteria);
         $criteria->setIds([$request->get('navigationId', $context->getSalesChannel()->getNavigationCategoryId())]);
         $criteria->setTerm($request->get('search'));
 
@@ -92,14 +92,14 @@ class CriteriaBuilder
         }
     }
 
-    private function handleSorting(Request $request, Criteria $criteria): void
+    private function handleSorting(Request $request, SalesChannelContext $context, Criteria $criteria): void
     {
         if (!$request->get('order')) {
             $request->request->set('order', SortOptionProvider::DEFAULT_SEARCH_SORT);
         }
 
         /** @var ProductSortingCollection $sortings */
-        $sortings = $criteria->getExtension('gally-sortings') ?? $this->sortOptionProvider->getSortingOptions();
+        $sortings = $criteria->getExtension('gally-sortings') ?? $this->sortOptionProvider->getSortingOptions($context);
         $currentSortKey = $request->get('order');
         $currentSorting = $sortings->getByKey($currentSortKey);
         if ($currentSorting === null) {

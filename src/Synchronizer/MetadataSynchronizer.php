@@ -5,20 +5,21 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\Metadata;
 use Gally\Rest\Model\ModelInterface;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Synchronize shopware entity with gally metadata.
  */
 class MetadataSynchronizer extends AbstractSynchronizer
 {
-    public function synchronizeAll()
+    public function synchronizeAll(SalesChannelEntity $salesChannel)
     {
         throw new \LogicException('Run source field synchronizer to sync all metadata');
     }
 
-    public function synchronizeItem(array $params): ?ModelInterface
+    public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface
     {
-        return $this->createOrUpdateEntity(new Metadata(["entity" => $params['entity']]));
+        return $this->createOrUpdateEntity($salesChannel, new Metadata(["entity" => $params['entity']]));
     }
 
     public function getIdentity(ModelInterface $entity): string
@@ -27,10 +28,10 @@ class MetadataSynchronizer extends AbstractSynchronizer
         return $entity->getEntity();
     }
 
-    protected function getEntityFromApi(ModelInterface $entity): ?ModelInterface
+    protected function getEntityFromApi(SalesChannelEntity $salesChannel, ModelInterface $entity): ?ModelInterface
     {
         if (!$this->allEntityHasBeenFetch) {
-            $this->fetchEntities();
+            $this->fetchEntities($salesChannel);
         }
 
         return $this->entityByCode[$this->getIdentity($entity)] ?? null;

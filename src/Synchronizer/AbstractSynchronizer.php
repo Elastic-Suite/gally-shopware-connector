@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\ModelInterface;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Synchronize shopware store structure with gally.
@@ -39,32 +40,34 @@ abstract class AbstractSynchronizer
         $this->patchEntityMethod = $patchEntityMethod;
     }
 
-    abstract public function synchronizeAll();
+    abstract public function synchronizeAll(SalesChannelEntity $salesChannel);
 
-    abstract public function synchronizeItem(array $params): ?ModelInterface;
+    abstract public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface;
 
     public function getEntityClass(): string
     {
         return $this->entityClass;
     }
 
-    public function fetchEntities(): void
+    public function fetchEntities(SalesChannelEntity $salesChannel): void
     {
-        $currentPage = 1;
-        do {
-            $entities = $this->client->query(...$this->buildFetchAllParams($currentPage));
+        if (!$this->allEntityHasBeenFetch) {
+            $currentPage = 1;
+            do {
+                $entities = $this->client->query($salesChannel, ...$this->buildFetchAllParams($currentPage));
 
-            foreach ($entities as $entity) {
-                $this->addEntityByIdentity($entity);
-            }
-            $currentPage++;
-        } while (count($entities) >= self::FETCH_PAGE_SIZE);
-        $this->allEntityHasBeenFetch = true;
+                foreach ($entities as $entity) {
+                    $this->addEntityByIdentity($entity);
+                }
+                $currentPage++;
+            } while (count($entities) >= self::FETCH_PAGE_SIZE);
+            $this->allEntityHasBeenFetch = true;
+        }
     }
 
-    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    public function fetchEntity(SalesChannelEntity $salesChannel, ModelInterface $entity): ?ModelInterface
     {
-        $entities = $this->client->query(...$this->buildFetchOneParams($entity));
+        $entities = $this->client->query($salesChannel, ...$this->buildFetchOneParams($entity));
         if (count($entities) !== 1) {
             return null;
         }
@@ -94,18 +97,19 @@ abstract class AbstractSynchronizer
         ];
     }
 
-    protected function createOrUpdateEntity(ModelInterface $entity): ModelInterface
+    protected function createOrUpdateEntity(SalesChannelEntity $salesChannel, ModelInterface $entity): ModelInterface
     {
         $this->validateEntity($entity);
 
         if ($this->getIdentity($entity)) {
             // Check if entity already exists.
-            $existingEntity = $this->getEntityFromApi($entity);
+            $existingEntity = $this->getEntityFromApi($salesChannel, $entity);
             if (!$existingEntity) {
                 // Create it if needed. Also save it locally for later use.
-                $entity = $this->client->query($this->entityClass, $this->createEntityMethod, $entity);
+                $entity = $this->client->query($salesChannel, $this->entityClass, $this->createEntityMethod, $entity);
             } else {
                 $entity = $this->client->query(
+                    $salesChannel,
                     $this->entityClass,
                     $this->patchEntityMethod,
                     $existingEntity->getId(), // @phpstan-ignore-line
@@ -118,13 +122,13 @@ abstract class AbstractSynchronizer
         return $this->entityByCode[$this->getIdentity($entity)];
     }
 
-    protected function getEntityFromApi(ModelInterface $entity): ?ModelInterface
+    protected function getEntityFromApi(SalesChannelEntity $salesChannel, ModelInterface $entity): ?ModelInterface
     {
         if ($this->allEntityHasBeenFetch) {
             return $this->entityByCode[$this->getIdentity($entity)] ?? null;
         }
 
-        return $this->fetchEntity($entity);
+        return $this->fetchEntity($salesChannel, $entity);
     }
 
     protected function addEntityByIdentity(ModelInterface $entity)

@@ -45,7 +45,7 @@ class SalesChannelSubscriber implements EventSubscriberInterface
                 ->getEntities()
                 ->first();
 
-            $this->catalogSynchronizer->synchronizeItem(['salesChannel' => $salesChannel]);
+            $this->catalogSynchronizer->synchronizeItem($salesChannel);
         }
     }
 }

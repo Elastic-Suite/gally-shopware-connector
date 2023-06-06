@@ -9,6 +9,7 @@ use Gally\ShopwarePlugin\Api\RestClient;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 /**
  * Get available sorting option from gally.
@@ -24,9 +25,13 @@ class SortOptionProvider
         $this->client = $client;
     }
 
-    public function getSortingOptions(): ProductSortingCollection
+    public function getSortingOptions(SalesChannelContext $context): ProductSortingCollection
     {
-        $sortingOptions = $this->client->query(CategorySortingOptionApi::class, 'getCategorySortingOptionCollection');
+        $sortingOptions = $this->client->query(
+            $context->getSalesChannel(),
+            CategorySortingOptionApi::class,
+            'getCategorySortingOptionCollection'
+        );
         $sortings = new ProductSortingCollection();
 
         /** @var CategorySortingOption $option */

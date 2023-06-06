@@ -5,13 +5,14 @@ namespace Gally\ShopwarePlugin\Api;
 
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Rest client used to call gally api on search request.
  */
 class GraphQlClient extends AbstractClient
 {
-    public function query(string $query, array $variables): ?ResponseInterface
+    public function query(SalesChannelEntity $salesChannel, string $query, array $variables): ?ResponseInterface
     {
         // TODO add verify false only for dev env.
         $client = new Client(['verify' => false,]);
@@ -24,10 +25,10 @@ class GraphQlClient extends AbstractClient
             }
             $result = $client->request(
                 'post',
-                $this->configuration->getBaseUrl() . '/graphql',
+                $this->configuration->getBaseUrl($salesChannel->getId()) . '/graphql',
                 [
                     'headers' => [
-                        'Authorization' => 'bearer ' . $this->getAuthorizationToken(),
+                        'Authorization' => 'bearer ' . $this->getAuthorizationToken($salesChannel),
                         'Content-Type' => 'application/json'
                     ],
                     'body' => json_encode(

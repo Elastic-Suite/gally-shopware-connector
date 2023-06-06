@@ -35,14 +35,13 @@ class ProductIndexer extends AbstractIndexer
 
     public function __construct(
         Configuration $configuration,
-        EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
         EntityRepository $entityRepository,
         UrlGenerator $urlGenerator,
         EntityRepository $categoryRepository
     )
     {
-        parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository, $urlGenerator);
+        parent::__construct($configuration, $indexOperation, $entityRepository, $urlGenerator);
         $this->categoryRepository = $categoryRepository;
     }
 

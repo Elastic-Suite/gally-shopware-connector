@@ -9,6 +9,7 @@ use Gally\Rest\Model\SourceFieldLabel;
 use Gally\Rest\Model\SourceFieldSourceFieldApi;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Synchronize shopware custom field and property labels with gally source field labels.
@@ -43,12 +44,12 @@ class SourceFieldLabelSynchronizer extends AbstractSynchronizer
         return $entity->getSourceField() . $entity->getLocalizedCatalog();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(SalesChannelEntity $salesChannel)
     {
         throw new \LogicException('Run source field synchronizer to sync all localized labels');
     }
 
-    public function synchronizeItem(array $params): ?ModelInterface
+    public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface
     {
         /** @var SourceFieldSourceFieldApi $sourceField */
         $sourceField = $params['field'];
@@ -60,8 +61,9 @@ class SourceFieldLabelSynchronizer extends AbstractSynchronizer
         $label = $params['label'];
 
         /** @var LocalizedCatalog $localizedCatalog */
-        foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($localeCode) as $localizedCatalog) {
+        foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($salesChannel, $localeCode) as $localizedCatalog) {
             $this->createOrUpdateEntity(
+                $salesChannel,
                 new SourceFieldLabel(
                     [
                         'sourceField'      => '/source_fields/' . $sourceField->getId() ,

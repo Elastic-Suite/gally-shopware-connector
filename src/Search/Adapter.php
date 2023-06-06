@@ -35,6 +35,7 @@ class Adapter
         return $this->resultBuilder->build(
             $context,
             $this->client->query(
+                $context->getSalesChannel(),
                 $this->getSearchQuery(),
                 [
                     'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
@@ -55,6 +56,7 @@ class Adapter
     {
         $navigationsIds = $criteria->getIds();
         $response = $this->client->query(
+            $context->getSalesChannel(),
             $this->getViewMoreQuery(),
             [
                 'aggregation' => $aggregationField,

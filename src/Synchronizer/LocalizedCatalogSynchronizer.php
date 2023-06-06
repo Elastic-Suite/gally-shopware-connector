@@ -22,16 +22,13 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
         return $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(SalesChannelEntity $salesChannel)
     {
         throw new \LogicException('Run catalog synchronizer to sync all localized catalog');
     }
 
-    public function synchronizeItem(array $params): ?ModelInterface
+    public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface
     {
-        /** @var SalesChannelEntity $salesChannel */
-        $salesChannel = $params['salesChannel'];
-
         /** @var LanguageEntity $language */
         $language = $params['language'];
 
@@ -39,6 +36,7 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
         $catalog = $params['catalog'];
 
         return $this->createOrUpdateEntity(
+            $salesChannel,
             new LocalizedCatalog([
                 "name" => $language->getName(),
                 "code" => $salesChannel->getId() . $language->getId(),
@@ -62,20 +60,20 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
         $this->localizedCatalogByLocale[$entity->getLocale()][$entity->getId()] = $entity;
     }
 
-    public function getLocalizedCatalogByLocale(string $localeCode): array
+    public function getLocalizedCatalogByLocale(SalesChannelEntity $salesChannel, string $localeCode): array
     {
         if (empty($this->localizedCatalogByLocale)) {
             // Load all entities to be able to check if the asked entity exists.
-            $this->fetchEntities();
+            $this->fetchEntities($salesChannel);
         }
 
         return $this->localizedCatalogByLocale[$localeCode] ?? [];
     }
 
-    public function getByIdentity(string $identifier): ?ModelInterface
+    public function getByIdentity(SalesChannelEntity $salesChannel, string $identifier): ?ModelInterface
     {
         if (!$this->allEntityHasBeenFetch) {
-            $this->fetchEntities();
+            $this->fetchEntities($salesChannel);
         }
 
         return $this->entityByCode[$identifier] ?? null;

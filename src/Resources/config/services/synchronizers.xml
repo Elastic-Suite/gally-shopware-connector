@@ -71,6 +71,8 @@
             <tag name="kernel.event_subscriber" />
         </service>
         <service id="Gally\ShopwarePlugin\Synchronizer\Subscriber\FieldSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="sales_channel.repository" />
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
             <argument type="service" id="custom_field.repository" />

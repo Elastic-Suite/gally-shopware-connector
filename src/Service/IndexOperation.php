@@ -29,10 +29,11 @@ class IndexOperation
         $this->localizedCatalogSynchronizer = $localizedCatalogSynchronizer;
     }
 
-    public function createIndex(string $entityType, SalesChannelEntity $salesChannel, LanguageEntity $language): string
+    public function createIndex(SalesChannelEntity $salesChannel, string $entityType, LanguageEntity $language): string
     {
         /** @var LocalizedCatalog $localizedCatalog */
         $localizedCatalog = $this->localizedCatalogSynchronizer->getByIdentity(
+            $salesChannel,
             $salesChannel->getId() . $language->getId()
         );
         $indexData = [
@@ -41,19 +42,20 @@ class IndexOperation
         ];
 
         /** @var IndexCreate $index */
-        $index = $this->client->query(IndexApi::class, 'postIndexCollection', $indexData);
+        $index = $this->client->query($salesChannel, IndexApi::class, 'postIndexCollection', $indexData);
 
         return $index->getName();
     }
 
-    public function getIndexByName(string $entityType, SalesChannelEntity $salesChannel, LanguageEntity $language): string
+    public function getIndexByName(SalesChannelEntity $salesChannel, string $entityType, LanguageEntity $language): string
     {
         /** @var LocalizedCatalog $localizedCatalog */
         $localizedCatalog = $this->localizedCatalogSynchronizer->getByIdentity(
+            $salesChannel,
             $salesChannel->getId() . $language->getId()
         );
 
-        $indices = $this->client->query(IndexApi::class, 'getIndexCollection');
+        $indices = $this->client->query($salesChannel, IndexApi::class, 'getIndexCollection');
 
         /** @var IndexDetails $index */
         foreach ($indices as $index) {
@@ -71,19 +73,20 @@ class IndexOperation
         );
     }
 
-    public function refreshIndex(string $indexName)
+    public function refreshIndex(SalesChannelEntity $salesChannel, string $indexName)
     {
-        $this->client->query(IndexApi::class, 'refreshIndexItem', $indexName, []);
+        $this->client->query($salesChannel, IndexApi::class, 'refreshIndexItem', $indexName, []);
     }
 
-    public function installIndex(string $indexName)
+    public function installIndex(SalesChannelEntity $salesChannel, string $indexName)
     {
-        $this->client->query(IndexApi::class, 'installIndexItem', $indexName, []);
+        $this->client->query($salesChannel, IndexApi::class, 'installIndexItem', $indexName, []);
     }
 
-    public function executeBulk(string $indexName, array $documents)
+    public function executeBulk(SalesChannelEntity $salesChannel, string $indexName, array $documents)
     {
         return $this->client->query(
+            $salesChannel,
             IndexDocumentApi::class,
             'postIndexDocumentCollection',
             ['indexName' => $indexName, 'documents' => $documents]

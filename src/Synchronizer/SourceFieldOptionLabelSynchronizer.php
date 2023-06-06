@@ -9,6 +9,7 @@ use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelWrite;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
 /**
  * Synchronize shopware custom field and property option labels with gally source field option labels.
@@ -26,12 +27,12 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
         return $sourceFieldOption . $entity->getLocalizedCatalog();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(SalesChannelEntity $salesChannel)
     {
         throw new \LogicException('Run source field synchronizer to sync all localized option labels');
     }
 
-    public function synchronizeItem(array $params): ?ModelInterface
+    public function synchronizeItem(SalesChannelEntity $salesChannel, array $params = []): ?ModelInterface
     {
         /** @var SourceFieldOptionSourceFieldOptionWrite $option */
         $option = $params['fieldOption'];
@@ -43,8 +44,9 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
         $label = $params['label'];
 
         /** @var LocalizedCatalog $localizedCatalog */
-        foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($localeCode) as $localizedCatalog) {
+        foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($salesChannel, $localeCode) as $localizedCatalog) {
             $this->createOrUpdateEntity(
+                $salesChannel,
                 new SourceFieldOptionLabelSourceFieldOptionLabelWrite(
                     [
                         'sourceFieldOption' => '/source_field_options/' . $option->getId() ,
