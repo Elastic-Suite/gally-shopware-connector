@@ -32,7 +32,6 @@ Shopware.Component.register(
         this.isLoading = true;
         this.gallyAction[this.action]()
           .then(response => {
-            console.log(response);
             if (response.status !== 200 || response.data.error) {
               this.createNotificationError({message: response.data.message});
             } else {

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\ShopwarePlugin\Indexer\ManufacturerIndexer;
 use Gally\ShopwarePlugin\Indexer\ProductIndexer;
 use Shopware\Core\Content\Product\ProductEvents;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;

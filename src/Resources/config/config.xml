@@ -25,7 +25,12 @@
         </component>
     </card>
     <card>
-        <title>Api setting</title>
+        <title>API setting</title>
+        <component name="gally-alert">
+            <name>globalScopeNotice</name>
+            <text>Gally API configuration will be stored globally.</text>
+            <variant>info</variant>
+        </component>
 
         <input-field type="text">
             <name>baseurl</name>

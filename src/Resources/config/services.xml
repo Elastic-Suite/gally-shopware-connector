@@ -20,5 +20,10 @@
             <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
             <argument type="service" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
         </service>
+
+        <service id="Gally\ShopwarePlugin\Subscriber\UpdateConfigSubscriber">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
     </services>
 </container>
