@@ -10,6 +10,7 @@
             <argument type="service" id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider" />
             <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument type="service" id="logger"/>
+            <argument>%kernel.environment%</argument>
         </service>
         <service id="Gally\ShopwarePlugin\Api\RestClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>
         <service id="Gally\ShopwarePlugin\Api\GraphQlClient" parent="Gally\ShopwarePlugin\Api\AbstractClient"/>

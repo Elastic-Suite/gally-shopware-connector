@@ -18,8 +18,7 @@ class RestClient extends AbstractClient
             ->setApiKeyPrefix('Authorization', 'Bearer')
             ->setHost($this->configuration->getBaseUrl());
 
-        // TODO add verify false only for dev env.
-        $apiInstance = new $endpoint(new Client(['verify' => false]), $config);
+        $apiInstance = new $endpoint(new Client($this->kernelEnv !== 'prod' ? ['verify' => false] : []), $config);
 
         try {
             if ($this->debug === true) {

@@ -13,8 +13,7 @@ class GraphQlClient extends AbstractClient
 {
     public function query(string $query, array $variables): ?ResponseInterface
     {
-        // TODO add verify false only for dev env.
-        $client = new Client(['verify' => false,]);
+        $client = new Client($this->kernelEnv !== 'prod' ? ['verify' => false] : []);
 
         try {
             if ($this->debug === true) {

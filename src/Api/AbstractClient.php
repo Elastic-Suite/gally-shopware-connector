@@ -14,17 +14,20 @@ class AbstractClient
     protected AuthenticationTokenProvider $tokenProvider;
     protected Configuration $configuration;
     protected LoggerInterface $logger;
+    protected string $kernelEnv;
     protected ?string $token = null;
     protected bool $debug;
 
     public function __construct(
         AuthenticationTokenProvider $tokenProvider,
         Configuration $configuration,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        string $kernelEnv
     ){
         $this->tokenProvider = $tokenProvider;
         $this->configuration = $configuration;
         $this->logger        = $logger;
+        $this->kernelEnv     = $kernelEnv;
         $this->debug         = false;
     }
 
