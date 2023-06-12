@@ -211,7 +211,8 @@ class ProductIndexer extends AbstractIndexer
         $categoryIds = $product->getCategories() ? $product->getCategories()->getIds() : [];
         /** @var CategoryEntity $productCategory */
         foreach ($product->getCategories() ?? [] as $productCategory) {
-            foreach (array_merge([$productCategory->getId()], explode('|', $productCategory->getPath())) as $categoryId) {
+            $categoryPath = $productCategory->getPath() ?: '';
+            foreach (array_merge([$productCategory->getId()], explode('|', $categoryPath)) as $categoryId) {
                 /** @var CategoryEntity|null $category */
                 $category = $this->categoryCollection->get($categoryId);
                 if ($category && $category->getActive()) {
