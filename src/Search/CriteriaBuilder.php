@@ -77,6 +77,7 @@ class CriteriaBuilder
             $filterData[$field] = $data;
         }
 
+        $criteria->resetPostFilters();
         foreach ($filterData as $field => $data) {
             if (isset($data['min']) || isset($data['max'])) {
                 $filterParams = [RangeFilter::GTE => (float) $data['min'] ?? 0];

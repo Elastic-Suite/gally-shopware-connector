@@ -144,7 +144,17 @@ class Adapter
                     $filters[] = [$filter->getField() => ['eq' => $filter->getValue()]];
                     break;
                 case EqualsAnyFilter::class:
-                    $filters[] = [$filter->getField() => ['in' => $filter->getValue()]];
+                    // On gally side, category filter can't handle multiple values
+                    // This is why we use a boolean filter in this case.
+                    if ($filter->getField() === 'category__id') {
+                        $boolFilterClauses = [];
+                        foreach ($filter->getValue() as $value) {
+                            $boolFilterClauses[] = [$filter->getField() => ['eq' => $value]];
+                        }
+                        $filters[] = ['boolFilter' => ['_should' => $boolFilterClauses]];
+                    } else {
+                        $filters[] = [$filter->getField() => ['in' => $filter->getValue()]];
+                    }
                     break;
                 case RangeFilter::class:
                     $filters[] = [$filter->getField() => $filter->getParameters()];
