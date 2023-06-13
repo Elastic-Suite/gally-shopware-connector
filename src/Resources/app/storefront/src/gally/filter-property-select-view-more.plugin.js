@@ -132,7 +132,7 @@ export default class FilterPropertySelectViewMorePlugin extends FilterPropertySe
     labelEl.classList.add("filter-multi-select-item-label");
     labelEl.classList.add("form-check-label");
     labelEl.setAttribute('for', value);
-    labelEl.textContent = label + ' (' + count + ')';
+    labelEl.textContent = label;
     return labelEl;
   }
 }
