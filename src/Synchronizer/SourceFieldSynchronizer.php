@@ -198,11 +198,13 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
 
         /** @var string|PropertyGroupTranslationEntity $label */
         foreach ($labels ?? [] as $localeCode => $label) {
-            $this->sourceFieldLabelSynchronizer->synchronizeItem([
-                'field' => $sourceField,
-                'localeCode' =>  str_replace('-', '_', is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()),
-                'label' => is_string($label) ? $label : $label->getName(),
-            ]);
+            if ($label) {
+                $this->sourceFieldLabelSynchronizer->synchronizeItem([
+                    'field' => $sourceField,
+                    'localeCode' =>  str_replace('-', '_', is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()),
+                    'label' => is_string($label) ? $label : $label->getName(),
+                ]);
+            }
         }
 
         foreach ($options ?? [] as $position => $option) {

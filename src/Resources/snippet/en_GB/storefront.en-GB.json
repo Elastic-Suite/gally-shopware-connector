@@ -4,7 +4,8 @@
       "viewMore": "Show more..."
     },
     "listing": {
-      "emptyResultMessage": "Have you sync and index your catalog data with gally ?"
+      "emptyResultMessage": "Have you sync and index your catalog data with gally ?",
+      "wrongConfiguration": "Please check your gally configuration."
     }
   }
 }

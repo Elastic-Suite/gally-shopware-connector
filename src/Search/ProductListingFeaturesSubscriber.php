@@ -79,33 +79,44 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     {
         $request = $event->getRequest();
         $context = $event->getSalesChannelContext();
-        $this->criteriaBuilder->build($request, $context, $event->getCriteria());
+
+        if ($this->configuration->isActive($context->getSalesChannel()->getId())
+            && $this->configuration->getBaseUrl()
+        ) {
+            $this->criteriaBuilder->build($request, $context, $event->getCriteria());
+        }
     }
 
     public function handleListingRequest(ProductListingCriteriaEvent $event): void
     {
         $request = $event->getRequest();
         $context = $event->getSalesChannelContext();
-        $criteria = $this->criteriaBuilder->build($request, $context, $event->getCriteria());
 
         if ($this->configuration->isActive($context->getSalesChannel()->getId())) {
-            // Search data from gally
-            try {
-                $this->gallyResults = $this->searchAdapter->search($context, $criteria);
-                // Create new criteria with gally result
-                $this->resetCriteria($criteria);
-                $productNumbers = array_keys($this->gallyResults->getProductNumbers());
-            } catch (ApiException $exception) {
-                $this->logger->error($exception->getMessage());
-                $productNumbers = [];
-            }
+            if ($this->configuration->getBaseUrl()) {
+                $criteria = $this->criteriaBuilder->build($request, $context, $event->getCriteria());
 
-            $criteria->addFilter(
-                new OrFilter([
-                    new EqualsAnyFilter('productNumber', $productNumbers),
-                    new EqualsAnyFilter('parent.productNumber', $productNumbers),
-                ])
-            );
+                // Search data from gally
+                try {
+                    $this->gallyResults = $this->searchAdapter->search($context, $criteria);
+                    // Create new criteria with gally result
+                    $this->resetCriteria($criteria);
+                    $productNumbers = array_keys($this->gallyResults->getProductNumbers());
+                } catch (ApiException $exception) {
+                    $this->logger->error($exception->getMessage());
+                    $productNumbers = [];
+                }
+
+                $criteria->addFilter(
+                    new OrFilter([
+                        new EqualsAnyFilter('productNumber', $productNumbers),
+                        new EqualsAnyFilter('parent.productNumber', $productNumbers),
+                    ])
+                );
+            } else {
+                // Show an empty product listing if gally is misconfigured.
+                $event->getCriteria()->addFilter(new EqualsAnyFilter('productNumber', []));
+            }
         }
     }
 
@@ -116,47 +127,65 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
      */
     public function handleNavigationResult(ShopwareEvent $event): void
     {
-        /** @var CmsPageEntity $page */
-        $page = $event instanceof NavigationPageLoadedEvent
-            ? $event->getPage()->getCmsPage()
-            : $event->getResult()->first();
+        $context = $event->getSalesChannelContext();
 
-        if ($page->getType() !== 'product_list') {
-            return;
-        }
+        if ($this->configuration->isActive($context->getSalesChannel()->getId())) {
+            /** @var CmsPageEntity $page */
+            $page = $event instanceof NavigationPageLoadedEvent
+                ? $event->getPage()->getCmsPage()
+                : $event->getResult()->first();
 
-        /** @var CmsBlockEntity $block */
-        foreach ($page->getSections()->getBlocks() as $block) {
-            if ($block->getType() == 'product-listing') {
-                /** @var ProductListingStruct $listingContainer */
-                $listingContainer = $block->getSlots()->getSlot('content')->getData();
-                /** @var ProductListingResult $productListing */
-                $productListing = $listingContainer->getListing();
+            if ($page->getType() !== 'product_list') {
+                return;
+            }
 
-                if (!$this->gallyResults) {
-                    $productListing->addExtension(
-                        'gally-message',
-                        new Message('warning', $this->translator->trans('gally.listing.emptyResultMessage')));
-                    return;
+            /** @var CmsBlockEntity $block */
+            foreach ($page->getSections()->getBlocks() as $block) {
+                if ($block->getType() == 'product-listing') {
+                    /** @var ProductListingStruct $listingContainer */
+                    $listingContainer = $block->getSlots()->getSlot('content')->getData();
+                    /** @var ProductListingResult $productListing */
+                    $productListing = $listingContainer->getListing();
+
+                    if (!$this->gallyResults) {
+                        $productListing->addExtension(
+                            'gally-message',
+                            new Message(
+                                'warning',
+                                $this->translator->trans($this->configuration->getBaseUrl()
+                                    ? 'gally.listing.emptyResultMessage'
+                                    : 'gally.listing.wrongConfiguration')
+                            ));
+                        return;
+                    }
+
+                    $listingContainer->setListing($this->gallyResults->getResultListing($productListing));
                 }
-
-                $listingContainer->setListing($this->gallyResults->getResultListing($productListing));
             }
         }
     }
 
     public function handleSearchResult(SearchPageLoadedEvent $event): void
     {
-        $productListing = $event->getPage()->getListing();
+        $context = $event->getSalesChannelContext();
 
-        if (!$this->gallyResults) {
-            $productListing->addExtension(
-                'gally-message',
-                new Message('warning', $this->translator->trans('gally.listing.emptyResultMessage')));
-            return;
+        if ($this->configuration->isActive($context->getSalesChannel()->getId())) {
+            $productListing = $event->getPage()->getListing();
+
+            if (!$this->gallyResults) {
+                $productListing->addExtension(
+                    'gally-message',
+                    new Message(
+                        'warning',
+                        $this->translator->trans($this->configuration->getBaseUrl()
+                            ? 'gally.listing.emptyResultMessage'
+                            : 'gally.listing.wrongConfiguration')
+                    ));
+                return;
+            }
+
+            $event->getPage()->setListing($this->gallyResults->getResultListing($productListing));
         }
-
-        $event->getPage()->setListing($this->gallyResults->getResultListing($productListing));
     }
 
     /**
