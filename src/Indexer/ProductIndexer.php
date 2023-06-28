@@ -92,7 +92,6 @@ class ProductIndexer extends AbstractIndexer
                 if (array_key_exists('image', $data)) {
                     $media = array_filter($data['image']);
                     if (!empty($media)) {
-                        var_dump($media);
                         $data['image'] = !empty($media) ? reset($media) : '';
                     }
                 }
@@ -127,7 +126,7 @@ class ProductIndexer extends AbstractIndexer
     private function formatProduct(ProductEntity $product, Context $context): array
     {
         $data = [
-            'id' => $product->getAutoIncrement(),
+            'id' => "{$product->getAutoIncrement()}",
             'sku' => [$product->getProductNumber()],
             'name' => [$product->getName()],
             'image' => [$this->formatMedia($product) ?: null],
