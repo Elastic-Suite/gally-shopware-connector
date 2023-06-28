@@ -107,7 +107,8 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                     $productNumbers = [];
                 }
 
-                $criteria->addFilter(
+                $criteria->setFilter(
+                    'gally_filter',
                     new OrFilter([
                         new EqualsAnyFilter('productNumber', $productNumbers),
                         new EqualsAnyFilter('parent.productNumber', $productNumbers),

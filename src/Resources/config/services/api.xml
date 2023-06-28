@@ -4,7 +4,7 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
         <service id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider">
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument>%kernel.environment%</argument>
         </service>
         <service id="Gally\ShopwarePlugin\Api\AbstractClient" abstract="true">
             <argument type="service" id="Gally\ShopwarePlugin\Api\AuthenticationTokenProvider" />

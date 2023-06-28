@@ -87,6 +87,16 @@ class ProductIndexer extends AbstractIndexer
             /** @var ProductEntity $product */
             foreach ($products as $product) {
                 $data = $this->formatProduct($product, $context);
+
+                // Keep the first non-null image
+                if (array_key_exists('image', $data)) {
+                    $media = array_filter($data['image']);
+                    if (!empty($media)) {
+                        var_dump($media);
+                        $data['image'] = !empty($media) ? reset($media) : '';
+                    }
+                }
+
                 // Remove option ids in key from data. (We need before them to avoid duplicated property values.)
                 array_walk(
                     $data,
@@ -120,7 +130,7 @@ class ProductIndexer extends AbstractIndexer
             'id' => $product->getAutoIncrement(),
             'sku' => [$product->getProductNumber()],
             'name' => [$product->getName()],
-            'image' => [$this->formatMedia($product)],
+            'image' => [$this->formatMedia($product) ?: null],
             'price' => $this->formatPrice($product),
             'stock' => [
                 'status' => $product->getAvailableStock() > 0,

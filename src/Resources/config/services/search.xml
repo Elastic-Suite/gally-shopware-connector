@@ -36,5 +36,15 @@
         <service id="Gally\ShopwarePlugin\Search\CriteriaBuilder">
             <argument type="service" id="Gally\ShopwarePlugin\Search\SortOptionProvider"/>
         </service>
+
+        <service id="Gally\ShopwarePlugin\Search\ProductListingLoader"
+                 decorates="Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingLoader">
+            <argument type="service" id=".inner"/>
+            <argument type="service" id="sales_channel.product.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="event_dispatcher"/>
+            <argument type="service" id="Shopware\Core\Content\Product\SalesChannel\ProductCloseoutFilterFactory"/>
+        </service>
     </services>
 </container>
