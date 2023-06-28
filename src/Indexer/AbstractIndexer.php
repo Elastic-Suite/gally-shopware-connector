@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Indexer;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Service\IndexOperation;
 use Shopware\Core\Content\Media\Pathname\UrlGenerator;
+use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -90,6 +91,11 @@ abstract class AbstractIndexer
 
     protected function getContext(SalesChannelEntity $salesChannel, LanguageEntity $language): Context
     {
-        return new Context(new SystemSource(), [], $salesChannel->getCurrencyId(), [$language->getId()]);
+        return new Context(
+            new SystemSource(),
+            [],
+            $salesChannel->getCurrencyId(),
+            [$language->getId(), Defaults::LANGUAGE_SYSTEM]
+        );
     }
 }

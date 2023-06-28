@@ -52,7 +52,7 @@ class CategoryIndexer extends AbstractIndexer
             'parentId' => $category->getParentId(),
             'level' => $category->getLevel(),
             'path' => trim(str_replace('|', '/', $category->getPath() ?? '') . $category->getId(), '/'),
-            'name' => $category->getName()
+            'name' => $category->getTranslation('name')
         ];
     }
 }

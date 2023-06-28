@@ -128,7 +128,7 @@ class ProductIndexer extends AbstractIndexer
         $data = [
             'id' => "{$product->getAutoIncrement()}",
             'sku' => [$product->getProductNumber()],
-            'name' => [$product->getName()],
+            'name' => [$product->getTranslation('name')],
             'image' => [$this->formatMedia($product) ?: null],
             'price' => $this->formatPrice($product),
             'stock' => [
@@ -153,7 +153,7 @@ class ProductIndexer extends AbstractIndexer
             }
             $data[$propertyId][$property->getId()] = [
                 'value' => $property->getId(),
-                'label' => $property->getName(),
+                'label' => $property->getTranslation('name'),
             ];
         }
 

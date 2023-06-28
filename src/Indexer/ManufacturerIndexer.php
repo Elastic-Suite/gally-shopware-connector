@@ -37,8 +37,8 @@ class ManufacturerIndexer extends AbstractIndexer
     {
         return [
             'id' => $manufacturer->getId(),
-            'name' => $manufacturer->getName(),
-            'description' => $manufacturer->getDescription(),
+            'name' => $manufacturer->getTranslation('name'),
+            'description' => $manufacturer->getTranslation('description'),
             'link' => $manufacturer->getLink(),
             'image' =>  $manufacturer->getMedia()
                 ? $this->urlGenerator->getRelativeMediaUrl($manufacturer->getMedia())
