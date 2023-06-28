@@ -15,7 +15,8 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
  */
 class SortOptionProvider
 {
-    public const DEFAULT_SEARCH_SORT = '_score';
+    public const DEFAULT_SEARCH_SORT = '_default';
+    public const SCORE_SEARCH_SORT = '_score';
 
     protected RestClient $client;
 
@@ -32,7 +33,7 @@ class SortOptionProvider
         /** @var CategorySortingOption $option */
         foreach ($sortingOptions as $option) {
             foreach ([FieldSorting::ASCENDING, FieldSorting::DESCENDING] as $direction) {
-                if ($option->getCode() === self::DEFAULT_SEARCH_SORT) {
+                if ($option->getCode() === self::SCORE_SEARCH_SORT) {
                     if ($direction === FieldSorting::ASCENDING) {
                         continue;
                     }
@@ -57,6 +58,21 @@ class SortOptionProvider
                 $sortings->add($sortingEntity);
             }
         }
+
+        $sortingEntity = new ProductSortingEntity();
+        $sortingEntity->setId(self::DEFAULT_SEARCH_SORT);
+        $sortingEntity->setKey(self::DEFAULT_SEARCH_SORT);
+        $sortingEntity->setLabel(self::DEFAULT_SEARCH_SORT);
+        $sortingEntity->addTranslated('label', self::DEFAULT_SEARCH_SORT);
+        $sortingEntity->setLocked(true);
+        $sortingEntity->setFields([
+            [
+                'field' => self::DEFAULT_SEARCH_SORT,
+                'order' => FieldSorting::ASCENDING,
+                'priority' => 1,
+            ]
+        ]);
+        $sortings->add($sortingEntity);
 
         return $sortings;
     }

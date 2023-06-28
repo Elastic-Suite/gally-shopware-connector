@@ -103,12 +103,12 @@ class CriteriaBuilder
         $sortings = $criteria->getExtension('gally-sortings') ?? $this->sortOptionProvider->getSortingOptions();
         $currentSortKey = $request->get('order');
         $currentSorting = $sortings->getByKey($currentSortKey);
-        if ($currentSorting === null) {
-            new ProductSortingNotFoundException($currentSortKey);
-        }
 
         $criteria->resetSorting(); // Remove multiple default shopware sortings.
-        $criteria->addSorting(...$currentSorting->createDalSorting());
+        if ($currentSorting !== null) {
+            $criteria->addSorting(...$currentSorting->createDalSorting());
+        }
+
         $criteria->addExtension('gally-sortings', $sortings);
         // Clone collection to prevent adding shopware base sorting in this list.
         $criteria->addExtension('sortings', clone $sortings);

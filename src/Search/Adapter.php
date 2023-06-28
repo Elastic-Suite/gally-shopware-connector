@@ -32,21 +32,23 @@ class Adapter
         $navigationsIds = $criteria->getIds();
         $currentPage = $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
 
+        $data = [
+            'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
+            'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
+            'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
+            'search' => $criteria->getTerm(),
+            'currentPage' => $currentPage,
+            'pageSize' => $criteria->getLimit(),
+            'filter' => $this->getFiltersFromCriteria($criteria)
+        ];
+
+        if ($sort->getField() !== SortOptionProvider::DEFAULT_SEARCH_SORT) {
+            $data['sort'] = [$sort->getField() => strtolower($sort->getDirection())];
+        }
+
         return $this->resultBuilder->build(
             $context,
-            $this->client->query(
-                $this->getSearchQuery(),
-                [
-                    'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
-                    'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
-                    'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
-                    'search' => $criteria->getTerm(),
-                    'sort' => [$sort->getField() => strtolower($sort->getDirection())],
-                    'currentPage' => $currentPage,
-                    'pageSize' => $criteria->getLimit(),
-                    'filter' => $this->getFiltersFromCriteria($criteria)
-                ]
-            ),
+            $this->client->query($this->getSearchQuery(), $data),
             $currentPage
         );
     }

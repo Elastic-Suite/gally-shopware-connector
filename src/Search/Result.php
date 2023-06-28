@@ -70,7 +70,7 @@ class Result
             $newListing->addCurrentFilter($name, $filter);
         }
 
-        $sortKey = $this->sortField === '_score'
+        $sortKey = $this->sortField === SortOptionProvider::SCORE_SEARCH_SORT
             ? $this->sortField
             : $this->sortField . '-' . $this->sortDirection;
 
@@ -78,7 +78,9 @@ class Result
         $newListing->getCriteria()->setOffset(($this->currentPage - 1) * $this->itemPerPage);
         $newListing->setExtensions($listing->getExtensions());
         $newListing->setSorting($sortKey);
-        $newListing->setAvailableSortings($listing->getAvailableSortings());
+        $sortings = $listing->getAvailableSortings();
+        $sortings->remove(SortOptionProvider::DEFAULT_SEARCH_SORT);
+        $newListing->setAvailableSortings($sortings);
 
         $this->sortListing($newListing);
         return $newListing;
