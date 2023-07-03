@@ -70,6 +70,7 @@ abstract class AbstractIndexer
                         $bulk[$document['id']] = json_encode($document);
                         if (count($bulk) >= $batchSize) {
                             $this->indexOperation->executeBulk($indexName, $bulk);
+                            $bulk = [];
                         }
                     }
                     if (count($bulk)) {

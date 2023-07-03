@@ -84,16 +84,16 @@ class ProductIndexer extends AbstractIndexer
         $products = $this->entityRepository->search($criteria, $context);
 
         while ($products->count()) {
+            $children = $this->getChildren($products, $context);
+
             /** @var ProductEntity $product */
             foreach ($products as $product) {
-                $data = $this->formatProduct($product, $context);
+                $data = $this->formatProduct($product, $children, $context);
 
                 // Keep the first non-null image
                 if (array_key_exists('image', $data)) {
                     $media = array_filter($data['image']);
-                    if (!empty($media)) {
-                        $data['image'] = !empty($media) ? reset($media) : '';
-                    }
+                    $data['image'] = !empty($media) ? reset($media) : '';
                 }
 
                 // Remove option ids in key from data. (We need before them to avoid duplicated property values.)
@@ -123,7 +123,7 @@ class ProductIndexer extends AbstractIndexer
         $this->categoryCollection = $this->categoryRepository->search($criteria, $context);
     }
 
-    private function formatProduct(ProductEntity $product, Context $context): array
+    private function formatProduct(ProductEntity $product, EntitySearchResult $children, Context $context): array
     {
         $data = [
             'id' => "{$product->getAutoIncrement()}",
@@ -162,9 +162,10 @@ class ProductIndexer extends AbstractIndexer
         }
 
         if ($product->getChildCount()) {
-            /** @var ProductEntity $child */
-            foreach ($this->getChildren($product, $context) as $child) {
-                $childData = $this->formatProduct($child, $context);
+            foreach ($product->getChildren()->getIds() as $childId) {
+                /** @var ProductEntity $child */
+                $child = $children->get($childId);
+                $childData = $this->formatProduct($child, $children, $context);
                 $childData['children.sku'] = $childData['sku'];
                 unset($childData['id']);
                 unset($childData['sku']);
@@ -250,10 +251,10 @@ class ProductIndexer extends AbstractIndexer
             : [];
     }
 
-    private function getChildren(ProductEntity $product, Context $context): EntitySearchResult
+    private function getChildren(EntitySearchResult $products, Context $context): EntitySearchResult
     {
         $criteria = new Criteria();
-        $criteria->addFilter(new EqualsAnyFilter('id', $product->getChildren()->getIds()));
+        $criteria->addFilter(new EqualsAnyFilter('parentId', $products->getIds()));
         $criteria->addAssociations(
             [
                 'categories',
