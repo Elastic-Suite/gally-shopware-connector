@@ -61,7 +61,7 @@ class FieldSubscriber implements EventSubscriberInterface
                     $criteria->addAssociations(['customFieldSet', 'customFieldSet.relations']);
                     /** @var CustomFieldEntity $field */
                     $field = $this->customFieldRepository
-                        ->search($criteria, Context::createDefaultContext())
+                        ->search($criteria, $event->getContext())
                         ->getEntities()
                         ->first();
                     foreach ($field->getCustomFieldSet()->getRelations() as $entity) {
@@ -81,7 +81,7 @@ class FieldSubscriber implements EventSubscriberInterface
                     ]);
                     $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => 'product']);
                     $property = $this->propertyGroupRepository
-                        ->search($criteria, Context::createDefaultContext())
+                        ->search($criteria, $event->getContext())
                         ->getEntities()
                         ->first();
                     $this->sourceFieldSynchronizer->synchronizeItem(
@@ -100,7 +100,7 @@ class FieldSubscriber implements EventSubscriberInterface
             $criteria->addAssociations(['customFields', 'relations']);
             /** @var CustomFieldSetEntity $fieldSet */
             $fieldSet = $this->customFieldSetRepository
-                ->search($criteria, Context::createDefaultContext())
+                ->search($criteria, $event->getContext())
                 ->getEntities()
                 ->first();
             foreach ($fieldSet->getRelations() as $entity) {

@@ -41,7 +41,7 @@ class SalesChannelSubscriber implements EventSubscriberInterface
             $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
 
             $salesChannel = $this->entityRepository
-                ->search($criteria, Context::createDefaultContext())
+                ->search($criteria, $event->getContext())
                 ->getEntities()
                 ->first();
 

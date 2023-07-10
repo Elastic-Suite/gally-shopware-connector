@@ -24,7 +24,6 @@ abstract class AbstractIndexer
     protected EntityRepository $salesChannelRepository;
     protected IndexOperation $indexOperation;
     protected UrlGenerator $urlGenerator;
-
     protected EntityRepository $entityRepository;
 
     public function __construct(
