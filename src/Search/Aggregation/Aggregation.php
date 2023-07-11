@@ -17,7 +17,6 @@ class Aggregation extends BucketResult
         string $label,
         private string $field,
         private string $type,
-        private bool $hasMore,
         array $options
     ) {
         parent::__construct($label, $options);
@@ -36,11 +35,6 @@ class Aggregation extends BucketResult
     public function getType(): string
     {
         return $this->type;
-    }
-
-    public function hasMore(): bool
-    {
-        return $this->hasMore;
     }
 
     public function getOptions(): array

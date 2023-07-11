@@ -14,9 +14,13 @@
         <service id="Gally\ShopwarePlugin\Controller\ViewMoreFacetOptionController" public="true">
             <argument type="service" id="Shopware\Storefront\Framework\Routing\RequestTransformer" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\CriteriaBuilder" />
+            <argument type="service" id="Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\Adapter" />
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
+            </call>
+            <call method="setTwig">
+                <argument type="service" id="twig"/>
             </call>
         </service>
     </services>

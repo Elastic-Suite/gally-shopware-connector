@@ -29,6 +29,6 @@ class ProductSearchBuilder implements ProductSearchBuilderInterface
         }
 
         // For gally search criteria building is managed in
-        // \Gally\ShopwarePlugin\Search\ProductListingFeaturesSubscriber::handleListingRequest
+        // @see \Gally\ShopwarePlugin\Search\ProductListingFeaturesSubscriber::handleListingRequest
     }
 }

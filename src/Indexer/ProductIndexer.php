@@ -135,7 +135,8 @@ class ProductIndexer extends AbstractIndexer
             ],
             'category' => $this->formatCategories($product),
             'manufacturer' => $this->formatManufacturer($product),
-            'free_shipping' => $product->getShippingFree()
+            'free_shipping' => $product->getShippingFree(),
+            'rating_avg' => $product->getRatingAverage(),
         ];
 
         $properties = array_merge(
@@ -170,6 +171,7 @@ class ProductIndexer extends AbstractIndexer
                 unset($childData['stock']);
                 unset($childData['price']);
                 unset($childData['free_shipping']);
+                unset($childData['rating_avg']);
                 foreach ($childData as $field => $value) {
                     $data[$field] = array_merge($data[$field] ?? [], $value);
                 }
@@ -177,7 +179,11 @@ class ProductIndexer extends AbstractIndexer
         }
 
         // Remove empty values
-        return array_filter($data, fn ($item) => !is_array($item) || !empty(array_filter($item)));
+        return array_filter(
+            $data,
+            fn ($item, $key) => in_array($key, ['stock']) || !is_array($item) || !empty(array_filter($item)),
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 
     private function formatPrice(ProductEntity $product): array

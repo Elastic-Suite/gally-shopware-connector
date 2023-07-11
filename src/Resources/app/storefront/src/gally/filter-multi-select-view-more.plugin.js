@@ -1,9 +1,9 @@
 
-import FilterPropertySelectPlugin from 'src/plugin/listing/filter-property-select.plugin';
+import FilterMultiSelectPlugin from 'src/plugin/listing/filter-multi-select.plugin';
 import DomAccess from 'src/helper/dom-access.helper';
 import ViewMoreHelper from './view-more.helper';
 
-export default class FilterPropertySelectViewMorePlugin extends FilterPropertySelectPlugin {
+export default class FilterMultiSelectViewMorePlugin extends FilterMultiSelectPlugin {
 
   init() {
     super.init();

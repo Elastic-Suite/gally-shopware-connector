@@ -5,11 +5,11 @@
 - From the shopware Back-Office, activate and configure the Gally extension.
 - Run this commands from your Shopware instance. This commands must be runned only once to synchronize the structure.
     ```shell
-        bin/console --no-debug gally:structure-sync   # Sync catalog et source field data with gally
+        bin/console gally:structure-sync   # Sync catalog et source field data with gally
     ```
 - Run a full index from Shopware to Gally. This command can be run only once. Afterwards, the modified products are automatically synchronized.
     ```shell
-        bin/console --no-debug gally:index            # Index category and product entity to gally
+        bin/console gally:index            # Index category and product entity to gally
     ```
 - At this step, you should be able to see your product and source field in the Gally backend.
 - They should also appear in your Shopware frontend when searching or browsing categories.
@@ -50,10 +50,10 @@
     - [x] aggregation free shipping
     - [X] aggregation manufacturer
     - [X] aggregation category
-    - [X] category visbility
-    - [ ] aggregation render swatches
+    - [X] category visibility
+    - [x] aggregation render swatches
     - [X] aggregation has more
-    - [ ] category multi select (with gally we can't have multiple category in filter, on shopware we can't build non multiselect filters)
+    - [X] category multi select (with gally we can't have multiple category in filter, on shopware we can't build non multiselect filters)
 - Config
   - [ ] Hide or native useless configuration on shopware administration to avoid confusion on what can be made from gally side or shopware side.
 - Miscellaneous
@@ -61,7 +61,3 @@
   - [ ] Unit test
   - [ ] fetchAll entity on each sync may create perf issue ?
 
-## Todo gally
-
-- [x] Bulk rest category (https://github.com/Elastic-Suite/gally-standard/pull/37)
-- [X] Set product id as string 

@@ -22,7 +22,7 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
         $sourceFieldOption = $entity->getSourceFieldOption();
         $sourceFieldOption = is_string($sourceFieldOption)
             ? $sourceFieldOption
-            : '/source_field_options/' . $sourceFieldOption->getId(); // @phpstan-ignore-line
+            : '/source_field_options/' . $sourceFieldOption->getId();
         return $sourceFieldOption . $entity->getLocalizedCatalog();
     }
 

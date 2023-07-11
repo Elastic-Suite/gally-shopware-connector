@@ -1,0 +1,11 @@
+{% sw_extends '@Storefront/storefront/component/listing/filter/filter-multi-select-list-item.html.twig' %}
+
+{% set dataUrl = url('frontend.gally.viewMore') %}
+
+{% block component_filter_multi_select_list_item %}
+    {% if element.id == "gally-show-more" %}
+        <a class="viewMoreLink" data-filter-code="" data-url="{{ dataUrl }}">{{ 'gally.filter.viewMore' | trans }}</a>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

@@ -1,44 +1,12 @@
 {% sw_extends '@Storefront/storefront/component/listing/filter-panel.html.twig' %}
 
 {% block component_filter_panel_items %}
-    {{ parent() }}
-
-    {% set aggregations = listing.aggregations.get('gally-aggregations') %}
-
-    {% if not aggregations.buckets is empty %}
-        {% for aggregationItem in aggregations.buckets %}
-
-            {% set aggregation = aggregationItem.result %}
-
-            {% if aggregation.type == 'slider' %}
-                {% sw_include '@Storefront/storefront/component/listing/filter/filter-range.html.twig' with {
-                    sidebar: sidebar,
-                    name: aggregation.field,
-                    minKey: aggregation.field ~ '_min',
-                    maxKey: aggregation.field ~ '_max',
-                    lowerBound: 0,
-                    displayName: aggregation.name|trans|sw_sanitize,
-                    minInputValue: 0,
-                    maxInputValue: max(aggregation.keys),
-                } %}
-            {% elseif aggregation.type == 'boolean' %}
-                {% sw_include '@Storefront/storefront/component/listing/filter/filter-boolean.html.twig' with {
-                    name: aggregation.field ~ '_bool',
-                    displayName: aggregation.name|trans|sw_sanitize,
-                } %}
-            {% else %}
-                {% sw_include '@GallyPlugin/storefront/component/listing/filter/gally-filter-select.html.twig' with {
-                    elements: aggregation.options,
-                    sidebar: sidebar,
-                    name: aggregation.field,
-                    displayName: aggregation.name|trans|sw_sanitize,
-                    displayType: 'nop',
-                    pluginSelector: 'filter-property-select',
-                    propertyName: aggregation.name,
-                    hasMore: aggregation.hasMore
-                } %}
-            {% endif %}
-        {% endfor %}
+    {% if config('GallyPlugin.config.active') %}
+        {% sw_include '@GallyPlugin/storefront/component/listing/filter-panel-item.html.twig' with {
+            aggregations: listing.aggregations
+        } %}
+    {% else %}
+        {{ parent() }}
     {% endif %}
-
 {% endblock %}
+

@@ -22,4 +22,14 @@ class AggregationOption extends Bucket
     {
         return $this->label;
     }
+
+    public function getTranslated(): array
+    {
+        return ['name' => $this->getLabel()];
+    }
+
+    public function getId(): string
+    {
+        return $this->getKey();
+    }
 }

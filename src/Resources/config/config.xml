@@ -21,7 +21,6 @@
         <component name="gally-button">
             <name>index</name>
             <action>index</action>
-            <helpText>Please fill in your personal eMail address</helpText>
         </component>
     </card>
     <card>

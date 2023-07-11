@@ -36,7 +36,7 @@ class ResultBuilder
             (int) $response['paginationInfo']['itemsPerPage'],
             $response['sortInfo']['current'][0]['field'],
             $response['sortInfo']['current'][0]['direction'],
-            $this->aggregationBuilder->build($response['aggregations'] ?? [])
+            $this->aggregationBuilder->build($response['aggregations'] ?? [], $context)
         );
     }
 

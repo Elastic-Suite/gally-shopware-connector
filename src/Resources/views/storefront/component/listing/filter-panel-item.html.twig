@@ -1,0 +1,90 @@
+
+{% for aggregation in aggregations %}
+    {% if aggregation.name == 'manufacturer__value' %}
+        {% block gally_component_filter_panel_item_manufacturer %}
+            {# @var aggregation \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+            {% if not aggregation.entities is empty %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
+                    elements: aggregation.entities,
+                    sidebar: sidebar,
+                    name: 'g_' ~ aggregation.name,
+                    displayName: 'listing.filterManufacturerDisplayName'|trans|sw_sanitize
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif aggregation.name == 'free_shipping' %}
+        {% block gally_component_filter_panel_item_shipping_free %}
+            {% set shippingFree = aggregation %}
+            {% if shippingFree.max > 0 %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-boolean.html.twig' with {
+                    name: "g_" ~ aggregation.name ~ '_bool',
+                    displayName: 'listing.filterFreeShippingDisplayName'|trans|sw_sanitize
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif aggregation.name == 'stock__status' %}
+        {% block gally_component_filter_panel_item_stock__status %}
+            {% set stockStatus = aggregation %}
+            {% if stockStatus.max > 0 %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-boolean.html.twig' with {
+                    name: 'g_' ~ aggregation.name ~ '_bool',
+                    displayName: 'gally.listing.filterStockStatusDisplayName'|trans|sw_sanitize
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif aggregation.name == 'rating_avg' %}
+        {% block gally_component_filter_panel_item_rating %}
+            {% if aggregation.max > 0 %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-rating-select.html.twig' with {
+                    sidebar: sidebar,
+                    name: 'g_' ~ aggregation.name ~ '_min',
+                    pluginSelector: 'filter-rating-select',
+                    displayName: 'listing.filterRatingDisplayName'|trans|sw_sanitize
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif aggregation.name == 'price__price' %}
+        {% block gally_component_filter_panel_item_price %}
+            {% set price = aggregation %}
+            {% if price.min !== null and price.max !== null %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-range.html.twig' with {
+                    sidebar: sidebar,
+                    name: 'g_' ~ aggregation.name,
+                    minKey: 'g_' ~ aggregation.name ~ '_min',
+                    maxKey: 'g_' ~ aggregation.name ~ '_max',
+                    lowerBound: 0,
+                    displayName: 'listing.filterPriceDisplayName'|trans|sw_sanitize,
+                    minInputValue: 0,
+                    maxInputValue: price.max,
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif aggregation.name starts with 'property_' %}
+        {% block gally_component_filter_panel_item_properties %}
+            {# @var properties \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+            {% set properties = aggregation %}
+            {% if not properties.entities is empty %}
+                {% for property in properties.entities %}
+                    {% sw_include '@Storefront/storefront/component/listing/filter/filter-property-select.html.twig' with {
+                        elements: property.options,
+                        sidebar: sidebar,
+                        name: 'g_' ~ aggregation.name,
+                        displayName: property.translated.name,
+                        displayType: property.displayType,
+                        pluginSelector: 'filter-property-select',
+                        propertyName: property.translated.name
+                    } %}
+                {% endfor %}
+            {% endif %}
+        {% endblock %}
+    {% else %}
+        {% block gally_component_filter_panel_item_custom_fields %}
+            {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
+                elements: aggregation.options,
+                sidebar: sidebar,
+                name: 'g_' ~ aggregation.field,
+                displayName: aggregation.name|trans|sw_sanitize
+            } %}
+        {% endblock %}
+    {% endif %}
+{% endfor %}

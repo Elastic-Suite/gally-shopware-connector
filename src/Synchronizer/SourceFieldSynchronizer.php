@@ -36,6 +36,10 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                 'type' => 'boolean',
                 'labelKey' => 'listing.filterFreeShippingDisplayName'
             ],
+            'rating_avg' => [
+                'type' => 'float',
+                'labelKey' => 'listing.filterRatingDisplayName'
+            ],
             'category' => [
                 'type' => 'category',
                 'labelKey' => 'general.categories'

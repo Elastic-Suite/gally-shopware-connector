@@ -4,12 +4,13 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Controller;
 
 use Gally\ShopwarePlugin\Search\Adapter;
+use Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder;
 use Gally\ShopwarePlugin\Search\CriteriaBuilder;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Shopware\Storefront\Controller\StorefrontController;
 use Shopware\Storefront\Framework\Routing\RequestTransformer;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -17,11 +18,12 @@ use Symfony\Component\Routing\Annotation\Route;
  *
  * @Route(defaults={"_routeScope"={"storefront"}})
  */
-class ViewMoreFacetOptionController extends AbstractController
+class ViewMoreFacetOptionController extends StorefrontController
 {
     public function __construct(
         private RequestTransformer $transformer,
         private CriteriaBuilder $criteriaBuilder,
+        private AggregationBuilder $aggregationBuilder,
         private Adapter $adapter
     ) {
     }
@@ -29,7 +31,7 @@ class ViewMoreFacetOptionController extends AbstractController
     /**
      * @Route("/gally/viewMore", name="frontend.gally.viewMore", methods={"POST"}, defaults={"XmlHttpRequest"=true})
      */
-    public function viewMore(Request $request, SalesChannelContext $context): JsonResponse
+    public function viewMore(Request $request, SalesChannelContext $context): Response
     {
         $referer = $this->buildRefererRequest($request);
         $params = json_decode($request->getContent(), true);
@@ -38,7 +40,27 @@ class ViewMoreFacetOptionController extends AbstractController
         }
         $criteria = $this->criteriaBuilder->build($referer, $context);
 
-        return new JsonResponse($this->adapter->viewMoreOption($context, $criteria, $params['aggregation']));
+        $field = preg_replace('/^' . CriteriaBuilder::GALLY_FILTER_PREFIX . '/', '', $params['aggregation']);
+        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field);
+
+        return $this->renderStorefront(
+            '@GallyPlugin/storefront/component/listing/filter-panel-item.html.twig',
+            [
+                'aggregations' => $this->aggregationBuilder->build(
+                    [
+                        [
+                            'field' => $field,
+                            'label' => $field,
+                            'type' => 'checkbox',
+                            'count' => 1,
+                            'options' => $rawOptions,
+                            'hasMore' => false,
+                        ]
+                    ],
+                    $context
+                )
+            ]
+        );
     }
 
     /**
@@ -51,7 +73,9 @@ class ViewMoreFacetOptionController extends AbstractController
         $server = $request->server->all();
         $server['REQUEST_URI'] = $refererUri;
         $server['QUERY_STRING'] = $refererUrl['query'] ?? '';
-        $request = $request->duplicate(null, null, [], null, null, $server);
+        $query = [];
+        parse_str($refererUrl['query'] ?? '', $query);
+        $request = $request->duplicate(null, $query, [], null, null, $server);
 
         $request = $this->transformer->transform($request);
         $pathInfo = explode('/', trim($request->getPathInfo(), '/'));

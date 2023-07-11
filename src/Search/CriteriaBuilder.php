@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Search;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\Product\SalesChannel\Exception\ProductSortingNotFoundException;
+use Shopware\Core\Content\Product\SalesChannel\Search\ResolvedCriteriaProductSearchRoute;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
 use Shopware\Core\Content\Product\SearchKeyword\ProductSearchBuilderInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -21,7 +22,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class CriteriaBuilder
 {
-    private array $nonFilterParameters = ['order', 'p', 'search', 'slots', 'aggregation', 'no-aggregations'];
+    public const GALLY_FILTER_PREFIX = 'g_';
 
     public function __construct(
         private SortOptionProvider $sortOptionProvider
@@ -51,9 +52,11 @@ class CriteriaBuilder
 
         $filterData = [];
         foreach ($filters as $field => $value) {
-            if (in_array($field, $this->nonFilterParameters)) {
+            if (!str_starts_with($field, self::GALLY_FILTER_PREFIX)) {
                 continue;
             }
+
+            $field = preg_replace('/^' . self::GALLY_FILTER_PREFIX . '/', '', $field);
 
             $data = [];
             if (str_contains($field, '_min')) {
@@ -93,7 +96,8 @@ class CriteriaBuilder
 
     private function handleSorting(Request $request, Criteria $criteria): void
     {
-        if (!$request->get('order')) {
+        if (!$request->get('order')
+            || $request->get('order') === ResolvedCriteriaProductSearchRoute::DEFAULT_SEARCH_SORT) {
             $request->request->set('order', SortOptionProvider::DEFAULT_SEARCH_SORT);
         }
 
