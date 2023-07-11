@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Command;
 
 use Gally\ShopwarePlugin\Indexer\AbstractIndexer;
+use Shopware\Core\Framework\Context;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -36,7 +37,7 @@ class Index extends Command
             $time = microtime(true);
             $message = "<comment>Indexing {$indexer->getEntityType()}</comment>";
             $output->writeln("$message ...");
-            $indexer->reindex();
+            $indexer->reindex(Context::createDefaultContext());
             $time = number_format(microtime(true) - $time, 2);
             $output->writeln("\033[1A$message <info>✔</info> ($time)s");
         }

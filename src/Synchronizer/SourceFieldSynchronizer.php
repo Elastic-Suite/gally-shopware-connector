@@ -86,7 +86,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         return $entity->getMetadata() . $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(Context $context)
     {
         $this->fetchEntities();
         $this->sourceFieldLabelSynchronizer->fetchEntities();
@@ -104,7 +104,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             foreach ($this->staticFields[$entity] ?? [] as $code => $data) {
                 $labels = [];
                 if (is_array($data)) {
-                    foreach ($this->getAllAvailableLocales() as $locale) {
+                    foreach ($this->getAllAvailableLocales($context) as $locale) {
                         $labels[$locale] = $this->translator->trans($data['labelKey'], [], null, $locale);
                     }
                 }
@@ -118,9 +118,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
 
             // Custom fields
             /** @var CustomFieldCollection $customFields */
-            $customFields = $this->customFieldRepository
-                ->search($criteria, Context::createDefaultContext())
-                ->getEntities();
+            $customFields = $this->customFieldRepository->search($criteria, $context)->getEntities();
             foreach ($customFields as $customField) {
                 $this->synchronizeItem(['metadata' => $metadata, 'field' => $customField]);
             }
@@ -139,9 +137,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                 ]);
 
                 /** @var PropertyGroupCollection $properties */
-                $properties = $this->propertyGroupRepository
-                    ->search($criteria, Context::createDefaultContext())
-                    ->getEntities();
+                $properties = $this->propertyGroupRepository->search($criteria, $context)->getEntities();
 
                 foreach ($properties as $property) {
                     $this->synchronizeItem(['metadata' => $metadata, 'field' => $property]);
@@ -264,11 +260,11 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         ];
     }
 
-    private function getAllAvailableLocales(): iterable
+    private function getAllAvailableLocales(Context $context): iterable
     {
         $criteria = new Criteria();
         $criteria->addAssociations(['locale']);
-        $languages = $this->languageRepository->search($criteria, Context::createDefaultContext());
+        $languages = $this->languageRepository->search($criteria, $context);
 
         /** @var LanguageEntity $language */
         foreach ($languages as $language) {

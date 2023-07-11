@@ -9,6 +9,7 @@ use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelWrite;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionLabelRead;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
+use Shopware\Core\Framework\Context;
 
 /**
  * Synchronize shopware custom field and property option labels with gally source field option labels.
@@ -26,7 +27,7 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
         return $sourceFieldOption . $entity->getLocalizedCatalog();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(Context $context)
     {
         throw new \LogicException('Run source field synchronizer to sync all localized option labels');
     }

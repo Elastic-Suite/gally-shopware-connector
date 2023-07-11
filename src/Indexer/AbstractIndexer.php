@@ -29,15 +29,13 @@ abstract class AbstractIndexer
     ) {
     }
 
-    public function reindex(array $documentIdsToReindex = []): void
+    public function reindex(Context $context, array $documentIdsToReindex = []): void
     {
         $criteria = new Criteria();
         $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency', 'domains']);
 
         /** @var SalesChannelCollection $salesChannels */
-        $salesChannels = $this->salesChannelRepository
-            ->search($criteria, Context::createDefaultContext())
-            ->getEntities();
+        $salesChannels = $this->salesChannelRepository->search($criteria, $context)->getEntities();
 
         /** @var SalesChannelEntity $salesChannel */
         foreach ($salesChannels as $salesChannel) {

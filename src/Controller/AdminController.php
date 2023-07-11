@@ -7,6 +7,8 @@ use Gally\Rest\ApiException;
 use Gally\ShopwarePlugin\Api\AuthenticationTokenProvider;
 use Gally\ShopwarePlugin\Indexer\AbstractIndexer;
 use Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -61,12 +63,12 @@ class AdminController extends AbstractController
     /**
      * @Route("/api/gally/synchronize", name="api.gally.synchronize", methods={"POST"})
      */
-    public function synchronizeStructure(): JsonResponse
+    public function synchronizeStructure(Context $context): JsonResponse
     {
         $responseData = ['error' => false];
         try {
             foreach ($this->synchronizers as $synchronizer) {
-                $synchronizer->synchronizeAll();
+                $synchronizer->synchronizeAll($context);
             }
             $responseData['message'] = "Syncing catalog structure with gally succeeded";
         } catch (\Exception $exception) {
@@ -79,12 +81,12 @@ class AdminController extends AbstractController
     /**
      * @Route("/api/gally/index", name="api.gally.index", methods={"POST"})
      */
-    public function index(): JsonResponse
+    public function index(Context $context): JsonResponse
     {
         $responseData = ['error' => false];
         try {
             foreach ($this->indexers as $indexer) {
-                $indexer->reindex();
+                $indexer->reindex($context);
             }
             $responseData['message'] = "Index catalog data to gally succeeded";
         } catch (\Exception $exception) {

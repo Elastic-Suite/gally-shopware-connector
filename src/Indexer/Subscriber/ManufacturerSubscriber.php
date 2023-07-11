@@ -29,6 +29,6 @@ class ManufacturerSubscriber implements EventSubscriberInterface
         foreach ($event->getWriteResults() as $writeResult) {
             $documentsIdsToReindex[] = $writeResult->getPrimaryKey();
         }
-        $this->manufacturerIndexer->reindex($documentsIdsToReindex);
+        $this->manufacturerIndexer->reindex($event->getContext(), $documentsIdsToReindex);
     }
 }

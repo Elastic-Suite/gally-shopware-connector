@@ -5,13 +5,14 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\Metadata;
 use Gally\Rest\Model\ModelInterface;
+use Shopware\Core\Framework\Context;
 
 /**
  * Synchronize shopware entity with gally metadata.
  */
 class MetadataSynchronizer extends AbstractSynchronizer
 {
-    public function synchronizeAll()
+    public function synchronizeAll(Context $context)
     {
         throw new \LogicException('Run source field synchronizer to sync all metadata');
     }

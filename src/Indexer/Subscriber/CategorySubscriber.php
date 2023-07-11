@@ -29,6 +29,6 @@ class CategorySubscriber implements EventSubscriberInterface
         foreach ($event->getWriteResults() as $writeResult) {
             $documentsIdsToReindex[] = $writeResult->getPrimaryKey();
         }
-        $this->categoryIndexer->reindex($documentsIdsToReindex);
+        $this->categoryIndexer->reindex($event->getContext(), $documentsIdsToReindex);
     }
 }

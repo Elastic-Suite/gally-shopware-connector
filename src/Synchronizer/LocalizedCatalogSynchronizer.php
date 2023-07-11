@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\Catalog;
 use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\ModelInterface;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 
@@ -22,7 +23,7 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
         return $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(Context $context)
     {
         throw new \LogicException('Run catalog synchronizer to sync all localized catalog');
     }

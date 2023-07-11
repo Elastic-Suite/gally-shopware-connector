@@ -6,6 +6,7 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\ModelInterface;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
+use Shopware\Core\Framework\Context;
 
 /**
  * Synchronize shopware store structure with gally.
@@ -27,7 +28,7 @@ abstract class AbstractSynchronizer
     ) {
     }
 
-    abstract public function synchronizeAll();
+    abstract public function synchronizeAll(Context $context);
 
     abstract public function synchronizeItem(array $params): ?ModelInterface;
 

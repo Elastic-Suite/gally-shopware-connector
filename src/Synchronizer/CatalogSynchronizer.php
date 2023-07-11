@@ -45,7 +45,7 @@ class CatalogSynchronizer extends AbstractSynchronizer
         return $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(Context $context)
     {
         $this->fetchEntities();
         $this->localizedCatalogSynchronizer->fetchEntities();
@@ -54,9 +54,7 @@ class CatalogSynchronizer extends AbstractSynchronizer
         $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
 
         /** @var SalesChannelCollection $salesChannels */
-        $salesChannels = $this->entityRepository
-            ->search($criteria, Context::createDefaultContext())
-            ->getEntities();
+        $salesChannels = $this->entityRepository->search($criteria, $context)->getEntities();
 
         /** @var SalesChannelEntity $salesChannel */
         foreach ($salesChannels as $salesChannel) {

@@ -29,6 +29,6 @@ class ProductSubscriber implements EventSubscriberInterface
         foreach ($event->getWriteResults() as $writeResult) {
             $documentsIdsToReindex[] = $writeResult->getPrimaryKey();
         }
-        $this->productIndexer->reindex($documentsIdsToReindex);
+        $this->productIndexer->reindex($event->getContext(), $documentsIdsToReindex);
     }
 }

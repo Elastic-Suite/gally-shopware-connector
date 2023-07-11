@@ -9,6 +9,7 @@ use Gally\Rest\Model\SourceFieldSourceFieldApi;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
+use Shopware\Core\Framework\Context;
 
 /**
  * Synchronize shopware custom field and property options with gally source field options.
@@ -40,7 +41,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         return $entity->getSourceField() . $entity->getCode();
     }
 
-    public function synchronizeAll()
+    public function synchronizeAll(Context $context)
     {
         throw new \LogicException('Run source field synchronizer to sync all options');
     }
