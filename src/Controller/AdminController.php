@@ -19,22 +19,16 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class AdminController extends AbstractController
 {
-    private AuthenticationTokenProvider $authenticationTokenProvider;
-
-    /** @var AbstractSynchronizer[] */
-    private iterable $synchronizers;
-
-    /** @var AbstractIndexer[]  */
-    private iterable $indexers;
-
+    /**
+     * @param AuthenticationTokenProvider $authenticationTokenProvider
+     * @param AbstractSynchronizer[] $synchronizers
+     * @param AbstractIndexer[] $indexers
+     */
     public function __construct(
-        AuthenticationTokenProvider $authenticationTokenProvider,
-        iterable $synchronizers,
-        iterable $indexers
+        private AuthenticationTokenProvider $authenticationTokenProvider,
+        private iterable $synchronizers,
+        private iterable $indexers
     ) {
-        $this->authenticationTokenProvider = $authenticationTokenProvider;
-        $this->synchronizers = $synchronizers;
-        $this->indexers = $indexers;
     }
 
     /**

@@ -25,26 +25,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 {
-    private Configuration $configuration;
-    private Adapter $searchAdapter;
-    private CriteriaBuilder $criteriaBuilder;
-    private LoggerInterface $logger;
-    private TranslatorInterface $translator;
-
     private ?Result $gallyResults = null;
 
     public function __construct(
-        Configuration $configuration,
-        Adapter $searchAdapter,
-        CriteriaBuilder $criteriaBuilder,
-        LoggerInterface $logger,
-        TranslatorInterface $translator
+        private Configuration $configuration,
+        private Adapter $searchAdapter,
+        private CriteriaBuilder $criteriaBuilder,
+        private LoggerInterface $logger,
+        private TranslatorInterface $translator
     ) {
-        $this->configuration = $configuration;
-        $this->searchAdapter = $searchAdapter;
-        $this->criteriaBuilder = $criteriaBuilder;
-        $this->logger = $logger;
-        $this->translator = $translator;
     }
 
     public static function getSubscribedEvents(): array

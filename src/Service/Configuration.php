@@ -10,11 +10,8 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
  */
 class Configuration
 {
-    private SystemConfigService $systemConfigService;
-
-    public function __construct(SystemConfigService $systemConfigService)
+    public function __construct(private SystemConfigService $systemConfigService)
     {
-        $this->systemConfigService = $systemConfigService;
     }
 
     public function isActive(?string $salesChannelId = null): bool

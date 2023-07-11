@@ -21,13 +21,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class CriteriaBuilder
 {
-    private SortOptionProvider $sortOptionProvider;
     private array $nonFilterParameters = ['order', 'p', 'search', 'slots', 'aggregation', 'no-aggregations'];
 
     public function __construct(
-        SortOptionProvider $sortOptionProvider
+        private SortOptionProvider $sortOptionProvider
     ) {
-        $this->sortOptionProvider = $sortOptionProvider;
     }
 
     public function build(Request $request, SalesChannelContext $context, Criteria $criteria = null): Criteria

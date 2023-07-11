@@ -13,11 +13,8 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
  */
 class ResultBuilder
 {
-    private AggregationBuilder $aggregationBuilder;
-
-    public function __construct(AggregationBuilder $aggregationBuilder)
+    public function __construct(private AggregationBuilder $aggregationBuilder)
     {
-        $this->aggregationBuilder = $aggregationBuilder;
     }
 
     public function build(SalesChannelContext $context, ?ResponseInterface $response, int $currentPage): Result

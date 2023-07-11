@@ -15,14 +15,13 @@ class Index extends Command
 {
     protected static $defaultName = 'gally:index';
 
-    /** @var AbstractIndexer[]  */
-    private iterable $indexers;
-
+    /**
+     * @param AbstractIndexer[] $indexers
+     */
     public function __construct(
-        iterable $indexers
+        private iterable $indexers
     ) {
         parent::__construct();
-        $this->indexers = $indexers;
     }
 
     protected function configure(): void

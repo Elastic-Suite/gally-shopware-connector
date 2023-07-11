@@ -19,9 +19,6 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
  */
 class CatalogSynchronizer extends AbstractSynchronizer
 {
-    private EntityRepository $entityRepository;
-    private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer;
-
     public function __construct(
         Configuration $configuration,
         RestClient $client,
@@ -29,8 +26,8 @@ class CatalogSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $patchEntityMethod,
-        EntityRepository $entityRepository,
-        LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
+        private EntityRepository $entityRepository,
+        private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
     ) {
         parent::__construct(
             $configuration,
@@ -40,8 +37,6 @@ class CatalogSynchronizer extends AbstractSynchronizer
             $createEntityMethod,
             $patchEntityMethod
         );
-        $this->entityRepository = $entityRepository;
-        $this->localizedCatalogSynchronizer = $localizedCatalogSynchronizer;
     }
 
     public function getIdentity(ModelInterface $entity): string

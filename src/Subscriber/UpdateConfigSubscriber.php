@@ -12,7 +12,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class UpdateConfigSubscriber implements EventSubscriberInterface
 {
-    private SystemConfigService $configService;
     private array $globalConfigs = [
         'GallyPlugin.config.baseurl',
         'GallyPlugin.config.user',
@@ -20,9 +19,8 @@ class UpdateConfigSubscriber implements EventSubscriberInterface
     ];
 
     public function __construct(
-        SystemConfigService $configService
+        private SystemConfigService $configService
     ) {
-        $this->configService = $configService;
     }
 
     public static function getSubscribedEvents(): array

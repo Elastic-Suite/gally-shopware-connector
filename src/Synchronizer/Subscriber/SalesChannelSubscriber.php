@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Synchronizer\Subscriber;
 
 use Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer;
-use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -17,15 +16,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class SalesChannelSubscriber implements EventSubscriberInterface
 {
-    private CatalogSynchronizer $catalogSynchronizer;
-    private EntityRepository $entityRepository;
-
     public function __construct(
-        CatalogSynchronizer $catalogSynchronizer,
-        EntityRepository $entityRepository
+        private CatalogSynchronizer $catalogSynchronizer,
+        private EntityRepository $entityRepository
     ) {
-        $this->catalogSynchronizer = $catalogSynchronizer;
-        $this->entityRepository = $entityRepository;
     }
 
     public static function getSubscribedEvents(): array

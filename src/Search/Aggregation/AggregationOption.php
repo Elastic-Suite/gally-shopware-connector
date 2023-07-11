@@ -10,15 +10,12 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Bucket
  */
 class AggregationOption extends Bucket
 {
-    private string $label;
-
     public function __construct(
-        string $label,
+        private string $label,
         string $value,
         int $count
     ) {
         parent::__construct($value, $count, null);
-        $this->label = $label;
     }
 
     public function getLabel(): string

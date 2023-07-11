@@ -30,7 +30,6 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
  */
 class ProductIndexer extends AbstractIndexer
 {
-    private EntityRepository $categoryRepository;
     private ?EntitySearchResult $categoryCollection = null;
 
     public function __construct(
@@ -39,11 +38,10 @@ class ProductIndexer extends AbstractIndexer
         IndexOperation $indexOperation,
         EntityRepository $entityRepository,
         UrlGenerator $urlGenerator,
-        EntityRepository $categoryRepository
+        private EntityRepository $categoryRepository
     )
     {
         parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository, $urlGenerator);
-        $this->categoryRepository = $categoryRepository;
     }
 
     public function getEntityType(): string

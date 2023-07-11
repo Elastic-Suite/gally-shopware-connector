@@ -16,13 +16,10 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
  */
 class Adapter
 {
-    private GraphQlClient $client;
-    private ResultBuilder $resultBuilder;
-
-    public function __construct(GraphQlClient $client, ResultBuilder $resultBuilder)
-    {
-        $this->client = $client;
-        $this->resultBuilder = $resultBuilder;
+    public function __construct(
+        private GraphQlClient $client,
+        private ResultBuilder $resultBuilder
+    ) {
     }
 
     public function search(SalesChannelContext $context, Criteria $criteria): Result

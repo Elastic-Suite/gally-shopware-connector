@@ -20,27 +20,16 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
  */
 abstract class AbstractIndexer
 {
-    protected Configuration $configuration;
-    protected EntityRepository $salesChannelRepository;
-    protected IndexOperation $indexOperation;
-    protected UrlGenerator $urlGenerator;
-    protected EntityRepository $entityRepository;
-
     public function __construct(
-        Configuration $configuration,
-        EntityRepository $salesChannelRepository,
-        IndexOperation $indexOperation,
-        EntityRepository $entityRepository,
-        UrlGenerator $urlGenerator
+        protected Configuration $configuration,
+        protected EntityRepository $salesChannelRepository,
+        protected IndexOperation $indexOperation,
+        protected EntityRepository $entityRepository,
+        protected UrlGenerator $urlGenerator
     ) {
-        $this->configuration = $configuration;
-        $this->salesChannelRepository = $salesChannelRepository;
-        $this->indexOperation = $indexOperation;
-        $this->entityRepository = $entityRepository;
-        $this->urlGenerator = $urlGenerator;
     }
 
-    public function reindex(array $documentIdsToReindex = [])
+    public function reindex(array $documentIdsToReindex = []): void
     {
         $criteria = new Criteria();
         $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency', 'domains']);

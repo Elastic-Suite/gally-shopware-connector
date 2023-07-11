@@ -15,14 +15,13 @@ class StructureSync extends Command
 {
     protected static $defaultName = 'gally:structure-sync';
 
-    /** @var AbstractSynchronizer[] */
-    private iterable $synchronizers;
-
+    /**
+     * @param AbstractSynchronizer[] $synchronizers
+     */
     public function __construct(
-        iterable $synchronizers
+        private iterable $synchronizers
     ) {
         parent::__construct();
-        $this->synchronizers = $synchronizers;
     }
 
     protected function configure(): void

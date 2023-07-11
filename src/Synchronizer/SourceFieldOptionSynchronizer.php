@@ -15,8 +15,6 @@ use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOp
  */
 class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 {
-    protected SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer;
-
     public function __construct(
         Configuration $configuration,
         RestClient $client,
@@ -24,7 +22,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $patchEntityMethod,
-        SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer
+        protected SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer
     ) {
         parent::__construct(
             $configuration,
@@ -34,7 +32,6 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
             $createEntityMethod,
             $patchEntityMethod
         );
-        $this->sourceFieldOptionLabelSynchronizer = $sourceFieldOptionLabelSynchronizer;
     }
 
     public function getIdentity(ModelInterface $entity): string

@@ -14,29 +14,17 @@ abstract class AbstractSynchronizer
 {
     protected const FETCH_PAGE_SIZE = 50;
 
-    protected Configuration $configuration;
-    protected RestClient $client;
-    protected string $entityClass;
-    protected string $getCollectionMethod;
-    protected string $createEntityMethod;
-    protected string $patchEntityMethod;
     protected array $entityByCode = [];
     protected bool $allEntityHasBeenFetch = false;
 
     public function __construct(
-        Configuration $configuration,
-        RestClient $client,
-        string $entityClass,
-        string $getCollectionMethod,
-        string $createEntityMethod,
-        string $patchEntityMethod
+        protected Configuration $configuration,
+        protected RestClient $client,
+        protected string $entityClass,
+        protected string $getCollectionMethod,
+        protected string $createEntityMethod,
+        protected string $patchEntityMethod
     ) {
-        $this->configuration = $configuration;
-        $this->client = $client;
-        $this->entityClass = $entityClass;
-        $this->getCollectionMethod = $getCollectionMethod;
-        $this->createEntityMethod = $createEntityMethod;
-        $this->patchEntityMethod = $patchEntityMethod;
     }
 
     abstract public function synchronizeAll();

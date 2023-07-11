@@ -15,8 +15,6 @@ use Gally\ShopwarePlugin\Service\Configuration;
  */
 class SourceFieldLabelSynchronizer extends AbstractSynchronizer
 {
-    protected LocalizedCatalogSynchronizer $localizedCatalogSynchronizer;
-
     public function __construct(
         Configuration $configuration,
         RestClient $client,
@@ -24,7 +22,7 @@ class SourceFieldLabelSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $patchEntityMethod,
-        LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
+        protected LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
     ) {
         parent::__construct(
             $configuration,
@@ -34,7 +32,6 @@ class SourceFieldLabelSynchronizer extends AbstractSynchronizer
             $createEntityMethod,
             $patchEntityMethod
         );
-        $this->localizedCatalogSynchronizer = $localizedCatalogSynchronizer;
     }
 
     public function getIdentity(ModelInterface $entity): string

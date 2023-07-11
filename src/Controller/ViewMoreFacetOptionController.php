@@ -19,15 +19,11 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class ViewMoreFacetOptionController extends AbstractController
 {
-    private RequestTransformer $transformer;
-    private CriteriaBuilder $criteriaBuilder;
-    private Adapter $adapter;
-
-    public function __construct(RequestTransformer $transformer, CriteriaBuilder $criteriaBuilder, Adapter $adapter)
-    {
-        $this->transformer = $transformer;
-        $this->criteriaBuilder = $criteriaBuilder;
-        $this->adapter = $adapter;
+    public function __construct(
+        private RequestTransformer $transformer,
+        private CriteriaBuilder $criteriaBuilder,
+        private Adapter $adapter
+    ) {
     }
 
     /**

@@ -49,15 +49,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             'image' => 'text',
         ],
     ];
-
-    private EntityRepository $customFieldRepository;
-    private EntityRepository $propertyGroupRepository;
-    private MetadataSynchronizer $metadataSynchronizer;
-    private SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer;
-    private SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer;
     private string $currentEntity;
-    private EntityRepository $languageRepository;
-    private TranslatorInterface $translator;
 
     public function __construct(
         Configuration $configuration,
@@ -66,13 +58,13 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $patchEntityMethod,
-        EntityRepository $customFieldRepository,
-        EntityRepository $propertyGroupRepository,
-        MetadataSynchronizer $metadataSynchronizer,
-        SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer,
-        SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer,
-        EntityRepository $languageRepository,
-        TranslatorInterface $translator
+        private EntityRepository $customFieldRepository,
+        private EntityRepository $propertyGroupRepository,
+        private MetadataSynchronizer $metadataSynchronizer,
+        private SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer,
+        private SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer,
+        private EntityRepository $languageRepository,
+        private TranslatorInterface $translator
     ) {
         parent::__construct(
             $configuration,
@@ -82,13 +74,6 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $createEntityMethod,
             $patchEntityMethod
         );
-        $this->customFieldRepository = $customFieldRepository;
-        $this->propertyGroupRepository = $propertyGroupRepository;
-        $this->metadataSynchronizer = $metadataSynchronizer;
-        $this->sourceFieldLabelSynchronizer = $sourceFieldLabelSynchronizer;
-        $this->sourceFieldOptionSynchronizer = $sourceFieldOptionSynchronizer;
-        $this->languageRepository = $languageRepository;
-        $this->translator = $translator;
     }
 
     public function getIdentity(ModelInterface $entity): string

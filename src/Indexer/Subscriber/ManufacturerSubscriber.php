@@ -13,12 +13,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class ManufacturerSubscriber implements EventSubscriberInterface
 {
-    private ManufacturerIndexer $manufacturerIndexer;
-
     public function __construct(
-        ManufacturerIndexer $manufacturerIndexer
+        private ManufacturerIndexer $manufacturerIndexer
     ) {
-        $this->manufacturerIndexer = $manufacturerIndexer;
     }
 
     public static function getSubscribedEvents(): array

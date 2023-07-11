@@ -10,24 +10,17 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Bucket
  */
 class Aggregation extends BucketResult
 {
-    private string $field;
-    private string $type;
-    private bool $hasMore;
-
     /**
      * @param AggregationOption[] $options
      */
     public function __construct(
         string $label,
-        string $field,
-        string $type,
-        bool $hasMore,
+        private string $field,
+        private string $type,
+        private bool $hasMore,
         array $options
     ) {
         parent::__construct($label, $options);
-        $this->field = $field;
-        $this->type = $type;
-        $this->hasMore = $hasMore;
     }
 
     public function getLabel(): string

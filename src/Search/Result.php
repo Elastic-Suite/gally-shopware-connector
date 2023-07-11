@@ -18,30 +18,15 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
  */
 class Result
 {
-    private array $productNumbers;
-    private int $totalResultCount;
-    private int $currentPage;
-    private int $itemPerPage;
-    private string $sortField;
-    private string $sortDirection;
-    private AggregationResultCollection $aggregations;
-
     public function __construct(
-        array $productNumbers,
-        int $totalResultCount,
-        int $currentPage,
-        int $itemPerPage,
-        string $sortField,
-        string $sortDirection,
-        AggregationResultCollection $aggregations
+        private array $productNumbers,
+        private int $totalResultCount,
+        private int $currentPage,
+        private int $itemPerPage,
+        private string $sortField,
+        private string $sortDirection,
+        private AggregationResultCollection $aggregations
     ) {
-        $this->productNumbers = $productNumbers;
-        $this->totalResultCount = $totalResultCount;
-        $this->currentPage = $currentPage;
-        $this->itemPerPage = $itemPerPage;
-        $this->sortField = $sortField;
-        $this->sortDirection = $sortDirection;
-        $this->aggregations = $aggregations;
     }
 
     /**

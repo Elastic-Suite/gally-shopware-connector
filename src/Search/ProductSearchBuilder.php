@@ -14,15 +14,10 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ProductSearchBuilder implements ProductSearchBuilderInterface
 {
-    private ProductSearchBuilderInterface $decorated;
-    private Configuration $configuration;
-
     public function __construct(
-        ProductSearchBuilderInterface $decorated,
-        Configuration $configuration
+        private ProductSearchBuilderInterface $decorated,
+        private Configuration $configuration
     ) {
-        $this->decorated = $decorated;
-        $this->configuration = $configuration;
     }
 
     public function build(Request $request, Criteria $criteria, SalesChannelContext $context): void

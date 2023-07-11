@@ -18,15 +18,10 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
  */
 class IndexOperation
 {
-    private RestClient $client;
-    private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer;
-
     public function __construct(
-        RestClient $client,
-        LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
+        private RestClient $client,
+        private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
     ) {
-        $this->client = $client;
-        $this->localizedCatalogSynchronizer = $localizedCatalogSynchronizer;
     }
 
     public function createIndex(string $entityType, SalesChannelEntity $salesChannel, LanguageEntity $language): string

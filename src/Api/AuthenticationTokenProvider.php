@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Api;
 
 use Gally\Rest\ApiException;
-use Gally\ShopwarePlugin\Service\Configuration;
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Client;
 use GuzzleHttp\Utils;
 
 /**

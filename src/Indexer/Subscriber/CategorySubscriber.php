@@ -13,12 +13,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class CategorySubscriber implements EventSubscriberInterface
 {
-    private CategoryIndexer $categoryIndexer;
-
     public function __construct(
-        CategoryIndexer $categoryIndexer
+        private CategoryIndexer $categoryIndexer
     ) {
-        $this->categoryIndexer = $categoryIndexer;
     }
 
     public static function getSubscribedEvents(): array

@@ -7,16 +7,8 @@ use Shopware\Core\Framework\Struct\Struct;
 
 class Message extends Struct
 {
-    /** @var string */
-    private $type;
-
-    /** @var string */
-    private $content;
-
-    public function __construct(string $type, string $content)
+    public function __construct(private string $type, private string $content)
     {
-        $this->type = $type;
-        $this->content = $content;
     }
 
     /**

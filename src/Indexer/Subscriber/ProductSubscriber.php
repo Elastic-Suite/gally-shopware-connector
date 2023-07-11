@@ -13,12 +13,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class ProductSubscriber implements EventSubscriberInterface
 {
-    private ProductIndexer $productIndexer;
-
     public function __construct(
-        ProductIndexer $productIndexer
+        private ProductIndexer $productIndexer
     ) {
-        $this->productIndexer = $productIndexer;
     }
 
     public static function getSubscribedEvents(): array

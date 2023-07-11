@@ -18,11 +18,8 @@ class SortOptionProvider
     public const DEFAULT_SEARCH_SORT = '_default';
     public const SCORE_SEARCH_SORT = '_score';
 
-    protected RestClient $client;
-
-    public function __construct(RestClient $client)
+    public function __construct(protected RestClient $client)
     {
-        $this->client = $client;
     }
 
     public function getSortingOptions(): ProductSortingCollection
