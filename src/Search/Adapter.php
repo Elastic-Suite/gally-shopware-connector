@@ -42,6 +42,7 @@ class Adapter
         if ($sort->getField() !== SortOptionProvider::DEFAULT_SEARCH_SORT) {
             $data['sort'] = [$sort->getField() => strtolower($sort->getDirection())];
         }
+        $criteria->resetSorting();
 
         return $this->resultBuilder->build(
             $context,
