@@ -26,7 +26,9 @@ class SortingListingProcessor extends BaseSortingListingProcessor
 
     public function prepare(Request $request, Criteria $criteria, SalesChannelContext $context): void
     {
-        if (!$this->configuration->isActive($context->getSalesChannelId())) {
+        if (!$this->configuration->isActive($context->getSalesChannelId())
+            || $request->getPathInfo() === '/suggest' // Gally does not handle suggest request yet
+        ) {
             parent::prepare($request, $criteria, $context);
         }
 
