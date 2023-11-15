@@ -5,7 +5,7 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 
 use Gally\Rest\Model\ModelInterface;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
-use Gally\Rest\Model\SourceFieldSourceFieldApi;
+use Gally\Rest\Model\SourceFieldSourceFieldWrite;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
@@ -22,7 +22,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         string $entityClass,
         string $getCollectionMethod,
         string $createEntityMethod,
-        string $patchEntityMethod,
+        string $putEntityMethod,
         protected SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer
     ) {
         parent::__construct(
@@ -31,7 +31,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
             $entityClass,
             $getCollectionMethod,
             $createEntityMethod,
-            $patchEntityMethod
+            $putEntityMethod
         );
     }
 
@@ -48,7 +48,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 
     public function synchronizeItem(array $params): ?ModelInterface
     {
-        /** @var SourceFieldSourceFieldApi $sourceField */
+        /** @var SourceFieldSourceFieldWrite $sourceField */
         $sourceField = $params['field'];
 
         /** @var array|PropertyGroupOptionEntity $option */
