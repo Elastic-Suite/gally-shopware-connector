@@ -3,9 +3,15 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Synchronizer;
 
+use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\Metadata;
 use Gally\Rest\Model\ModelInterface;
+use Gally\Rest\Model\SourceFieldLabel;
+use Gally\Rest\Model\SourceFieldOptionLabelSourceFieldOptionLabelWrite;
+use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
 use Gally\Rest\Model\SourceFieldSourceFieldApi;
+use Gally\Rest\Model\SourceFieldSourceFieldRead;
+use Gally\Rest\Model\SourceFieldSourceFieldWrite;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupTranslation\PropertyGroupTranslationEntity;
@@ -54,6 +60,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         ],
     ];
     private string $currentEntity;
+    private int $optionBatchSize = 10;
 
     public function __construct(
         Configuration $configuration,
@@ -61,14 +68,16 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         string $entityClass,
         string $getCollectionMethod,
         string $createEntityMethod,
-        string $patchEntityMethod,
+        string $putEntityMethod,
         private EntityRepository $customFieldRepository,
         private EntityRepository $propertyGroupRepository,
         private MetadataSynchronizer $metadataSynchronizer,
         private SourceFieldLabelSynchronizer $sourceFieldLabelSynchronizer,
         private SourceFieldOptionSynchronizer $sourceFieldOptionSynchronizer,
+        private SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer,
         private EntityRepository $languageRepository,
-        private TranslatorInterface $translator
+        private TranslatorInterface $translator,
+        protected LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
     ) {
         parent::__construct(
             $configuration,
@@ -76,21 +85,19 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $entityClass,
             $getCollectionMethod,
             $createEntityMethod,
-            $patchEntityMethod
+            $putEntityMethod
         );
     }
 
     public function getIdentity(ModelInterface $entity): string
     {
-        /** @var SourceFieldSourceFieldApi $entity */
+        /** @var SourceFieldSourceFieldRead $entity */
         return $entity->getMetadata() . $entity->getCode();
     }
 
     public function synchronizeAll(Context $context)
     {
         $this->fetchEntities();
-        $this->sourceFieldLabelSynchronizer->fetchEntities();
-        $this->sourceFieldOptionSynchronizer->fetchEntities();
 
         foreach ($this->entitiesToSync as $entity) {
             /** @var Metadata $metadata */
@@ -155,7 +162,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         /** @var array|CustomFieldEntity|PropertyGroupEntity $field */
         $field = $params['field'];
 
-        $data = ['metadata' => '/metadata/' . $metadata->getId()];
+        $data = ['metadata' => '/metadata/' . $metadata->getId(), 'labels' => []];
 
         if (is_array($field)) {
             $data['code'] = $field['code'];
@@ -179,28 +186,149 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $data['type'] = 'select';
         }
 
-        $sourceField = $this->createOrUpdateEntity(new SourceFieldSourceFieldApi($data));
-
         /** @var string|PropertyGroupTranslationEntity $label */
         foreach ($labels ?? [] as $localeCode => $label) {
             if ($label) {
-                $this->sourceFieldLabelSynchronizer->synchronizeItem([
-                    'field' => $sourceField,
-                    'localeCode' =>  str_replace('-', '_', is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()),
-                    'label' => is_string($label) ? $label : $label->getName(),
-                ]);
+                $tempSourceField = $this->getEntityFromApi(new SourceFieldSourceFieldWrite($data));
+                $localeCode = str_replace(
+                    '-',
+                    '_',
+                    is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()
+                );
+                $label = is_string($label) ? $label : $label->getName();
+
+                /** @var LocalizedCatalog $localizedCatalog */
+                foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($localeCode) as $localizedCatalog) {
+                    /** @var SourceFieldLabel $labelObject */
+                    $labelObject = $tempSourceField
+                        ? $this->sourceFieldLabelSynchronizer->getEntityFromApi(
+                            new SourceFieldLabel(
+                                [
+                                    'sourceField'      => '/source_fields/' . $tempSourceField->getId() ,
+                                    'localizedCatalog' => '/localized_catalogs/' . $localizedCatalog->getId(),
+                                    'label'            => $label,
+                                ]
+                            )
+                        )
+                        : $tempSourceField;
+
+                    $labelData = [
+                        'localizedCatalog' => '/localized_catalogs/' . $localizedCatalog->getId(),
+                        'label' => $label,
+                    ];
+                    if ($labelObject && $labelObject->getId()) {
+                        $labelData['id'] = '/source_field_labels/' . $labelObject->getId();
+                    }
+                    $data['labels'][] = $labelData;
+                }
             }
         }
 
-        foreach ($options ?? [] as $position => $option) {
-            $this->sourceFieldOptionSynchronizer->synchronizeItem([
-                'field' => $sourceField,
-                'option' => $option,
-                'position' => $position,
-            ]);
-        }
+        $sourceField = $this->createOrUpdateEntity(new SourceFieldSourceFieldWrite($data));
+        $this->addOptions($sourceField, $options ?? []);
 
         return $sourceField;
+    }
+
+    public function fetchEntity(ModelInterface $entity): ?ModelInterface
+    {
+        /** @var SourceFieldSourceFieldApi $entity */
+        $results = $this->client->query(...$this->buildFetchOneParams($entity));
+        $filteredResults = [];
+        /** @var SourceFieldSourceFieldApi $result */
+        foreach ($results as $result) {
+            // Search by source field code in api is a partial match,
+            // to be sure to get the good sourceField we need to check that the code of the result
+            // is exactly the code of the sourceField.
+            if ($result->getCode() === $entity->getCode()) {
+                $filteredResults[] = $result;
+            }
+        }
+        if (count($filteredResults) !== 1) {
+            return null;
+        }
+        return reset($filteredResults);
+    }
+
+    public function fetchEntities(): void
+    {
+        parent::fetchEntities();
+        $this->sourceFieldLabelSynchronizer->fetchEntities();
+        $this->sourceFieldOptionSynchronizer->fetchEntities();
+    }
+
+    protected function addOptions(ModelInterface $sourceField, iterable $options)
+    {
+        $currentBulkSize = 0;
+        $currentBulk = [];
+        foreach ($options ?? [] as $position => $option) {
+            $code = is_array($option) ? $option['value'] : $option->getId();
+
+            /** @var SourceFieldOptionSourceFieldOptionWrite $optionObject */
+            $optionObject = $this->sourceFieldOptionSynchronizer->getEntityFromApi(
+                new SourceFieldOptionSourceFieldOptionWrite(
+                    [
+                        'sourceField' => '/source_fields/' . $sourceField->getId(),
+                        'code'        => $code,
+                    ]
+                )
+            );
+
+            $optionData = [
+                'code'         => $code,
+                'defaultLabel' => is_array($option) ? $option['value'] : $option->getName(),
+                'position'     => is_array($option) ? $position : $option->getPosition(),
+            ];
+            if ($optionObject && $optionObject->getId()) {
+                $optionData['@id'] = '/source_field_options/' . $optionObject->getId();
+            }
+
+            // Add option labels
+            $labels = is_array($option) ? $option['label'] : $option->getTranslations();
+            foreach ($labels as $localeCode => $label) {
+                $localeCode = str_replace(
+                    '-',
+                    '_',
+                    is_string($label) ? $localeCode: $label->getLanguage()->getLocale()->getCode()
+                );
+
+                /** @var LocalizedCatalog $localizedCatalog */
+                foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($localeCode) as $localizedCatalog) {
+                    /** @var SourceFieldLabel $labelObject */
+                    $labelObject = $optionObject
+                        ? $this->sourceFieldOptionLabelSynchronizer->getEntityFromApi(
+                            new SourceFieldOptionLabelSourceFieldOptionLabelWrite(
+                                [
+                                    'sourceFieldOption'      => '/source_field_options/' . $optionObject->getId(),
+                                    'localizedCatalog' => '/localized_catalogs/' . $localizedCatalog->getId(),
+                                ]
+                            )
+                        )
+                        : null;
+
+                    $labelData = [
+                        'localizedCatalog' =>  '/localized_catalogs/' . $localizedCatalog->getId(),
+                        'label' => is_string($label) ? $label : $label->getName(),
+                    ];
+                    if ($labelObject && $labelObject->getId()) {
+                        $labelData['@id'] = '/source_field_option_labels/' . $labelObject->getId();
+                    }
+                    $optionData['labels'][] = $labelData;
+                }
+            }
+
+            $currentBulk[] = $optionData;
+            $currentBulkSize++;
+            if ($currentBulkSize > $this->optionBatchSize) {
+                $this->client->query($this->entityClass, 'addOptionsSourceFieldItem', $sourceField->getId(), $currentBulk);
+                $currentBulkSize = 0;
+                $currentBulk = [];
+            }
+        }
+
+        if ($currentBulkSize) {
+            $this->client->query($this->entityClass, 'addOptionsSourceFieldItem', $sourceField->getId(), $currentBulk);
+        }
     }
 
     protected function buildFetchAllParams(int $page): array
@@ -225,26 +353,6 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $page,
             self::FETCH_PAGE_SIZE,
         ];
-    }
-
-    public function fetchEntity(ModelInterface $entity): ?ModelInterface
-    {
-        /** @var SourceFieldSourceFieldApi $entity */
-        $results = $this->client->query(...$this->buildFetchOneParams($entity));
-        $filteredResults = [];
-        /** @var SourceFieldSourceFieldApi $result */
-        foreach ($results as $result) {
-            // Search by source field code in api is a partial match,
-            // to be sure to get the good sourceField we need to check that the code of the result
-            // is exactly the code of the sourceField.
-            if ($result->getCode() === $entity->getCode()) {
-                $filteredResults[] = $result;
-            }
-        }
-        if (count($filteredResults) !== 1) {
-            return null;
-        }
-        return reset($filteredResults);
     }
 
     protected function buildFetchOneParams(ModelInterface $entity): array
