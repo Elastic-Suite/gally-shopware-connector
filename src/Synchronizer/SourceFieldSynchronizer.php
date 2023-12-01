@@ -60,7 +60,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         ],
     ];
     private string $currentEntity;
-    private int $optionBatchSize = 10;
+    private int $optionBatchSize = 1000;
 
     public function __construct(
         Configuration $configuration,
@@ -210,7 +210,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                                 ]
                             )
                         )
-                        : $tempSourceField;
+                        : null;
 
                     $labelData = [
                         'localizedCatalog' => '/localized_catalogs/' . $localizedCatalog->getId(),
@@ -278,6 +278,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
                 'code'         => $code,
                 'defaultLabel' => is_array($option) ? $option['value'] : $option->getName(),
                 'position'     => is_array($option) ? $position : $option->getPosition(),
+                'labels'       => [],
             ];
             if ($optionObject && $optionObject->getId()) {
                 $optionData['@id'] = '/source_field_options/' . $optionObject->getId();
