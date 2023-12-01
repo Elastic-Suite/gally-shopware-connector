@@ -13,6 +13,7 @@ use Shopware\Core\Content\Cms\Events\CmsPageLoadedEvent;
 use Shopware\Core\Content\Cms\SalesChannel\Struct\ProductListingStruct;
 use Shopware\Core\Content\Product\Events\ProductListingCriteriaEvent;
 use Shopware\Core\Content\Product\Events\ProductSearchCriteriaEvent;
+use Shopware\Core\Content\Product\Events\ProductSuggestCriteriaEvent;
 use Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
@@ -46,6 +47,11 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             ],
             // Criteria building for search page
             ProductSearchCriteriaEvent::class => [
+                ['setDefaultOrder', 200],
+                ['handleListingRequest', 50],
+            ],
+            // Criteria building for search page
+            ProductSuggestCriteriaEvent::class => [
                 ['setDefaultOrder', 200],
                 ['handleListingRequest', 50],
             ],

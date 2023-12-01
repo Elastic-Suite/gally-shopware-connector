@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\Rest\Api\CategorySortingOptionApi;
-use Gally\Rest\Model\CategorySortingOption;
+use Gally\Rest\Api\ProductSortingOptionApi;
+use Gally\Rest\Model\ProductSortingOption;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingEntity;
@@ -24,10 +24,10 @@ class SortOptionProvider
 
     public function getSortingOptions(): ProductSortingCollection
     {
-        $sortingOptions = $this->client->query(CategorySortingOptionApi::class, 'getCategorySortingOptionCollection');
+        $sortingOptions = $this->client->query(ProductSortingOptionApi::class, 'getProductSortingOptionCollection');
         $sortings = new ProductSortingCollection();
 
-        /** @var CategorySortingOption $option */
+        /** @var ProductSortingOption $option */
         foreach ($sortingOptions as $option) {
             foreach ([FieldSorting::ASCENDING, FieldSorting::DESCENDING] as $direction) {
                 if ($option->getCode() === self::SCORE_SEARCH_SORT) {

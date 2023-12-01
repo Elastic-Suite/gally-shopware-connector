@@ -22,9 +22,7 @@ class ProductSearchBuilder implements ProductSearchBuilderInterface
 
     public function build(Request $request, Criteria $criteria, SalesChannelContext $context): void
     {
-        if (!$this->configuration->isActive($context->getSalesChannelId())
-            || $request->getPathInfo() === '/suggest' // Gally does not handle suggest request yet
-        ) {
+        if (!$this->configuration->isActive($context->getSalesChannelId())) {
             $this->decorated->build($request, $criteria, $context);
         }
 
