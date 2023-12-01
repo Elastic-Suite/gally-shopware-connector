@@ -48,40 +48,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 
     public function synchronizeItem(array $params): ?ModelInterface
     {
-        /** @var SourceFieldSourceFieldWrite $sourceField */
-        $sourceField = $params['field'];
-
-        /** @var array|PropertyGroupOptionEntity $option */
-        $option = $params['option'];
-
-        /** @var int $position */
-        $position = $params['position'];
-
-        $sourceFieldOption = $this->createOrUpdateEntity(
-            new SourceFieldOptionSourceFieldOptionWrite(
-                [
-                    'sourceField'  => '/source_fields/' . $sourceField->getId() ,
-                    'code'         => is_array($option) ? $option['value'] : $option->getId(),
-                    'defaultLabel' => is_array($option) ? $option['value'] : $option->getName(),
-                    'position'     => is_array($option) ? $position : $option->getPosition(),
-                ]
-            )
-        );
-
-        $labels = is_array($option) ? $option['label'] : $option->getTranslations();
-        foreach ($labels as $localeCode => $label) {
-            $this->sourceFieldOptionLabelSynchronizer->synchronizeItem(
-                [
-                    'fieldOption' => $sourceFieldOption,
-                    'label' => is_string($label) ? $label : $label->getName(),
-                    'localeCode' =>  str_replace('-', '_', is_string($label)
-                        ? $localeCode
-                        : $label->getLanguage()->getLocale()->getCode()),
-                ]
-            );
-        }
-
-        return $sourceFieldOption;
+        throw new \LogicException('Run source field synchronizer to sync option');
     }
 
     public function fetchEntities(): void

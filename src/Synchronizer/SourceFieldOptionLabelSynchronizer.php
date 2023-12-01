@@ -34,7 +34,7 @@ class SourceFieldOptionLabelSynchronizer extends SourceFieldLabelSynchronizer
 
     public function synchronizeItem(array $params): ?ModelInterface
     {
-        throw new \LogicException('Run source field synchronizer to sync all localized option label');
+        throw new \LogicException('Run source field synchronizer to sync localized option label');
     }
 
     protected function buildFetchAllParams(int $page): array
