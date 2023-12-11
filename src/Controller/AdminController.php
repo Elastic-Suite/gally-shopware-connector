@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Controller;
@@ -8,7 +19,6 @@ use Gally\ShopwarePlugin\Api\AuthenticationTokenProvider;
 use Gally\ShopwarePlugin\Indexer\AbstractIndexer;
 use Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,9 +32,8 @@ use Symfony\Component\Routing\Annotation\Route;
 class AdminController extends AbstractController
 {
     /**
-     * @param AuthenticationTokenProvider $authenticationTokenProvider
      * @param AbstractSynchronizer[] $synchronizers
-     * @param AbstractIndexer[] $indexers
+     * @param AbstractIndexer[]      $indexers
      */
     public function __construct(
         private AuthenticationTokenProvider $authenticationTokenProvider,
@@ -46,11 +55,11 @@ class AdminController extends AbstractController
                 $apiParams['user'],
                 $apiParams['password']
             );
-            $responseData['message'] = "Connection to the api succeeded";
+            $responseData['message'] = 'Connection to the api succeeded';
         } catch (ApiException $exception) {
             $responseData['error'] = true;
-            $responseData['message'] = $exception->getCode() == 401
-                ? "Invalid credentials."
+            $responseData['message'] = 401 == $exception->getCode()
+                ? 'Invalid credentials.'
                 : $exception->getMessage();
         } catch (\Exception $exception) {
             $responseData['error'] = true;
@@ -70,11 +79,12 @@ class AdminController extends AbstractController
             foreach ($this->synchronizers as $synchronizer) {
                 $synchronizer->synchronizeAll($context);
             }
-            $responseData['message'] = "Syncing catalog structure with gally succeeded";
+            $responseData['message'] = 'Syncing catalog structure with gally succeeded';
         } catch (\Exception $exception) {
             $responseData['error'] = true;
             $responseData['message'] = $exception->getMessage();
         }
+
         return new JsonResponse($responseData);
     }
 
@@ -88,7 +98,7 @@ class AdminController extends AbstractController
             foreach ($this->indexers as $indexer) {
                 $indexer->reindex($context);
             }
-            $responseData['message'] = "Index catalog data to gally succeeded";
+            $responseData['message'] = 'Index catalog data to gally succeeded';
         } catch (\Exception $exception) {
             $responseData['error'] = true;
             $responseData['message'] = $exception->getMessage();

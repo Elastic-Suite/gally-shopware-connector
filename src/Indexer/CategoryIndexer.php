@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
@@ -32,7 +43,7 @@ class CategoryIndexer extends AbstractIndexer
             $criteria->addFilter(
                 new OrFilter([
                     new EqualsFilter('id', $salesChannel->getNavigationCategoryId()),
-                    new ContainsFilter('path', $salesChannel->getNavigationCategoryId())
+                    new ContainsFilter('path', $salesChannel->getNavigationCategoryId()),
                 ])
             );
         }
@@ -52,7 +63,7 @@ class CategoryIndexer extends AbstractIndexer
             'parentId' => $category->getParentId(),
             'level' => $category->getLevel(),
             'path' => trim(str_replace('|', '/', $category->getPath() ?? '') . $category->getId(), '/'),
-            'name' => $category->getTranslation('name')
+            'name' => $category->getTranslation('name'),
         ];
     }
 }

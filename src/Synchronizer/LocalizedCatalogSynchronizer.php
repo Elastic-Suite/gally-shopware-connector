@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Synchronizer;
@@ -41,12 +52,12 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
 
         return $this->createOrUpdateEntity(
             new LocalizedCatalog([
-                "name" => $language->getName(),
-                "code" => $salesChannel->getId() . $language->getId(),
-                "locale" => str_replace('-', '_', $language->getLocale()->getCode()),
-                "currency" => $salesChannel->getCurrency()->getIsoCode(),
-                "isDefault" => $language->getId() == $salesChannel->getLanguage()->getId(),
-                "catalog" => "/catalogs/" . $catalog->getId(),
+                'name' => $language->getName(),
+                'code' => $salesChannel->getId() . $language->getId(),
+                'locale' => str_replace('-', '_', $language->getLocale()->getCode()),
+                'currency' => $salesChannel->getCurrency()->getIsoCode(),
+                'isDefault' => $language->getId() == $salesChannel->getLanguage()->getId(),
+                'catalog' => '/catalogs/' . $catalog->getId(),
             ])
         );
     }
@@ -56,7 +67,7 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
         /** @var LocalizedCatalog $entity */
         parent::addEntityByIdentity($entity);
 
-        if (!array_key_exists($entity->getLocale(), $this->localizedCatalogByLocale)) {
+        if (!\array_key_exists($entity->getLocale(), $this->localizedCatalogByLocale)) {
             $this->localizedCatalogByLocale[$entity->getLocale()] = [];
         }
 
@@ -82,4 +93,3 @@ class LocalizedCatalogSynchronizer extends AbstractSynchronizer
         return $this->entityByCode[$identifier] ?? null;
     }
 }
-

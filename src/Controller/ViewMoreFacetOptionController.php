@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Controller;
@@ -35,7 +46,7 @@ class ViewMoreFacetOptionController extends StorefrontController
     {
         $referer = $this->buildRefererRequest($request);
         $params = json_decode($request->getContent(), true);
-        if (!array_key_exists('aggregation', $params)) {
+        if (!\array_key_exists('aggregation', $params)) {
             throw new \InvalidArgumentException('"aggregation" parameter is required.');
         }
         $criteria = $this->criteriaBuilder->build($referer, $context);
@@ -55,10 +66,10 @@ class ViewMoreFacetOptionController extends StorefrontController
                             'count' => 1,
                             'options' => $rawOptions,
                             'hasMore' => false,
-                        ]
+                        ],
                     ],
                     $context
-                )
+                ),
             ]
         );
     }
@@ -79,9 +90,10 @@ class ViewMoreFacetOptionController extends StorefrontController
 
         $request = $this->transformer->transform($request);
         $pathInfo = explode('/', trim($request->getPathInfo(), '/'));
-        if ($pathInfo[0] === 'navigation') {
+        if ('navigation' === $pathInfo[0]) {
             $request->attributes->set('navigationId', $pathInfo[1]);
         }
+
         return $request;
     }
 }

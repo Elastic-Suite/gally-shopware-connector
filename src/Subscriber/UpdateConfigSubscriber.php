@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Subscriber;
@@ -15,7 +26,7 @@ class UpdateConfigSubscriber implements EventSubscriberInterface
     private array $globalConfigs = [
         'GallyPlugin.config.baseurl',
         'GallyPlugin.config.user',
-        'GallyPlugin.config.password'
+        'GallyPlugin.config.password',
     ];
 
     public function __construct(
@@ -34,7 +45,7 @@ class UpdateConfigSubscriber implements EventSubscriberInterface
     {
         if ($event->getSalesChannelId()
             && $event->getValue()
-            && in_array($event->getKey(), $this->globalConfigs)) {
+            && \in_array($event->getKey(), $this->globalConfigs, true)) {
             $this->configService->set($event->getKey(), $event->getValue());
             $this->configService->set($event->getKey(), null, $event->getSalesChannelId());
         }

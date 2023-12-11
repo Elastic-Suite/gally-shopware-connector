@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
@@ -39,8 +50,7 @@ class ProductIndexer extends AbstractIndexer
         EntityRepository $entityRepository,
         UrlGenerator $urlGenerator,
         private EntityRepository $categoryRepository
-    )
-    {
+    ) {
         parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository, $urlGenerator);
     }
 
@@ -89,7 +99,7 @@ class ProductIndexer extends AbstractIndexer
                 $data = $this->formatProduct($product, $children, $context);
 
                 // Keep the first non-null image
-                if (array_key_exists('image', $data)) {
+                if (\array_key_exists('image', $data)) {
                     $media = array_filter($data['image']);
                     $data['image'] = !empty($media) ? reset($media) : '';
                 }
@@ -98,7 +108,7 @@ class ProductIndexer extends AbstractIndexer
                 array_walk(
                     $data,
                     function (&$item, $key) {
-                        $item = (is_array($item) && $key !== 'stock') ? array_values($item) : $item;
+                        $item = (\is_array($item) && 'stock' !== $key) ? array_values($item) : $item;
                     }
                 );
                 yield $data;
@@ -114,7 +124,7 @@ class ProductIndexer extends AbstractIndexer
         $criteria->addFilter(
             new OrFilter([
                 new EqualsFilter('id', $rootId),
-                new ContainsFilter('path', $rootId)
+                new ContainsFilter('path', $rootId),
             ])
         );
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
@@ -131,7 +141,7 @@ class ProductIndexer extends AbstractIndexer
             'price' => $this->formatPrice($product),
             'stock' => [
                 'status' => $product->getAvailableStock() > 0,
-                'qty' => $product->getStock()
+                'qty' => $product->getStock(),
             ],
             'category' => $this->formatCategories($product),
             'manufacturer' => $this->formatManufacturer($product),
@@ -147,7 +157,7 @@ class ProductIndexer extends AbstractIndexer
         /** @var PropertyGroupOptionEntity $property */
         foreach ($properties as $property) {
             $propertyId = 'property_' . $property->getGroupId();
-            if (!array_key_exists($propertyId, $data)) {
+            if (!\array_key_exists($propertyId, $data)) {
                 $data[$propertyId] = [];
             }
             $data[$propertyId][$property->getId()] = [
@@ -181,8 +191,8 @@ class ProductIndexer extends AbstractIndexer
         // Remove empty values
         return array_filter(
             $data,
-            fn ($item, $key) => in_array($key, ['stock']) || !is_array($item) || !empty(array_filter($item)),
-            ARRAY_FILTER_USE_BOTH
+            fn ($item, $key) => \in_array($key, ['stock'], true) || !\is_array($item) || !empty(array_filter($item)),
+            \ARRAY_FILTER_USE_BOTH
         );
     }
 
@@ -193,13 +203,13 @@ class ProductIndexer extends AbstractIndexer
         foreach ($product->getPrice() ?? [] as $price) {
             $originalPrice = $price->getListPrice() ? $price->getListPrice()->getGross() : $price->getGross();
             $prices[] = [
-                'price' =>  $price->getGross(),
+                'price' => $price->getGross(),
                 'original_price' => $originalPrice,
                 'group_id' => 0,
-                'is_discounted' => $price->getGross() < $originalPrice
+                'is_discounted' => $price->getGross() < $originalPrice,
             ];
-
         }
+
         return $prices;
     }
 
@@ -209,7 +219,7 @@ class ProductIndexer extends AbstractIndexer
             $media = $product->getMedia()->getMedia()->first();
             /** @var MediaThumbnailEntity $thumbnail */
             foreach ($media->getThumbnails() as $thumbnail) {
-                if (400 == $thumbnail->getWidth()){
+                if (400 == $thumbnail->getWidth()) {
                     return $this->urlGenerator->getRelativeThumbnailUrl($media, $thumbnail);
                 }
             }
@@ -233,24 +243,26 @@ class ProductIndexer extends AbstractIndexer
                     $categories[$category->getId()] = [
                         'id' => $category->getId(),
                         'category_uid' => $category->getId(),
-                        'name' =>  $category->getName(),
-                        'is_parent' => !array_key_exists($category->getId(), $categoryIds)
+                        'name' => $category->getName(),
+                        'is_parent' => !\array_key_exists($category->getId(), $categoryIds),
                     ];
                 }
             }
         }
+
         return array_values($categories);
     }
 
     private function formatManufacturer(ProductEntity $product): array
     {
         $manufacturer = $product->getManufacturer();
+
         return $manufacturer
             ? [
                 $manufacturer->getId() => [
                     'value' => $manufacturer->getId(),
                     'label' => $manufacturer->getName(),
-                ]
+                ],
             ]
             : [];
     }

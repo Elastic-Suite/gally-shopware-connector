@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
@@ -43,7 +54,6 @@ abstract class AbstractIndexer
                 $languages = $salesChannel->getLanguages();
                 /** @var LanguageEntity $language */
                 foreach ($languages as $language) {
-
                     if (empty($documentIdsToReindex)) {
                         $indexName = $this->indexOperation->createIndex($this->getEntityType(), $salesChannel, $language);
                     } else {
@@ -54,12 +64,12 @@ abstract class AbstractIndexer
                     $bulk = [];
                     foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
                         $bulk[$document['id']] = json_encode($document);
-                        if (count($bulk) >= $batchSize) {
+                        if (\count($bulk) >= $batchSize) {
                             $this->indexOperation->executeBulk($indexName, $bulk);
                             $bulk = [];
                         }
                     }
-                    if (count($bulk)) {
+                    if (\count($bulk)) {
                         $this->indexOperation->executeBulk($indexName, $bulk);
                     }
 

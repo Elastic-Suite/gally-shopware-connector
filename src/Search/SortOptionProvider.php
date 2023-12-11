@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
@@ -30,8 +41,8 @@ class SortOptionProvider
         /** @var ProductSortingOption $option */
         foreach ($sortingOptions as $option) {
             foreach ([FieldSorting::ASCENDING, FieldSorting::DESCENDING] as $direction) {
-                if ($option->getCode() === self::SCORE_SEARCH_SORT) {
-                    if ($direction === FieldSorting::ASCENDING) {
+                if (self::SCORE_SEARCH_SORT === $option->getCode()) {
+                    if (FieldSorting::ASCENDING === $direction) {
                         continue;
                     }
                     $label = $option->getLabel();
@@ -50,7 +61,7 @@ class SortOptionProvider
                         'field' => $option->getCode(),
                         'order' => $direction,
                         'priority' => 1,
-                    ]
+                    ],
                 ]);
                 $sortings->add($sortingEntity);
             }
@@ -67,11 +78,10 @@ class SortOptionProvider
                 'field' => self::DEFAULT_SEARCH_SORT,
                 'order' => FieldSorting::ASCENDING,
                 'priority' => 1,
-            ]
+            ],
         ]);
         $sortings->add($sortingEntity);
 
         return $sortings;
     }
 }
-

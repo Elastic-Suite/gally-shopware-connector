@@ -1,8 +1,8 @@
 parameters:
     level: 5
-    autoload_files:
-        - %rootDir%/../../../vendor/autoload.php
-    autoload_directories:
-    	- %rootDir%/../../../src
-    excludes_analyse:
+    excludePaths:
         - %rootDir%/../../../vendor/*
+    ignoreErrors:
+        -
+            message: '#Class [a-zA-Z0-9\\_]+ extends @final class [a-zA-Z0-9\\_]+\.#'
+            path: src/Search/Aggregation/AggregationOption.php

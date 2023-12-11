@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search\Aggregation;
@@ -33,7 +44,7 @@ class AggregationBuilder
     public function __construct(
         protected EntityRepository $manufacturerRepository,
         protected EntityRepository $propertyGroupRepository
-    ){
+    ) {
     }
 
     public function build(array $rawAggregationData, SalesChannelContext $context): AggregationResultCollection
@@ -54,21 +65,16 @@ class AggregationBuilder
                         $manufacturers->add($showMore);
                     }
                     $aggregationCollection->add(new EntityResult($data['field'], $manufacturers));
-
                 } elseif (self::PRICE_AGGREGATION === $data['field']) {
                     $minPrice = reset($data['options'])['value'];
                     $maxPrice = end($data['options'])['value'];
                     $aggregationCollection->add(new StatsResult($data['field'], $minPrice, $maxPrice, null, null));
-
                 } elseif (self::FREE_SHIPPING_AGGREGATION === $data['field']) {
                     $aggregationCollection->add(new MaxResult($data['field'], max(array_column($data['options'], 'value'))));
-
                 } elseif (self::STOCK_STATUS_AGGREGATION === $data['field']) {
                     $aggregationCollection->add(new MaxResult($data['field'], max(array_column($data['options'], 'value'))));
-
                 } elseif (self::RATING_AGGREGATION === $data['field']) {
                     $aggregationCollection->add(new MaxResult($data['field'], max(array_column($data['options'], 'value'))));
-
                 } elseif (str_starts_with($data['field'], 'property')) {
                     $propertyId = str_replace('property_', '', str_replace('__value', '', $data['field']));
                     $criteria = new Criteria();
@@ -77,7 +83,7 @@ class AggregationBuilder
                     $properties = $this->propertyGroupRepository->search($criteria, $context->getContext());
                     /** @var PropertyGroupEntity $property */
                     $property = $properties->first();
-                    
+
                     $optionIds = array_column($data['options'], 'value');
                     $options = new PropertyGroupOptionCollection();
                     foreach ($optionIds as $optionId) {
@@ -92,10 +98,9 @@ class AggregationBuilder
                     $property->setOptions($options);
 
                     $aggregationCollection->add(new EntityResult($data['field'], $properties));
-
                 } else {
                     foreach ($data['options'] as $bucket) {
-                        $buckets[] = new AggregationOption($bucket['label'], $bucket['value'], (int)$bucket['count']);
+                        $buckets[] = new AggregationOption($bucket['label'], $bucket['value'], (int) $bucket['count']);
                     }
 
                     if ($data['hasMore']) {

@@ -1,20 +1,26 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\Rest\ApiException;
-use Gally\ShopwarePlugin\Api\GraphQlClient;
-use Psr\Http\Message\ResponseInterface;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\AggregationResultCollection;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 /**
- * Gally result
+ * Gally result.
  */
 class Result
 {
@@ -30,7 +36,7 @@ class Result
     }
 
     /**
-     * Get product numbers from gally response
+     * Get product numbers from gally response.
      *
      * @return string[]
      */
@@ -55,7 +61,7 @@ class Result
             $newListing->addCurrentFilter($name, $filter);
         }
 
-        $sortKey = $this->sortField === SortOptionProvider::SCORE_SEARCH_SORT
+        $sortKey = SortOptionProvider::SCORE_SEARCH_SORT === $this->sortField
             ? $this->sortField
             : $this->sortField . '-' . $this->sortDirection;
 
@@ -68,6 +74,7 @@ class Result
         $newListing->setAvailableSortings($sortings);
 
         $this->sortListing($newListing);
+
         return $newListing;
     }
 
@@ -87,6 +94,5 @@ class Result
                 return $gallyOrder[$productA->getProductNumber()] >= $gallyOrder[$productB->getProductNumber()];
             }
         );
-
     }
 }

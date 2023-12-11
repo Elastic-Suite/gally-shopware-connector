@@ -1,21 +1,27 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\ShopwarePlugin\Service\Configuration;
-use Psr\Log\LoggerInterface;
-use Shopware\Core\Content\Product\SalesChannel\Exception\ProductSortingNotFoundException;
 use Shopware\Core\Content\Product\SalesChannel\Search\ResolvedCriteriaProductSearchRoute;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
-use Shopware\Core\Content\Product\SearchKeyword\ProductSearchBuilderInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Create a criteria object from a request object.
@@ -81,7 +87,7 @@ class CriteriaBuilder
         $criteria->resetPostFilters();
         foreach ($filterData as $field => $data) {
             if (isset($data['min']) || isset($data['max'])) {
-                $filterParams = [RangeFilter::GTE => (float) $data['min'] ?? 0];
+                $filterParams = [RangeFilter::GTE => (float) ($data['min'] ?? 0)];
                 if (isset($data['max'])) {
                     $filterParams[RangeFilter::LTE] = (float) $data['max'];
                 }
@@ -97,7 +103,7 @@ class CriteriaBuilder
     private function handleSorting(Request $request, Criteria $criteria): void
     {
         if (!$request->get('order')
-            || $request->get('order') === ResolvedCriteriaProductSearchRoute::DEFAULT_SEARCH_SORT) {
+            || ResolvedCriteriaProductSearchRoute::DEFAULT_SEARCH_SORT === $request->get('order')) {
             $request->request->set('order', SortOptionProvider::DEFAULT_SEARCH_SORT);
         }
 
@@ -107,7 +113,7 @@ class CriteriaBuilder
         $currentSorting = $sortings->getByKey($currentSortKey);
 
         $criteria->resetSorting(); // Remove multiple default shopware sortings.
-        if ($currentSorting !== null) {
+        if (null !== $currentSorting) {
             $criteria->addSorting(...$currentSorting->createDalSorting());
         }
 

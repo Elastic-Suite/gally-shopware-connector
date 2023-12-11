@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
@@ -56,15 +67,15 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                 ['handleListingRequest', 50],
             ],
             // Listing override for category page
-            NavigationPageLoadedEvent::class =>[
+            NavigationPageLoadedEvent::class => [
                 ['handleNavigationResult', 50],
             ],
             // Listing override for category page update (ajax)
-            CmsPageLoadedEvent::class =>[
+            CmsPageLoadedEvent::class => [
                 ['handleNavigationResult', 50],
             ],
             // Listing override for search page and search page update (ajax)
-            SearchPageLoadedEvent::class =>[
+            SearchPageLoadedEvent::class => [
                 ['handleSearchResult', 50],
             ],
         ];
@@ -117,7 +128,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Listing override for category page
+     * Listing override for category page.
      *
      * @param NavigationPageLoadedEvent|CmsPageLoadedEvent $event
      */
@@ -131,13 +142,13 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                 ? $event->getPage()->getCmsPage()
                 : $event->getResult()->first();
 
-            if ($page->getType() !== 'product_list') {
+            if ('product_list' !== $page->getType()) {
                 return;
             }
 
             /** @var CmsBlockEntity $block */
             foreach ($page->getSections()->getBlocks() as $block) {
-                if ($block->getType() == 'product-listing') {
+                if ('product-listing' == $block->getType()) {
                     /** @var ProductListingStruct $listingContainer */
                     $listingContainer = $block->getSlots()->getSlot('content')->getData();
                     /** @var ProductListingResult $productListing */
@@ -152,6 +163,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                                     ? 'gally.listing.emptyResultMessage'
                                     : 'gally.listing.wrongConfiguration')
                             ));
+
                         return;
                     }
 
@@ -177,6 +189,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                             ? 'gally.listing.emptyResultMessage'
                             : 'gally.listing.wrongConfiguration')
                     ));
+
                 return;
             }
 
@@ -191,7 +204,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     {
         $criteria->setTerm(null);
         $criteria->setIds([]);
-        $criteria->setLimit(count($this->gallyResults->getProductNumbers()));
+        $criteria->setLimit(\count($this->gallyResults->getProductNumbers()));
         $criteria->setOffset(0);
         $criteria->resetAggregations();
         $criteria->resetFilters();

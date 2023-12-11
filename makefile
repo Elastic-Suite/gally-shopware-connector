@@ -21,3 +21,6 @@ test: ## Starts all Tests
 
 stan: ## Starts the PHPStan Analyser
 	php ./vendor/bin/phpstan --memory-limit=1G analyse .
+
+fixer: ## Starts the PHPStan Analyser
+	php ./vendor/bin/php-cs-fixer fix src

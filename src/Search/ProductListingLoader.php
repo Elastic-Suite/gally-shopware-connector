@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
@@ -31,10 +42,11 @@ class ProductListingLoader extends \Shopware\Core\Content\Product\SalesChannel\L
     public function load(Criteria $origin, SalesChannelContext $context): EntitySearchResult
     {
         $filters = $origin->getFilters();
-        if (array_key_exists('gally_filter', $filters)) {
+        if (\array_key_exists('gally_filter', $filters)) {
             $origin->resetFilters();
             $origin->setFilter('gally_filter', $filters['gally_filter']);
         }
+
         return $this->decorated->load($origin, $context);
     }
 }

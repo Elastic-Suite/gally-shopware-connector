@@ -1,4 +1,15 @@
 <?php
+/**
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Gally to newer versions in the future.
+ *
+ * @package   Gally
+ * @author    Gally Team <elasticsuite@smile.fr>
+ * @copyright 2022-present Smile
+ * @license   Open Software License v. 3.0 (OSL-3.0)
+ */
+
 declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
@@ -27,7 +38,7 @@ class Adapter
         $sorts = $criteria->getSorting();
         $sort = reset($sorts);
         $navigationsIds = $criteria->getIds();
-        $currentPage = $criteria->getOffset() == 0 ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
+        $currentPage = 0 == $criteria->getOffset() ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
 
         $data = [
             'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
@@ -36,10 +47,10 @@ class Adapter
             'search' => $criteria->getTerm(),
             'currentPage' => $currentPage,
             'pageSize' => $criteria->getLimit(),
-            'filter' => $this->getFiltersFromCriteria($criteria)
+            'filter' => $this->getFiltersFromCriteria($criteria),
         ];
 
-        if ($sort->getField() !== SortOptionProvider::DEFAULT_SEARCH_SORT) {
+        if (SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField()) {
             $data['sort'] = [$sort->getField() => strtolower($sort->getDirection())];
         }
         $criteria->resetSorting();
@@ -61,13 +72,14 @@ class Adapter
                 'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
                 'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
                 'search' => $criteria->getTerm(),
-                'filter' => $this->getFiltersFromCriteria($criteria)
+                'filter' => $this->getFiltersFromCriteria($criteria),
             ]
         );
         $data = json_decode($response->getBody()->getContents(), true);
-        if (array_key_exists('errors', $data)) {
+        if (\array_key_exists('errors', $data)) {
             throw new ApiException(reset($data['errors'])['message']);
         }
+
         return $data['data']['viewMoreProductFacetOptions'];
     }
 
@@ -139,14 +151,14 @@ class Adapter
     {
         $filters = [];
         foreach ($criteria->getPostFilters() as $filter) {
-            switch (get_class($filter)) {
+            switch ($filter::class) {
                 case EqualsFilter::class:
                     $filters[] = [$filter->getField() => ['eq' => $filter->getValue()]];
                     break;
                 case EqualsAnyFilter::class:
                     // On gally side, category filter can't handle multiple values
                     // This is why we use a boolean filter in this case.
-                    if ($filter->getField() === 'category__id') {
+                    if ('category__id' === $filter->getField()) {
                         $boolFilterClauses = [];
                         foreach ($filter->getValue() as $value) {
                             $boolFilterClauses[] = [$filter->getField() => ['eq' => $value]];
@@ -161,6 +173,7 @@ class Adapter
                     break;
             }
         }
+
         return $filters;
     }
 }
