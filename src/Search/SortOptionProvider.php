@@ -61,6 +61,7 @@ class SortOptionProvider
                         'field' => $option->getCode(),
                         'order' => $direction,
                         'priority' => 1,
+                        'naturalSorting' => false,
                     ],
                 ]);
                 $sortings->add($sortingEntity);
@@ -78,6 +79,7 @@ class SortOptionProvider
                 'field' => self::DEFAULT_SEARCH_SORT,
                 'order' => FieldSorting::ASCENDING,
                 'priority' => 1,
+                'naturalSorting' => false,
             ],
         ]);
         $sortings->add($sortingEntity);

@@ -29,42 +29,32 @@
             <argument key="$createEntityMethod">postMetadataCollection</argument>
             <argument key="$putEntityMethod">putMetadataItem</argument>
         </service>
-        <service id="Gally\ShopwarePlugin\Synchronizer\SourceFieldLabelSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer">
-            <argument key="$entityClass">\Gally\Rest\Api\SourceFieldLabelApi</argument>
-            <argument key="$getCollectionMethod">getSourceFieldLabelCollection</argument>
-            <argument key="$createEntityMethod">postSourceFieldLabelCollection</argument>
-            <argument key="$putEntityMethod">putSourceFieldLabelItem</argument>
+        <service id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer">
+            <argument key="$entityClass">\Gally\Rest\Api\SourceFieldApi</argument>
+            <argument key="$getCollectionMethod">getSourceFieldCollection</argument>
+            <argument key="$createEntityMethod">postSourceFieldCollection</argument>
+            <argument key="$putEntityMethod">putSourceFieldItem</argument>
+            <argument key="$bulkEntityMethod">bulkSourceFieldItem</argument>
+            <argument type="service" key="$customFieldRepository" id="custom_field.repository" />
+            <argument type="service" key="$propertyGroupRepository" id="property_group.repository" />
+            <argument type="service" key="$metadataSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
             <argument type="service" key="$localizedCatalogSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionLabelSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\SourceFieldLabelSynchronizer">
-            <argument key="$entityClass">\Gally\Rest\Api\SourceFieldOptionLabelApi</argument>
-            <argument key="$getCollectionMethod">getSourceFieldOptionLabelCollection</argument>
-            <argument key="$createEntityMethod">postSourceFieldOptionLabelCollection</argument>
-            <argument key="$putEntityMethod">putSourceFieldOptionLabelItem</argument>
-            <argument type="service" key="$localizedCatalogSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
+            <argument type="service" key="$languageRepository" id="language.repository" />
+            <argument type="service" key="$translator" id="translator" />
+            <tag name="gally.entity.synchronizer" priority="80"/>
         </service>
         <service id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer">
             <argument key="$entityClass">\Gally\Rest\Api\SourceFieldOptionApi</argument>
             <argument key="$getCollectionMethod">getSourceFieldOptionCollection</argument>
             <argument key="$createEntityMethod">postSourceFieldOptionCollection</argument>
             <argument key="$putEntityMethod">putSourceFieldOptionItem</argument>
-            <argument type="service" key="$sourceFieldOptionLabelSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionLabelSynchronizer" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" parent="Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer">
-            <argument key="$entityClass">\Gally\Rest\Api\SourceFieldApi</argument>
-            <argument key="$getCollectionMethod">getSourceFieldCollection</argument>
-            <argument key="$createEntityMethod">postSourceFieldCollection</argument>
-            <argument key="$putEntityMethod">putSourceFieldItem</argument>
+            <argument key="$bulkEntityMethod">bulkSourceFieldOptionItem</argument>
             <argument type="service" key="$customFieldRepository" id="custom_field.repository" />
             <argument type="service" key="$propertyGroupRepository" id="property_group.repository" />
+            <argument type="service" key="$sourceFieldSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer" />
             <argument type="service" key="$metadataSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer" />
-            <argument type="service" key="$sourceFieldLabelSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldLabelSynchronizer" />
-            <argument type="service" key="$sourceFieldOptionSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionSynchronizer" />
-            <argument type="service" key="$sourceFieldOptionLabelSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\SourceFieldOptionLabelSynchronizer" />
-            <argument type="service" key="$languageRepository" id="language.repository" />
-            <argument type="service" key="$translator" id="translator" />
-            <tag name="gally.entity.synchronizer" priority="80"/>
             <argument type="service" key="$localizedCatalogSynchronizer" id="Gally\ShopwarePlugin\Synchronizer\LocalizedCatalogSynchronizer" />
+            <tag name="gally.entity.synchronizer" priority="60"/>
         </service>
 
         <service id="Gally\ShopwarePlugin\Synchronizer\Subscriber\SalesChannelSubscriber">

@@ -25,8 +25,10 @@ use Shopware\Core\Framework\Context;
 abstract class AbstractSynchronizer
 {
     protected const FETCH_PAGE_SIZE = 50;
-
+    protected const BATCH_SIZE = 100;
     protected array $entityByCode = [];
+    private array $currentBatch = [];
+    private int $currentBatchSize = 0;
     protected bool $allEntityHasBeenFetch = false;
 
     public function __construct(
@@ -35,7 +37,8 @@ abstract class AbstractSynchronizer
         protected string $entityClass,
         protected string $getCollectionMethod,
         protected string $createEntityMethod,
-        protected string $putEntityMethod
+        protected string $putEntityMethod,
+        protected ?string $bulkEntityMethod = null
     ) {
     }
 
@@ -137,6 +140,31 @@ abstract class AbstractSynchronizer
     {
         if (!$entity->valid()) {
             throw new \LogicException('Missing properties for ' . $entity::class . ' : ' . implode(',', $entity->listInvalidProperties()));
+        }
+    }
+
+    protected function addEntityToBulk(ModelInterface $entity): void
+    {
+        if ($this->bulkEntityMethod === null) {
+            throw new \Exception(sprintf('The entity %s doesn\'t have a bulk method.', $this->getEntityClass()));
+        }
+
+        $this->currentBatch[] = $entity;
+        $this->currentBatchSize++;
+        if ($this->currentBatchSize >= self::BATCH_SIZE) {
+            $this->runBulk();
+        }
+    }
+
+    protected function runBulk(): void
+    {
+        if ($this->currentBatchSize) {
+            $entities = $this->client->query($this->entityClass, $this->bulkEntityMethod, 'fakeId', $this->currentBatch);
+            foreach ($entities as $entity) {
+                $this->addEntityByIdentity($entity);
+            }
+            $this->currentBatch = [];
+            $this->currentBatchSize = 0;
         }
     }
 }
