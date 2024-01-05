@@ -14,17 +14,27 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Synchronizer;
 
+use Gally\Rest\Model\LocalizedCatalog;
+use Gally\Rest\Model\MetadataMetadataRead;
 use Gally\Rest\Model\ModelInterface;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
+use Gally\Rest\Model\SourceFieldSourceFieldRead;
 use Gally\ShopwarePlugin\Api\RestClient;
 use Gally\ShopwarePlugin\Service\Configuration;
+use Shopware\Core\Content\Property\PropertyGroupCollection;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\System\CustomField\CustomFieldCollection;
 
 /**
  * Synchronize shopware custom field and property options with gally source field options.
  */
 class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 {
+    private array $entitiesToSync = ['category', 'product', 'manufacturer'];
+
     public function __construct(
         Configuration $configuration,
         RestClient $client,
@@ -32,7 +42,12 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $putEntityMethod,
-        protected SourceFieldOptionLabelSynchronizer $sourceFieldOptionLabelSynchronizer
+        string $bulkEntityMethod,
+        private EntityRepository $customFieldRepository,
+        private EntityRepository $propertyGroupRepository,
+        private SourceFieldSynchronizer $sourceFieldSynchronizer,
+        private MetadataSynchronizer $metadataSynchronizer,
+        private LocalizedCatalogSynchronizer $localizedCatalogSynchronizer
     ) {
         parent::__construct(
             $configuration,
@@ -40,7 +55,8 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
             $entityClass,
             $getCollectionMethod,
             $createEntityMethod,
-            $putEntityMethod
+            $putEntityMethod,
+            $bulkEntityMethod
         );
     }
 
@@ -52,18 +68,110 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 
     public function synchronizeAll(Context $context)
     {
-        throw new \LogicException('Run source field synchronizer to sync all options');
+        $this->sourceFieldSynchronizer->fetchEntities();
+
+        foreach ($this->entitiesToSync as $entity) {
+            /** @var MetadataMetadataRead $metadata */
+            $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity]);
+
+            // Custom fields
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', $entity));
+            $criteria->addAssociations(['customFieldSet', 'customFieldSet.relations']);
+            /** @var CustomFieldCollection $customFields */
+            $customFields = $this->customFieldRepository->search($criteria, $context)->getEntities();
+            foreach ($customFields as $customField) {
+                $position = 0;
+                foreach ($customField->getConfig()['options'] ?? [] as $option) {
+                    $sourceField = $this->sourceFieldSynchronizer->getEntityByCode($metadata, $customField->getName());
+
+                    $labels = [];
+                    foreach ($option['label'] as $localeCode => $label) {
+                        $labels[] = [
+                            'locale' => str_replace('-', '_', $localeCode),
+                            'label' => $label
+                        ];
+                    }
+
+                    $this->synchronizeItem([
+                        'sourceField' => $sourceField,
+                        'code' => $option['value'],
+                        'labels' => $labels,
+                        'position' => ++$position,
+                    ]);
+                }
+            }
+
+            // Property groups
+            if ('product' == $entity) {
+                $criteria = new Criteria();
+                $criteria->addAssociations([
+                    'options',
+                    'options.translations',
+                    'options.translations.language',
+                    'options.translations.language.locale',
+                ]);
+
+                /** @var PropertyGroupCollection $properties */
+                $properties = $this->propertyGroupRepository->search($criteria, $context)->getEntities();
+
+                foreach ($properties as $property) {
+                    foreach ($property->getOptions() as $option) {
+                        $sourceField = $this->sourceFieldSynchronizer->getEntityByCode($metadata, 'property_' . $property->getId());
+
+                        $labels = [];
+                        foreach ($option->getTranslations() as $label) {
+                            $labels[] = [
+                                'locale' => str_replace('-', '_', $label->getLanguage()->getLocale()->getCode()),
+                                'label' => $label->getName()
+                            ];
+                        }
+
+                        $this->synchronizeItem([
+                            'sourceField' => $sourceField,
+                            'code' => $option->getId(),
+                            'labels' => $labels,
+                            'position' => $option->getPosition(),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        $this->runBulk();
     }
 
     public function synchronizeItem(array $params): ?ModelInterface
     {
-        throw new \LogicException('Run source field synchronizer to sync option');
-    }
+        /** @var SourceFieldSourceFieldRead $sourceField */
+        $sourceField = $params['sourceField'];
 
-    public function fetchEntities(): void
-    {
-        parent::fetchEntities();
-        $this->sourceFieldOptionLabelSynchronizer->fetchEntities();
+        /** @var array $labels */
+        $labels = $params['labels'];
+
+        $data = [
+            'sourceField' => '/source_fields/' . $sourceField->getId(),
+            'code' => $params['code'],
+            'defaultLabel' => reset($labels)['label'],
+            'position' => $params['position'],
+            'labels' => [],
+        ];
+
+        foreach ($labels as $label) {
+            $locale = $label['locale'];
+            /** @var LocalizedCatalog $localizedCatalog */
+            foreach ($this->localizedCatalogSynchronizer->getLocalizedCatalogByLocale($locale) as $localizedCatalog) {
+                $data['labels'][] = [
+                    'localizedCatalog' => '/localized_catalogs/' . $localizedCatalog->getId(),
+                    'label' => $label['label'],
+                ];
+            }
+        }
+
+        $sourceFieldOption = new SourceFieldOptionSourceFieldOptionWrite($data);
+        $this->addEntityToBulk($sourceFieldOption);
+
+        return $sourceFieldOption;
     }
 
     public function fetchEntity(ModelInterface $entity): ?ModelInterface
