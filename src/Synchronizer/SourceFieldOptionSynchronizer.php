@@ -17,6 +17,7 @@ namespace Gally\ShopwarePlugin\Synchronizer;
 use Gally\Rest\Model\LocalizedCatalog;
 use Gally\Rest\Model\MetadataMetadataRead;
 use Gally\Rest\Model\ModelInterface;
+use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionRead;
 use Gally\Rest\Model\SourceFieldOptionSourceFieldOptionWrite;
 use Gally\Rest\Model\SourceFieldSourceFieldRead;
 use Gally\ShopwarePlugin\Api\RestClient;
@@ -34,6 +35,7 @@ use Shopware\Core\System\CustomField\CustomFieldCollection;
 class SourceFieldOptionSynchronizer extends AbstractSynchronizer
 {
     private array $entitiesToSync = ['category', 'product', 'manufacturer'];
+    private array $sourceFieldOptionCodes = [];
 
     public function __construct(
         Configuration $configuration,
@@ -42,6 +44,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $putEntityMethod,
+        string $deleteEntityMethod,
         string $bulkEntityMethod,
         private EntityRepository $customFieldRepository,
         private EntityRepository $propertyGroupRepository,
@@ -56,6 +59,7 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
             $getCollectionMethod,
             $createEntityMethod,
             $putEntityMethod,
+            $deleteEntityMethod,
             $bulkEntityMethod
         );
     }
@@ -172,6 +176,60 @@ class SourceFieldOptionSynchronizer extends AbstractSynchronizer
         $this->addEntityToBulk($sourceFieldOption);
 
         return $sourceFieldOption;
+    }
+
+    public function cleanAll(Context $context, bool $dryRun = true, bool $quiet = false): void
+    {
+        $this->sourceFieldOptionCodes = array_flip($this->getAllEntityCodes());
+        $this->sourceFieldSynchronizer->fetchEntities();
+
+        foreach ($this->entitiesToSync as $entity) {
+            /** @var MetadataMetadataRead $metadata */
+            $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity]);
+
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', $entity));
+            $criteria->addAssociations(['customFieldSet', 'customFieldSet.relations']);
+
+            // Custom fields
+            /** @var CustomFieldCollection $customFields */
+            $customFields = $this->customFieldRepository->search($criteria, $context)->getEntities();
+            foreach ($customFields as $customField) {
+                foreach ($customField->getConfig()['options'] ?? [] as $option) {
+                    /** @var SourceFieldSourceFieldRead $sourceField */
+                    $sourceField = $this->sourceFieldSynchronizer->getEntityByCode($metadata, $customField->getName());
+                    unset($this->sourceFieldOptionCodes['/source_fields/' . $sourceField->getId() . $option['value']]);
+                }
+            }
+
+            // Property groups
+            if ('product' == $entity) {
+                $criteria = new Criteria();
+                $criteria->addAssociations(['options']);
+
+                /** @var PropertyGroupCollection $properties */
+                $properties = $this->propertyGroupRepository->search($criteria, $context)->getEntities();
+
+                foreach ($properties as $property) {
+                    foreach ($property->getOptions() as $option) {
+                        /** @var SourceFieldSourceFieldRead $sourceField */
+                        $sourceField = $this->sourceFieldSynchronizer->getEntityByCode($metadata, 'property_' . $property->getId());
+                        unset($this->sourceFieldOptionCodes['/source_fields/' . $sourceField->getId() . $option->getId()]);
+                    }
+                }
+            }
+        }
+
+        foreach (array_flip($this->sourceFieldOptionCodes) as $sourceFieldOptionCode) {
+            /** @var SourceFieldOptionSourceFieldOptionRead $sourceFieldOption */
+            $sourceFieldOption = $this->getEntityFromApi($sourceFieldOptionCode);
+            if (!$quiet) {
+                print("  Delete sourceFieldOption {$sourceFieldOption->getSourceField()} {$sourceFieldOption->getCode()}\n");
+            }
+            if (!$dryRun) {
+                $this->deleteEntity($sourceFieldOption->getId());
+            }
+        }
     }
 
     public function fetchEntity(ModelInterface $entity): ?ModelInterface

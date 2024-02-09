@@ -68,6 +68,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         ],
     ];
     private string $currentEntity;
+    private array $sourceFieldCodes = [];
 
     public function __construct(
         Configuration $configuration,
@@ -76,6 +77,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         string $getCollectionMethod,
         string $createEntityMethod,
         string $putEntityMethod,
+        string $deleteEntityMethod,
         protected ?string $bulkEntityMethod,
         private EntityRepository $customFieldRepository,
         private EntityRepository $propertyGroupRepository,
@@ -91,6 +93,7 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
             $getCollectionMethod,
             $createEntityMethod,
             $putEntityMethod,
+            $deleteEntityMethod,
             $bulkEntityMethod
         );
     }
@@ -217,6 +220,60 @@ class SourceFieldSynchronizer extends AbstractSynchronizer
         $this->addEntityToBulk($sourceField);
 
         return $sourceField;
+    }
+
+    public function cleanAll(Context $context, bool $dryRun = true, bool $quiet = false): void
+    {
+        $this->sourceFieldCodes = array_flip($this->getAllEntityCodes());
+
+        foreach ($this->entitiesToSync as $entity) {
+            /** @var MetadataMetadataRead $metadata */
+            $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity]);
+
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', $entity));
+            $criteria->addAssociations(['customFieldSet', 'customFieldSet.relations']);
+
+            // Static fields
+            foreach ($this->staticFields[$entity] ?? [] as $code => $data) {
+                unset($this->sourceFieldCodes['/metadata/' . $metadata->getId() . $code]);
+            }
+
+            // Custom fields
+            /** @var CustomFieldCollection $customFields */
+            $customFields = $this->customFieldRepository->search($criteria, $context)->getEntities();
+            foreach ($customFields as $customField) {
+                unset($this->sourceFieldCodes['/metadata/' . $metadata->getId() . $customField->getName()]);
+            }
+
+            // Property groups
+            if ('product' == $entity) {
+                $criteria = new Criteria();
+                $criteria->addAssociations([
+                    'translations',
+                    'translations.language',
+                    'translations.language.locale',
+                ]);
+
+                /** @var PropertyGroupCollection $properties */
+                $properties = $this->propertyGroupRepository->search($criteria, $context)->getEntities();
+
+                foreach ($properties as $property) {
+                    unset($this->sourceFieldCodes['/metadata/' . $metadata->getId() . 'property_' . $property->getId()]);
+                }
+            }
+        }
+
+        foreach (array_flip($this->sourceFieldCodes) as $sourceFieldCode) {
+            /** @var SourceFieldSourceFieldRead $sourceField */
+            $sourceField = $this->getEntityFromApi($sourceFieldCode);
+            if (!$sourceField->getIsSystem() && !$quiet) {
+                print("  Delete sourceField {$sourceField->getMetadata()} {$sourceField->getCode()}\n");
+            }
+            if (!$sourceField->getIsSystem() && !$dryRun) {
+                $this->deleteEntity($sourceField->getId());
+            }
+        }
     }
 
     public function fetchEntity(ModelInterface $entity): ?ModelInterface
