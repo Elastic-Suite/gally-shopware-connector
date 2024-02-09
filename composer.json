@@ -19,7 +19,7 @@
     },
     "require": {
         "php": "~8.1.0 || ~8.2.0",
-        "gally/gally-php-rest-sdk": "dev-perf-sourceField-api",
+        "gally/gally-php-rest-sdk": "1.3.0-alpha1",
         "shopware/core": "^6.5.0"
     },
     "require-dev": {

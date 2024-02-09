@@ -38,6 +38,7 @@ abstract class AbstractSynchronizer
         protected string $getCollectionMethod,
         protected string $createEntityMethod,
         protected string $putEntityMethod,
+        protected string $deleteEntityMethod,
         protected ?string $bulkEntityMethod = null
     ) {
     }
@@ -45,6 +46,14 @@ abstract class AbstractSynchronizer
     abstract public function synchronizeAll(Context $context);
 
     abstract public function synchronizeItem(array $params): ?ModelInterface;
+
+    /**
+     * Remove all entity from gally that not exist anymore on shopware side.
+     */
+    public function cleanAll(Context $context, bool $dryRun = true, bool $quiet = false): void
+    {
+
+    }
 
     public function getEntityClass(): string
     {
@@ -122,10 +131,10 @@ abstract class AbstractSynchronizer
         return $this->entityByCode[$this->getIdentity($entity)];
     }
 
-    protected function getEntityFromApi(ModelInterface $entity): ?ModelInterface
+    protected function getEntityFromApi(ModelInterface|string|int $entity): ?ModelInterface
     {
         if ($this->allEntityHasBeenFetch) {
-            return $this->entityByCode[$this->getIdentity($entity)] ?? null;
+            return $this->entityByCode[\is_scalar($entity) ? $entity : $this->getIdentity($entity)] ?? null;
         }
 
         return $this->fetchEntity($entity);
@@ -166,5 +175,17 @@ abstract class AbstractSynchronizer
             $this->currentBatch = [];
             $this->currentBatchSize = 0;
         }
+    }
+
+    protected function getAllEntityCodes(): array
+    {
+        $this->fetchEntities();
+
+        return array_keys($this->entityByCode);
+    }
+
+    protected function deleteEntity(int|string $entityId)
+    {
+        $this->client->query($this->entityClass, $this->deleteEntityMethod, $entityId);
     }
 }

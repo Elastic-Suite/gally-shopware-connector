@@ -40,12 +40,12 @@ class MetadataSynchronizer extends AbstractSynchronizer
         return $entity->getEntity();
     }
 
-    protected function getEntityFromApi(ModelInterface $entity): ?ModelInterface
+    protected function getEntityFromApi(ModelInterface|string|int $entity): ?ModelInterface
     {
         if (!$this->allEntityHasBeenFetch) {
             $this->fetchEntities();
         }
 
-        return $this->entityByCode[$this->getIdentity($entity)] ?? null;
+        return $this->entityByCode[\is_scalar($entity) ? $entity : $this->getIdentity($entity)] ?? null;
     }
 }
