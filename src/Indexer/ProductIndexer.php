@@ -137,6 +137,7 @@ class ProductIndexer extends AbstractIndexer
             'id' => "{$product->getAutoIncrement()}",
             'sku' => [$product->getProductNumber()],
             'name' => [$product->getTranslation('name')],
+            'description' => [$product->getTranslation('description')],
             'image' => [$this->formatMedia($product) ?: null],
             'price' => $this->formatPrice($product),
             'stock' => [
