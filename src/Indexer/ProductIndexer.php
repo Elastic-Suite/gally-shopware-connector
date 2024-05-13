@@ -18,6 +18,8 @@ use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Service\IndexOperation;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
+use Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator;
+use Shopware\Core\Content\Media\Core\Params\UrlParams;
 use Shopware\Core\Content\Media\Pathname\UrlGenerator;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
 use Shopware\Core\Content\Product\ProductEntity;
@@ -48,7 +50,7 @@ class ProductIndexer extends AbstractIndexer
         EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
         EntityRepository $entityRepository,
-        UrlGenerator $urlGenerator,
+        AbstractMediaUrlGenerator $urlGenerator,
         private EntityRepository $categoryRepository
     ) {
         parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository, $urlGenerator);
@@ -221,7 +223,7 @@ class ProductIndexer extends AbstractIndexer
             /** @var MediaThumbnailEntity $thumbnail */
             foreach ($media->getThumbnails() as $thumbnail) {
                 if (400 == $thumbnail->getWidth()) {
-                    return $this->urlGenerator->getRelativeThumbnailUrl($media, $thumbnail);
+                    return $thumbnail->getPath();
                 }
             }
         }

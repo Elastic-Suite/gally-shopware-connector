@@ -26,9 +26,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Controller used to fetch more option of a filter.
- *
- * @Route(defaults={"_routeScope"={"storefront"}})
  */
+#[Route(defaults: ['_routeScope' => ['storefront']])]
 class ViewMoreFacetOptionController extends StorefrontController
 {
     public function __construct(
@@ -39,9 +38,7 @@ class ViewMoreFacetOptionController extends StorefrontController
     ) {
     }
 
-    /**
-     * @Route("/gally/viewMore", name="frontend.gally.viewMore", methods={"POST"}, defaults={"XmlHttpRequest"=true})
-     */
+    #[Route(path: '/gally/viewMore', name: 'frontend.gally.viewMore', methods: ['POST'], defaults: ['XmlHttpRequest' => true])]
     public function viewMore(Request $request, SalesChannelContext $context): Response
     {
         $referer = $this->buildRefererRequest($request);

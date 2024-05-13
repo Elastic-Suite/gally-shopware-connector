@@ -16,7 +16,7 @@ namespace Gally\ShopwarePlugin\Indexer;
 
 use Gally\ShopwarePlugin\Service\Configuration;
 use Gally\ShopwarePlugin\Service\IndexOperation;
-use Shopware\Core\Content\Media\Pathname\UrlGenerator;
+use Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator;
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
@@ -36,7 +36,7 @@ abstract class AbstractIndexer
         protected EntityRepository $salesChannelRepository,
         protected IndexOperation $indexOperation,
         protected EntityRepository $entityRepository,
-        protected UrlGenerator $urlGenerator
+        protected AbstractMediaUrlGenerator $urlGenerator
     ) {
     }
 

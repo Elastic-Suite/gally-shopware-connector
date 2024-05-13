@@ -21,11 +21,9 @@ Shopware.Component.register(
         required: true,
         default: 'test',
       },
-      isLoading: {
-        type: Boolean,
-        default: false,
-        required: false,
-      },
+    },
+    data() {
+        return {isLoading: false}
     },
     methods: {
       runAction() {

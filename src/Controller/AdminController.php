@@ -26,9 +26,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Handle administration configuration button action.
- *
- * @Route(defaults={"_routeScope"={"api"}})
  */
+#[Route(defaults: ['_routeScope' => ['api']])]
 class AdminController extends AbstractController
 {
     /**
@@ -42,9 +41,7 @@ class AdminController extends AbstractController
     ) {
     }
 
-    /**
-     * @Route("/api/gally/test", name="api.gally.test", methods={"POST"})
-     */
+    #[Route(path: '/api/gally/test', name: 'api.gally.test', methods: ['POST'])]
     public function testApi(Request $request): JsonResponse
     {
         $apiParams = json_decode($request->getContent(), true);
@@ -69,9 +66,7 @@ class AdminController extends AbstractController
         return new JsonResponse($responseData);
     }
 
-    /**
-     * @Route("/api/gally/synchronize", name="api.gally.synchronize", methods={"POST"})
-     */
+    #[Route(path: '/api/gally/synchronize', name: 'api.gally.synchronize', methods: ['POST'])]
     public function synchronizeStructure(Context $context): JsonResponse
     {
         $responseData = ['error' => false];
@@ -88,9 +83,7 @@ class AdminController extends AbstractController
         return new JsonResponse($responseData);
     }
 
-    /**
-     * @Route("/api/gally/index", name="api.gally.index", methods={"POST"})
-     */
+    #[Route(path: '/api/gally/index', name: 'api.gally.index', methods: ['POST'])]
     public function index(Context $context): JsonResponse
     {
         $responseData = ['error' => false];

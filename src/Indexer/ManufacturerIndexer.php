@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
+use Shopware\Core\Content\Media\Core\Params\UrlParams;
 use Shopware\Core\Content\Product\Aggregate\ProductManufacturer\ProductManufacturerEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
@@ -52,7 +53,7 @@ class ManufacturerIndexer extends AbstractIndexer
             'description' => $manufacturer->getTranslation('description'),
             'link' => $manufacturer->getLink(),
             'image' => $manufacturer->getMedia()
-                ? $this->urlGenerator->getRelativeMediaUrl($manufacturer->getMedia())
+                ? $manufacturer->getMedia()->getPath()
                 : '',
         ];
     }
