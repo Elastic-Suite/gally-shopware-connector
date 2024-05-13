@@ -25,8 +25,6 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class StructureSync extends Command
 {
-    protected static $defaultName = 'gally:structure:sync';
-
     /**
      * @param AbstractSynchronizer[] $synchronizers
      */
@@ -38,7 +36,8 @@ class StructureSync extends Command
 
     protected function configure(): void
     {
-        $this->setDescription('Synchronize sales channels, entity fields with gally data structure.');
+        $this->setName('gally:structure:sync')
+            ->setDescription('Synchronize sales channels, entity fields with gally data structure.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

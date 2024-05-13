@@ -7,7 +7,7 @@
             <argument key="$configuration" type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
             <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
             <argument key="$indexOperation" type="service" id="Gally\ShopwarePlugin\Service\IndexOperation" />
-            <argument key="$urlGenerator" type="service" id="Shopware\Core\Content\Media\Pathname\UrlGeneratorInterface" />
+            <argument key="$urlGenerator" type="service" id="Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="category.repository" />

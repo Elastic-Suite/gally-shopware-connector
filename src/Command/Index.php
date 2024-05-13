@@ -25,8 +25,6 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Index extends Command
 {
-    protected static $defaultName = 'gally:index';
-
     /**
      * @param AbstractIndexer[] $indexers
      */
@@ -38,7 +36,8 @@ class Index extends Command
 
     protected function configure(): void
     {
-        $this->setDescription('Index category, product and manufacturer entities.');
+        $this->setName('gally:index')
+            ->setDescription('Index category, product and manufacturer entities.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

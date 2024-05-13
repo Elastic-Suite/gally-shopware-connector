@@ -37,8 +37,6 @@ export default class ViewMore {
       filterOptions = JSON.parse(filter.el.dataset.filterMultiSelectOptions);
     }
 
-    console.log(filterOptions.name);
-
     this.client.post(
       event.target.dataset.url,
       JSON.stringify({aggregation: filterOptions.name}),
