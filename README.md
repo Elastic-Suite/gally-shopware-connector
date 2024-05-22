@@ -3,9 +3,9 @@
 ## Usage
 
 - From the shopware Back-Office, activate and configure the Gally extension.
-- Run this commands from your Shopware instance. This commands must be runned only once to synchronize the structure.
+- Run these commands from your Shopware instance. These commands must be runned only *once* to synchronize the structure.
     ```shell
-        bin/console gally:structure:sync   # Sync catalog et source field data with gally
+        bin/console gally:structure:sync   # Sync catalog and source field data with gally
     ```
 - Run a full index from Shopware to Gally. This command can be run only once. Afterwards, the modified products are automatically synchronized.
     ```shell
