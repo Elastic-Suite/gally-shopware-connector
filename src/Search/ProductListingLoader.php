@@ -18,6 +18,7 @@ use Doctrine\DBAL\Connection;
 use Shopware\Core\Content\Product\SalesChannel\AbstractProductCloseoutFilterFactory;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
+use Shopware\Core\Framework\Extensions\ExtensionDispatcher;
 use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
@@ -34,9 +35,17 @@ class ProductListingLoader extends \Shopware\Core\Content\Product\SalesChannel\L
         SystemConfigService $systemConfigService,
         Connection $connection,
         EventDispatcherInterface $eventDispatcher,
-        AbstractProductCloseoutFilterFactory $productCloseoutFilterFactory
+        AbstractProductCloseoutFilterFactory $productCloseoutFilterFactory,
+        ExtensionDispatcher $extensions,
     ) {
-        parent::__construct($repository, $systemConfigService, $connection, $eventDispatcher, $productCloseoutFilterFactory);
+        parent::__construct(
+            $repository,
+            $systemConfigService,
+            $connection,
+            $eventDispatcher,
+            $productCloseoutFilterFactory,
+            $extensions
+        );
     }
 
     public function load(Criteria $origin, SalesChannelContext $context): EntitySearchResult

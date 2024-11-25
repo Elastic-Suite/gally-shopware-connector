@@ -29,7 +29,11 @@ class AuthenticationTokenProvider
 
     public function __construct(string $kernelEnv)
     {
-        $this->client = new Client('prod' !== $kernelEnv ? ['verify' => false] : []);
+        $options = ['allow_redirects' => false];
+        if ('prod' !== $kernelEnv) {
+            $options['verify'] = false;
+        }
+        $this->client = new Client($options);
     }
 
     public function getAuthenticationToken(string $baseUrl, string $user, string $password)

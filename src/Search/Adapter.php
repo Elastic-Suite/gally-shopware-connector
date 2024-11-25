@@ -33,17 +33,16 @@ class Adapter
     ) {
     }
 
-    public function search(SalesChannelContext $context, Criteria $criteria): Result
+    public function search(SalesChannelContext $context, Criteria $criteria, ?string $navigationId): Result
     {
         $sorts = $criteria->getSorting();
         $sort = reset($sorts);
-        $navigationsIds = $criteria->getIds();
         $currentPage = 0 == $criteria->getOffset() ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
 
         $data = [
             'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
             'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
-            'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
+            'currentCategoryId' => $navigationId,
             'search' => $criteria->getTerm(),
             'currentPage' => $currentPage,
             'pageSize' => $criteria->getLimit(),

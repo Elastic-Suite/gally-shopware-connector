@@ -47,13 +47,17 @@ class Result
 
     public function getResultListing(ProductListingResult $listing): ProductListingResult
     {
+        $newCriteria = clone $listing->getCriteria();
+        $newCriteria->setLimit($this->itemPerPage);
+        $newCriteria->setOffset(($this->currentPage - 1) * $this->itemPerPage);
+
         /** @var ProductListingResult $newListing */
         $newListing = ProductListingResult::createFrom(new EntitySearchResult(
             $listing->getEntity(),
             $this->totalResultCount,
             $listing->getEntities(),
             $this->aggregations,
-            $listing->getCriteria(),
+            $newCriteria,
             $listing->getContext()
         ));
 
@@ -65,8 +69,6 @@ class Result
             ? $this->sortField
             : $this->sortField . '-' . $this->sortDirection;
 
-        $newListing->getCriteria()->setLimit($this->itemPerPage);
-        $newListing->getCriteria()->setOffset(($this->currentPage - 1) * $this->itemPerPage);
         $newListing->setExtensions($listing->getExtensions());
         $newListing->setSorting($sortKey);
         $sortings = $listing->getAvailableSortings();

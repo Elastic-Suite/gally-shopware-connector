@@ -38,7 +38,7 @@ class StructureClean extends Command
     protected function configure(): void
     {
         $this->setName('gally:structure:clean')
-            ->setDescription('Remove all entity from gally that not exist anymore on sylius side.')
+            ->setDescription('Remove all entity from gally that not exist anymore on shopware side.')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Really remove the listed entity from the gally.')
             ->addOption('quiet', 'q', InputOption::VALUE_NONE, 'Don\'t list deleted entities.');
     }

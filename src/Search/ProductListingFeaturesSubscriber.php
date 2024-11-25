@@ -104,7 +104,11 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 
                 // Search data from gally
                 try {
-                    $this->gallyResults = $this->searchAdapter->search($context, $criteria);
+                    $this->gallyResults = $this->searchAdapter->search(
+                        $context,
+                        $criteria,
+                        $this->criteriaBuilder->getNavigationId()
+                    );
                     // Create new criteria with gally result
                     $this->resetCriteria($criteria);
                     $productNumbers = array_keys($this->gallyResults->getProductNumbers());
@@ -203,7 +207,6 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     private function resetCriteria(Criteria $criteria)
     {
         $criteria->setTerm(null);
-        $criteria->setIds([]);
         $criteria->setLimit(\count($this->gallyResults->getProductNumbers()));
         $criteria->setOffset(0);
         $criteria->resetAggregations();

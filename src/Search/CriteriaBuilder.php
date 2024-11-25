@@ -30,9 +30,16 @@ class CriteriaBuilder
 {
     public const GALLY_FILTER_PREFIX = 'g_';
 
+    private ?string $navigationId = null;
+
     public function __construct(
         private SortOptionProvider $sortOptionProvider
     ) {
+    }
+
+    public function getNavigationId(): ?string
+    {
+        return $this->navigationId;
     }
 
     public function build(Request $request, SalesChannelContext $context, Criteria $criteria = null): Criteria
@@ -43,7 +50,7 @@ class CriteriaBuilder
 
         $this->handleFilters($request, $criteria);
         $this->handleSorting($request, $criteria);
-        $criteria->setIds([$request->get('navigationId', $context->getSalesChannel()->getNavigationCategoryId())]);
+        $this->navigationId = $request->get('navigationId', $context->getSalesChannel()->getNavigationCategoryId());
         $criteria->setTerm($request->get('search'));
 
         return $criteria;

@@ -24,7 +24,11 @@ class GraphQlClient extends AbstractClient
 {
     public function query(string $query, array $variables): ?ResponseInterface
     {
-        $client = new Client('prod' !== $this->kernelEnv ? ['verify' => false] : []);
+        $options = ['allow_redirects' => false];
+        if ('prod' !== $this->kernelEnv) {
+            $options['verify'] = false;
+        }
+        $client = new Client($options);
 
         try {
             if (true === $this->debug) {

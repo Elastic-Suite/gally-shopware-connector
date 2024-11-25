@@ -24,12 +24,16 @@ class RestClient extends AbstractClient
 {
     public function query($endpoint, $operation, ...$input)
     {
+        $options = ['allow_redirects' => false];
+        if ('prod' !== $this->kernelEnv) {
+            $options['verify'] = false;
+        }
         $config = Configuration::getDefaultConfiguration()
             ->setApiKey('Authorization', $this->getAuthorizationToken())
             ->setApiKeyPrefix('Authorization', 'Bearer')
             ->setHost($this->configuration->getBaseUrl());
 
-        $apiInstance = new $endpoint(new Client('prod' !== $this->kernelEnv ? ['verify' => false] : []), $config);
+        $apiInstance = new $endpoint(new Client($options), $config);
 
         try {
             if (true === $this->debug) {
