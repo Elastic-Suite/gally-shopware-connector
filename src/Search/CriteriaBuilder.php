@@ -33,7 +33,7 @@ class CriteriaBuilder
     private ?string $navigationId = null;
 
     public function __construct(
-        private SortOptionProvider $sortOptionProvider
+        private SortOptionProvider $sortOptionProvider,
     ) {
     }
 
@@ -42,7 +42,7 @@ class CriteriaBuilder
         return $this->navigationId;
     }
 
-    public function build(Request $request, SalesChannelContext $context, Criteria $criteria = null): Criteria
+    public function build(Request $request, SalesChannelContext $context, ?Criteria $criteria = null): Criteria
     {
         if (!$criteria) {
             $criteria = new Criteria();

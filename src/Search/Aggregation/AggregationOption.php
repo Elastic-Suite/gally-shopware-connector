@@ -24,7 +24,7 @@ class AggregationOption extends Bucket
     public function __construct(
         private string $label,
         string $value,
-        int $count
+        int $count,
     ) {
         parent::__construct($value, $count, null);
     }

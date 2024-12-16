@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\ShopwarePlugin\Service\Configuration;
+use Gally\ShopwarePlugin\Config\ConfigManager;
 use Shopware\Core\Content\Product\SearchKeyword\ProductSearchBuilderInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
@@ -27,7 +27,7 @@ class ProductSearchBuilder implements ProductSearchBuilderInterface
 {
     public function __construct(
         private ProductSearchBuilderInterface $decorated,
-        private Configuration $configuration
+        private ConfigManager $configuration,
     ) {
     }
 

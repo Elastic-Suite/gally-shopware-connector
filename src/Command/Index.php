@@ -29,7 +29,7 @@ class Index extends Command
      * @param AbstractIndexer[] $indexers
      */
     public function __construct(
-        private iterable $indexers
+        private iterable $indexers,
     ) {
         parent::__construct();
     }

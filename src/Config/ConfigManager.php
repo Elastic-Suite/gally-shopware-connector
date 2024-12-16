@@ -12,20 +12,18 @@
 
 declare(strict_types=1);
 
-namespace Gally\ShopwarePlugin\Service;
+namespace Gally\ShopwarePlugin\Config;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
-/**
- * Configuration provider service.
- */
-class Configuration
+class ConfigManager
 {
-    public function __construct(private SystemConfigService $systemConfigService)
-    {
+    public function __construct(
+        private SystemConfigService $systemConfigService,
+    ) {
     }
 
-    public function isActive(string $salesChannelId = null): bool
+    public function isActive(?string $salesChannelId = null): bool
     {
         return (bool) $this->systemConfigService->get('GallyPlugin.config.active', $salesChannelId);
     }
@@ -45,7 +43,7 @@ class Configuration
         return (string) $this->systemConfigService->get('GallyPlugin.config.password');
     }
 
-    public function getBatchSize(string $entityType, string $salesChannelId = null): int
+    public function getBatchSize(string $entityType, ?string $salesChannelId = null): int
     {
         $configKey = "GallyPlugin.config.{$entityType}BatchSize";
 

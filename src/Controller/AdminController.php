@@ -14,10 +14,11 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Controller;
 
-use Gally\Rest\ApiException;
-use Gally\ShopwarePlugin\Api\AuthenticationTokenProvider;
+use Gally\Sdk\Client\Client;
+use Gally\Sdk\Client\Configuration;
+use Gally\Sdk\Service\StructureSynchonizer;
 use Gally\ShopwarePlugin\Indexer\AbstractIndexer;
-use Gally\ShopwarePlugin\Synchronizer\AbstractSynchronizer;
+use Gally\ShopwarePlugin\Indexer\Provider\ProviderInterface;
 use Shopware\Core\Framework\Context;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,15 +31,24 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route(defaults: ['_routeScope' => ['api']])]
 class AdminController extends AbstractController
 {
+    /** @var ProviderInterface[] */
+    private array $providers;
+    private array $syncMethod = [
+        'catalog' => 'syncAllLocalizedCatalogs',
+        'sourceField' => 'syncAllSourceFields',
+        'sourceFieldOption' => 'syncAllSourceFieldOptions',
+    ];
+
     /**
-     * @param AbstractSynchronizer[] $synchronizers
-     * @param AbstractIndexer[]      $indexers
+     * @param AbstractIndexer[] $indexers
      */
     public function __construct(
-        private AuthenticationTokenProvider $authenticationTokenProvider,
-        private iterable $synchronizers,
-        private iterable $indexers
+        private StructureSynchonizer $synchonizer,
+        \IteratorAggregate $providers,
+        private string $environment,
+        private iterable $indexers,
     ) {
+        $this->providers = iterator_to_array($providers);
     }
 
     #[Route(path: '/api/gally/test', name: 'api.gally.test', methods: ['POST'])]
@@ -46,14 +56,13 @@ class AdminController extends AbstractController
     {
         $apiParams = json_decode($request->getContent(), true);
         $responseData = ['error' => false];
+        $configuration = new Configuration($apiParams['baseUrl'], $apiParams['user'], $apiParams['password']);
+        $client = new Client($configuration, $this->environment);
+
         try {
-            $this->authenticationTokenProvider->getAuthenticationToken(
-                $apiParams['baseUrl'],
-                $apiParams['user'],
-                $apiParams['password']
-            );
+            $client->get('indices');
             $responseData['message'] = 'Connection to the api succeeded';
-        } catch (ApiException $exception) {
+        } catch (\RuntimeException $exception) {
             $responseData['error'] = true;
             $responseData['message'] = 401 == $exception->getCode()
                 ? 'Invalid credentials.'
@@ -71,8 +80,8 @@ class AdminController extends AbstractController
     {
         $responseData = ['error' => false];
         try {
-            foreach ($this->synchronizers as $synchronizer) {
-                $synchronizer->synchronizeAll($context);
+            foreach ($this->syncMethod as $entity => $method) {
+                $this->synchonizer->{$method}($this->providers[$entity]->provide($context));
             }
             $responseData['message'] = 'Syncing catalog structure with gally succeeded';
         } catch (\Exception $exception) {

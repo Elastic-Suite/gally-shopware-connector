@@ -14,8 +14,11 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
-use Gally\ShopwarePlugin\Service\Configuration;
-use Gally\ShopwarePlugin\Service\IndexOperation;
+use Gally\Sdk\Entity\LocalizedCatalog;
+use Gally\Sdk\Entity\Metadata;
+use Gally\Sdk\Service\IndexOperation;
+use Gally\ShopwarePlugin\Config\ConfigManager;
+use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator;
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Api\Context\SystemSource;
@@ -31,12 +34,16 @@ use Shopware\Core\System\SalesChannel\SalesChannelEntity;
  */
 abstract class AbstractIndexer
 {
+    /** @var LocalizedCatalog[][] */
+    private array $localizedCatalogByChannel;
+
     public function __construct(
-        protected Configuration $configuration,
+        protected ConfigManager $configManager,
         protected EntityRepository $salesChannelRepository,
         protected IndexOperation $indexOperation,
+        protected CatalogProvider $catalogProvider,
         protected EntityRepository $entityRepository,
-        protected AbstractMediaUrlGenerator $urlGenerator
+        protected AbstractMediaUrlGenerator $urlGenerator,
     ) {
     }
 
@@ -47,35 +54,40 @@ abstract class AbstractIndexer
 
         /** @var SalesChannelCollection $salesChannels */
         $salesChannels = $this->salesChannelRepository->search($criteria, $context)->getEntities();
+        $metadata = new Metadata($this->getEntityType());
 
         /** @var SalesChannelEntity $salesChannel */
         foreach ($salesChannels as $salesChannel) {
-            if ($this->configuration->isActive($salesChannel->getId())) {
-                $languages = $salesChannel->getLanguages();
-                /** @var LanguageEntity $language */
-                foreach ($languages as $language) {
+            if ($this->configManager->isActive($salesChannel->getId())) {
+                $languages = [];
+                foreach ($salesChannel->getLanguages() as $language) {
+                    $languages[str_replace('-', '_', $language->getLocale()->getCode())] = $language;
+                }
+
+                foreach ($this->getLocalizedCatalogByChannel($context, $salesChannel) as $localizedCatalog) {
                     if (empty($documentIdsToReindex)) {
-                        $indexName = $this->indexOperation->createIndex($this->getEntityType(), $salesChannel, $language);
+                        $index = $this->indexOperation->createIndex($metadata, $localizedCatalog);
                     } else {
-                        $indexName = $this->indexOperation->getIndexByName($this->getEntityType(), $salesChannel, $language);
+                        $index = $this->indexOperation->getIndexByName($metadata, $localizedCatalog);
                     }
 
-                    $batchSize = $this->configuration->getBatchSize($this->getEntityType(), $salesChannel->getId());
+                    $batchSize = $this->configManager->getBatchSize($this->getEntityType(), $salesChannel->getId());
                     $bulk = [];
+                    $language = $languages[$localizedCatalog->getLocale()];
                     foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
                         $bulk[$document['id']] = json_encode($document);
                         if (\count($bulk) >= $batchSize) {
-                            $this->indexOperation->executeBulk($indexName, $bulk);
+                            $this->indexOperation->executeBulk($index, $bulk);
                             $bulk = [];
                         }
                     }
                     if (\count($bulk)) {
-                        $this->indexOperation->executeBulk($indexName, $bulk);
+                        $this->indexOperation->executeBulk($index, $bulk);
                     }
 
                     if (empty($documentIdsToReindex)) {
-                        $this->indexOperation->refreshIndex($indexName);
-                        $this->indexOperation->installIndex($indexName);
+                        $this->indexOperation->refreshIndex($index);
+                        $this->indexOperation->installIndex($index);
                     }
                 }
             }
@@ -94,5 +106,23 @@ abstract class AbstractIndexer
             $salesChannel->getCurrencyId(),
             [$language->getId(), Defaults::LANGUAGE_SYSTEM]
         );
+    }
+
+    /**
+     * @return LocalizedCatalog[]
+     */
+    private function getLocalizedCatalogByChannel(Context $context, SalesChannelEntity $salesChannel): array
+    {
+        if (!isset($this->localizedCatalogByChannel)) {
+            foreach ($this->catalogProvider->provide($context) as $localizedCatalog) {
+                $catalogCode = $localizedCatalog->getCatalog()->getCode();
+                if (!isset($this->localizedCatalogByChannel[$catalogCode])) {
+                    $this->localizedCatalogByChannel[$catalogCode] = [];
+                }
+                $this->localizedCatalogByChannel[$catalogCode][] = $localizedCatalog;
+            }
+        }
+
+        return $this->localizedCatalogByChannel[$salesChannel->getId()];
     }
 }

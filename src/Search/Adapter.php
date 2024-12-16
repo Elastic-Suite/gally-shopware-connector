@@ -14,12 +14,18 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\Rest\ApiException;
-use Gally\ShopwarePlugin\Api\GraphQlClient;
+use Gally\Sdk\Entity\LocalizedCatalog;
+use Gally\Sdk\Entity\Metadata;
+use Gally\Sdk\GraphQl\Request;
+use Gally\Sdk\Service\SearchManager;
+use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
+use Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
+use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 /**
@@ -28,8 +34,10 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 class Adapter
 {
     public function __construct(
-        private GraphQlClient $client,
-        private ResultBuilder $resultBuilder
+        private SearchManager $searchManager,
+        private CatalogProvider $catalogProvider,
+        private EntityRepository $languageRepository,
+        private AggregationBuilder $aggregationBuilder,
     ) {
     }
 
@@ -39,111 +47,45 @@ class Adapter
         $sort = reset($sorts);
         $currentPage = 0 == $criteria->getOffset() ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
 
-        $data = [
-            'requestType' => $criteria->getTerm() ? 'product_search' : 'product_catalog',
-            'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
-            'currentCategoryId' => $navigationId,
-            'search' => $criteria->getTerm(),
-            'currentPage' => $currentPage,
-            'pageSize' => $criteria->getLimit(),
-            'filter' => $this->getFiltersFromCriteria($criteria),
-        ];
+        $request = new Request(
+            $this->getCurrentLocalizedCatalog($context),
+            new Metadata('product'),
+            $context->hasState('suggest'),
+            ['sku', 'source'],
+            $currentPage,
+            $criteria->getLimit(),
+            $navigationId,
+            $criteria->getTerm(),
+            $this->getFiltersFromCriteria($criteria),
+            $sort && SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField() ? $sort->getField() : null,
+            $sort && SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField() ? strtolower($sort->getDirection()) : null,
+        );
+        $response = $this->searchManager->search($request);
 
-        if (SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField()) {
-            $data['sort'] = [$sort->getField() => strtolower($sort->getDirection())];
-        }
         $criteria->resetSorting();
 
-        return $this->resultBuilder->build(
-            $context,
-            $this->client->query($this->getSearchQuery(), $data),
-            $currentPage
+        return new Result(
+            $request,
+            $response,
+            $this->aggregationBuilder->build($response->getAggregations(), $context),
         );
     }
 
-    public function viewMoreOption(SalesChannelContext $context, Criteria $criteria, string $aggregationField)
+    public function viewMoreOption(SalesChannelContext $context, Criteria $criteria, string $aggregationField, ?string $navigationId)
     {
-        $navigationsIds = $criteria->getIds();
-        $response = $this->client->query(
-            $this->getViewMoreQuery(),
-            [
-                'aggregation' => $aggregationField,
-                'localizedCatalog' => $context->getSalesChannelId() . $context->getLanguageId(),
-                'currentCategoryId' => empty($navigationsIds) ? null : reset($navigationsIds),
-                'search' => $criteria->getTerm(),
-                'filter' => $this->getFiltersFromCriteria($criteria),
-            ]
+        $request = new Request(
+            $this->getCurrentLocalizedCatalog($context),
+            new Metadata('product'),
+            false,
+            ['sku', 'source'],
+            1,
+            0,
+            $navigationId,
+            $criteria->getTerm(),
+            $this->getFiltersFromCriteria($criteria),
         );
-        $data = json_decode($response->getBody()->getContents(), true);
-        if (\array_key_exists('errors', $data)) {
-            throw new ApiException(reset($data['errors'])['message']);
-        }
 
-        return $data['data']['viewMoreProductFacetOptions'];
-    }
-
-    private function getSearchQuery(): string
-    {
-        return <<<GQL
-            query getProducts (
-              \$requestType: ProductRequestTypeEnum!,
-              \$localizedCatalog: String!,
-              \$currentPage: Int,
-              \$currentCategoryId: String,
-              \$pageSize: Int,
-              \$search: String,
-              \$sort: ProductSortInput,
-              \$filter: [ProductFieldFilterInput]
-            ) {
-              products (
-                requestType: \$requestType,
-                localizedCatalog: \$localizedCatalog,
-                currentPage: \$currentPage,
-                currentCategoryId: \$currentCategoryId,
-                pageSize: \$pageSize,
-                search: \$search,
-                sort: \$sort,
-                filter: \$filter
-              ) {
-                collection { ... on Product { sku source } }
-                paginationInfo { lastPage itemsPerPage totalCount }
-                sortInfo { current { field direction } }
-                aggregations {
-                  type
-                  field
-                  label
-                  count
-                  hasMore
-                  options { count label value }
-                }
-            }
-          }
-        GQL;
-    }
-
-    private function getViewMoreQuery(): string
-    {
-        return <<<GQL
-            query viewMoreProductFacetOptions (
-              \$aggregation: String!,
-              \$localizedCatalog: String!,
-              \$currentCategoryId: String,
-              \$search: String,
-              \$filter: [ProductFieldFilterInput]
-            ) {
-              viewMoreProductFacetOptions (
-                aggregation: \$aggregation,
-                localizedCatalog: \$localizedCatalog,
-                currentCategoryId: \$currentCategoryId,
-                search: \$search,
-                filter: \$filter
-              ) {
-                value
-                label
-                count
-            }
-          }
-        GQL;
+        return $this->searchManager->viewMoreProductFilterOption($request, $aggregationField);
     }
 
     private function getFiltersFromCriteria(Criteria $criteria): array
@@ -174,5 +116,18 @@ class Adapter
         }
 
         return $filters;
+    }
+
+    private function getCurrentLocalizedCatalog(SalesChannelContext $context): LocalizedCatalog
+    {
+        $languageCriteria = new Criteria();
+        $languageCriteria->addAssociations(['locale']);
+        $languageCriteria->addFilter(new EqualsFilter('id', $context->getLanguageId()));
+        /** @var LanguageEntity $currentLanguage */
+        $currentLanguage = $this->languageRepository
+            ->search($languageCriteria, $context->getContext())
+            ->first();
+
+        return $this->catalogProvider->buildLocalizedCatalog($context->getSalesChannel(), $currentLanguage);
     }
 }

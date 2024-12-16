@@ -30,7 +30,7 @@ class UpdateConfigSubscriber implements EventSubscriberInterface
     ];
 
     public function __construct(
-        private SystemConfigService $configService
+        private SystemConfigService $configService,
     ) {
     }
 

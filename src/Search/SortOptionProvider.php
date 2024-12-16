@@ -14,9 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\Rest\Api\ProductSortingOptionApi;
-use Gally\Rest\Model\ProductSortingOption;
-use Gally\ShopwarePlugin\Api\RestClient;
+use Gally\Sdk\Service\SearchManager;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingCollection;
 use Shopware\Core\Content\Product\SalesChannel\Sorting\ProductSortingEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
@@ -29,26 +27,26 @@ class SortOptionProvider
     public const DEFAULT_SEARCH_SORT = '_default';
     public const SCORE_SEARCH_SORT = '_score';
 
-    public function __construct(protected RestClient $client)
-    {
+    public function __construct(
+        private SearchManager $searchManager,
+    ) {
     }
 
     public function getSortingOptions(): ProductSortingCollection
     {
-        $sortingOptions = $this->client->query(ProductSortingOptionApi::class, 'getProductSortingOptionCollection');
+        $sortingOptions = $this->searchManager->getProductSortingOptions();
         $sortings = new ProductSortingCollection();
 
-        /** @var ProductSortingOption $option */
         foreach ($sortingOptions as $option) {
             foreach ([FieldSorting::ASCENDING, FieldSorting::DESCENDING] as $direction) {
                 if (self::SCORE_SEARCH_SORT === $option->getCode()) {
                     if (FieldSorting::ASCENDING === $direction) {
                         continue;
                     }
-                    $label = $option->getLabel();
+                    $label = $option->getDefaultLabel();
                     $code = $option->getCode();
                 } else {
-                    $label = $option->getLabel() . ' ' . strtolower($direction) . 'ending';
+                    $label = $option->getDefaultLabel() . ' ' . strtolower($direction) . 'ending';
                     $code = $option->getCode() . '-' . strtolower($direction);
                 }
                 $sortingEntity = new ProductSortingEntity();

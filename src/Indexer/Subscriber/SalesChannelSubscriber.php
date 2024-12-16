@@ -12,13 +12,17 @@
 
 declare(strict_types=1);
 
-namespace Gally\ShopwarePlugin\Synchronizer\Subscriber;
+namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\ShopwarePlugin\Synchronizer\CatalogSynchronizer;
+use Gally\Sdk\Service\StructureSynchonizer;
+use Gally\ShopwarePlugin\Config\ConfigManager;
+use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -28,8 +32,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class SalesChannelSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private CatalogSynchronizer $catalogSynchronizer,
-        private EntityRepository $entityRepository
+        private ConfigManager $configManager,
+        private EntityRepository $entityRepository,
+        private CatalogProvider $catalogProvider,
+        private StructureSynchonizer $synchonizer,
     ) {
     }
 
@@ -45,12 +51,19 @@ class SalesChannelSubscriber implements EventSubscriberInterface
             $criteria->addFilter(new EqualsFilter('id', $writeResult->getPrimaryKey()));
             $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency']);
 
+            /** @var SalesChannelEntity $salesChannel */
             $salesChannel = $this->entityRepository
                 ->search($criteria, $event->getContext())
                 ->getEntities()
                 ->first();
 
-            $this->catalogSynchronizer->synchronizeItem(['salesChannel' => $salesChannel]);
+            if ($this->configManager->isActive($salesChannel->getId())) {
+                /** @var LanguageEntity $language */
+                foreach ($salesChannel->getLanguages() as $language) {
+                    $localizedCatalog = $this->catalogProvider->buildLocalizedCatalog($salesChannel, $language);
+                    $this->synchonizer->syncLocalizedCatalog($localizedCatalog);
+                }
+            }
         }
     }
 }

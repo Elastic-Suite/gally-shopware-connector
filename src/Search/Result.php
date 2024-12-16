@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
+use Gally\Sdk\GraphQl\Request;
+use Gally\Sdk\GraphQl\Response;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\AggregationResultCollection;
@@ -24,15 +26,16 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
  */
 class Result
 {
+    private array $productNumbers = [];
+
     public function __construct(
-        private array $productNumbers,
-        private int $totalResultCount,
-        private int $currentPage,
-        private int $itemPerPage,
-        private string $sortField,
-        private string $sortDirection,
-        private AggregationResultCollection $aggregations
+        private Request $request,
+        private Response $response,
+        private AggregationResultCollection $aggregations,
     ) {
+        foreach ($this->response->getCollection() as $productRawData) {
+            $this->productNumbers[$productRawData['sku']] = $productRawData['source']['children.sku'] ?? [];
+        }
     }
 
     /**
@@ -48,13 +51,13 @@ class Result
     public function getResultListing(ProductListingResult $listing): ProductListingResult
     {
         $newCriteria = clone $listing->getCriteria();
-        $newCriteria->setLimit($this->itemPerPage);
-        $newCriteria->setOffset(($this->currentPage - 1) * $this->itemPerPage);
+        $newCriteria->setLimit($this->response->getItemsPerPage());
+        $newCriteria->setOffset(($this->request->getCurrentPage() - 1) * $this->response->getItemsPerPage());
 
         /** @var ProductListingResult $newListing */
         $newListing = ProductListingResult::createFrom(new EntitySearchResult(
             $listing->getEntity(),
-            $this->totalResultCount,
+            $this->response->getTotalCount(),
             $listing->getEntities(),
             $this->aggregations,
             $newCriteria,
@@ -65,9 +68,9 @@ class Result
             $newListing->addCurrentFilter($name, $filter);
         }
 
-        $sortKey = SortOptionProvider::SCORE_SEARCH_SORT === $this->sortField
-            ? $this->sortField
-            : $this->sortField . '-' . $this->sortDirection;
+        $sortKey = SortOptionProvider::SCORE_SEARCH_SORT === $this->response->getSortField()
+            ? $this->response->getSortField()
+            : $this->response->getSortField() . '-' . $this->response->getSortDirection();
 
         $newListing->setExtensions($listing->getExtensions());
         $newListing->setSorting($sortKey);
@@ -84,7 +87,7 @@ class Result
     {
         $gallyOrder = [];
 
-        foreach (array_keys($this->productNumbers) as $order => $sku) {
+        foreach (array_keys($this->getProductNumbers()) as $order => $sku) {
             $gallyOrder[$sku] = $order;
             foreach ($this->productNumbers[$sku] as $childSku) {
                 $gallyOrder[$childSku] = $order;

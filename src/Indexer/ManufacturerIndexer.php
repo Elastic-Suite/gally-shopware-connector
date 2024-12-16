@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
-use Shopware\Core\Content\Media\Core\Params\UrlParams;
 use Shopware\Core\Content\Product\Aggregate\ProductManufacturer\ProductManufacturerEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;

@@ -34,7 +34,7 @@ class ViewMoreFacetOptionController extends StorefrontController
         private RequestTransformer $transformer,
         private CriteriaBuilder $criteriaBuilder,
         private AggregationBuilder $aggregationBuilder,
-        private Adapter $adapter
+        private Adapter $adapter,
     ) {
     }
 
@@ -49,7 +49,7 @@ class ViewMoreFacetOptionController extends StorefrontController
         $criteria = $this->criteriaBuilder->build($referer, $context);
 
         $field = preg_replace('/^' . CriteriaBuilder::GALLY_FILTER_PREFIX . '/', '', $params['aggregation']);
-        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field);
+        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field, $this->criteriaBuilder->getNavigationId());
 
         return $this->renderStorefront(
             '@GallyPlugin/storefront/component/listing/filter-panel-item.html.twig',

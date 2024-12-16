@@ -25,7 +25,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CategorySubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private CategoryIndexer $categoryIndexer
+        private CategoryIndexer $categoryIndexer,
     ) {
     }
 

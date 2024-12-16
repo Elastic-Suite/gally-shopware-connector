@@ -12,11 +12,12 @@
 
 declare(strict_types=1);
 
-namespace Gally\ShopwarePlugin\Synchronizer\Subscriber;
+namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\ShopwarePlugin\Synchronizer\MetadataSynchronizer;
-use Gally\ShopwarePlugin\Synchronizer\SourceFieldSynchronizer;
+use Gally\Sdk\Service\StructureSynchonizer;
+use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider;
 use Shopware\Core\Content\Property\PropertyEvents;
+use Shopware\Core\Content\Property\PropertyGroupEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -32,11 +33,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class FieldSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private SourceFieldSynchronizer $sourceFieldSynchronizer,
-        private MetadataSynchronizer $metadataSynchronizer,
         private EntityRepository $customFieldRepository,
         private EntityRepository $customFieldSetRepository,
-        private EntityRepository $propertyGroupRepository
+        private EntityRepository $propertyGroupRepository,
+        private SourceFieldProvider $sourceFieldProvider,
+        private StructureSynchonizer $synchonizer,
     ) {
     }
 
@@ -64,8 +65,8 @@ class FieldSubscriber implements EventSubscriberInterface
                         ->getEntities()
                         ->first();
                     foreach ($field->getCustomFieldSet()->getRelations() as $entity) {
-                        $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity->getEntityName()]);
-                        $this->sourceFieldSynchronizer->synchronizeItem(['metadata' => $metadata, 'field' => $field]);
+                        $sourceField = $this->sourceFieldProvider->buildSourceField($field, $entity->getEntityName());
+                        $this->synchonizer->syncSourceField($sourceField);
                     }
                     break;
                 default:
@@ -78,14 +79,14 @@ class FieldSubscriber implements EventSubscriberInterface
                         'options.translations.language',
                         'options.translations.language.locale',
                     ]);
-                    $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => 'product']);
+                    /** @var PropertyGroupEntity $property */
                     $property = $this->propertyGroupRepository
                         ->search($criteria, $event->getContext())
                         ->getEntities()
                         ->first();
-                    $this->sourceFieldSynchronizer->synchronizeItem(
-                        ['metadata' => $metadata, 'field' => $property]
-                    );
+
+                    $sourceField = $this->sourceFieldProvider->buildSourceField($property, 'product');
+                    $this->synchonizer->syncSourceField($sourceField);
                     break;
             }
         }
@@ -103,9 +104,9 @@ class FieldSubscriber implements EventSubscriberInterface
                 ->getEntities()
                 ->first();
             foreach ($fieldSet->getRelations() as $entity) {
-                $metadata = $this->metadataSynchronizer->synchronizeItem(['entity' => $entity->getEntityName()]);
                 foreach ($fieldSet->getCustomFields() as $customField) {
-                    $this->sourceFieldSynchronizer->synchronizeItem(['metadata' => $metadata, 'field' => $customField]);
+                    $sourceField = $this->sourceFieldProvider->buildSourceField($customField, $entity->getEntityName());
+                    $this->synchonizer->syncSourceField($sourceField);
                 }
             }
         }

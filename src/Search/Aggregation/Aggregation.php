@@ -28,7 +28,7 @@ class Aggregation extends BucketResult
         string $label,
         private string $field,
         private string $type,
-        array $options
+        array $options,
     ) {
         parent::__construct($label, $options);
     }

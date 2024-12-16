@@ -14,9 +14,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\Rest\ApiException;
+use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Model\Message;
-use Gally\ShopwarePlugin\Service\Configuration;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\Cms\Aggregate\CmsBlock\CmsBlockEntity;
 use Shopware\Core\Content\Cms\CmsPageEntity;
@@ -40,11 +39,11 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
     private ?Result $gallyResults = null;
 
     public function __construct(
-        private Configuration $configuration,
+        private ConfigManager $configuration,
         private Adapter $searchAdapter,
         private CriteriaBuilder $criteriaBuilder,
         private LoggerInterface $logger,
-        private TranslatorInterface $translator
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -63,6 +62,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             ],
             // Criteria building for search page
             ProductSuggestCriteriaEvent::class => [
+                ['setAutocompleteContext', 200],
                 ['setDefaultOrder', 200],
                 ['handleListingRequest', 50],
             ],
@@ -93,6 +93,17 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         }
     }
 
+    public function setAutocompleteContext(ProductSuggestCriteriaEvent $event): void
+    {
+        $context = $event->getSalesChannelContext();
+
+        if ($this->configuration->isActive($context->getSalesChannel()->getId())
+            && $this->configuration->getBaseUrl()
+        ) {
+            $context->addState('suggest');
+        }
+    }
+
     public function handleListingRequest(ProductListingCriteriaEvent $event): void
     {
         $request = $event->getRequest();
@@ -112,7 +123,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                     // Create new criteria with gally result
                     $this->resetCriteria($criteria);
                     $productNumbers = array_keys($this->gallyResults->getProductNumbers());
-                } catch (ApiException $exception) {
+                } catch (\RuntimeException $exception) {
                     $this->logger->error($exception->getMessage());
                     $productNumbers = [];
                 }

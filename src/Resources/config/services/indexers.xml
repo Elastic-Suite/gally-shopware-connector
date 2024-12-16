@@ -3,10 +3,46 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <service id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider">
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
+            <argument type="service" id="sales_channel.repository" />
+            <tag name="gally.dataprovider" entity="catalog"/>
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider"/>
+            <argument type="service" id="custom_field.repository" />
+            <argument type="service" id="property_group.repository" />
+            <argument type="service" id="translator" />
+            <tag name="gally.dataprovider" entity="sourceField"/>
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldOptionProvider">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider"/>
+            <argument type="service" id="custom_field.repository" />
+            <argument type="service" id="property_group.repository" />
+            <tag name="gally.dataprovider" entity="sourceFieldOption"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\SalesChannelSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
+            <argument type="service" id="sales_channel.repository" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
+            <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\FieldSubscriber">
+            <argument type="service" id="custom_field.repository" />
+            <argument type="service" id="custom_field_set.repository" />
+            <argument type="service" id="property_group.repository" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider" />
+            <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+
         <service id="Gally\ShopwarePlugin\Indexer\AbstractIndexer" abstract="true">
-            <argument key="$configuration" type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument key="$configManager" type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
-            <argument key="$indexOperation" type="service" id="Gally\ShopwarePlugin\Service\IndexOperation" />
+            <argument key="$indexOperation" type="service" id="Gally\Sdk\Service\IndexOperation" />
+            <argument key="$catalogProvider" type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
             <argument key="$urlGenerator" type="service" id="Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >

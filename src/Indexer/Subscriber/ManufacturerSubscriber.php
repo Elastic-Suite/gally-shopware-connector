@@ -25,7 +25,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ManufacturerSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private ManufacturerIndexer $manufacturerIndexer
+        private ManufacturerIndexer $manufacturerIndexer,
     ) {
     }
 

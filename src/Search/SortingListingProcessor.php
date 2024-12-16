@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search;
 
-use Gally\ShopwarePlugin\Service\Configuration;
+use Gally\ShopwarePlugin\Config\ConfigManager;
 use Shopware\Core\Content\Product\SalesChannel\Listing\Processor\SortingListingProcessor as BaseSortingListingProcessor;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -24,20 +24,20 @@ use Symfony\Component\HttpFoundation\Request;
 
 class SortingListingProcessor extends BaseSortingListingProcessor
 {
-    private Configuration $configuration;
+    private ConfigManager $configManager;
 
     public function __construct(
         SystemConfigService $systemConfigService,
         EntityRepository $sortingRepository,
-        Configuration $configuration
+        ConfigManager $configManager,
     ) {
         parent::__construct($systemConfigService, $sortingRepository);
-        $this->configuration = $configuration;
+        $this->configManager = $configManager;
     }
 
     public function prepare(Request $request, Criteria $criteria, SalesChannelContext $context): void
     {
-        if (!$this->configuration->isActive($context->getSalesChannelId())) {
+        if (!$this->configManager->isActive($context->getSalesChannelId())) {
             parent::prepare($request, $criteria, $context);
         }
 

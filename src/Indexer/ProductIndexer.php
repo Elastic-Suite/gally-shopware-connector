@@ -14,13 +14,12 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
-use Gally\ShopwarePlugin\Service\Configuration;
-use Gally\ShopwarePlugin\Service\IndexOperation;
+use Gally\Sdk\Service\IndexOperation;
+use Gally\ShopwarePlugin\Config\ConfigManager;
+use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator;
-use Shopware\Core\Content\Media\Core\Params\UrlParams;
-use Shopware\Core\Content\Media\Pathname\UrlGenerator;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\ProductAvailableFilter;
@@ -46,14 +45,22 @@ class ProductIndexer extends AbstractIndexer
     private ?EntitySearchResult $categoryCollection = null;
 
     public function __construct(
-        Configuration $configuration,
+        protected ConfigManager $configManager,
         EntityRepository $salesChannelRepository,
         IndexOperation $indexOperation,
+        CatalogProvider $catalogProvider,
         EntityRepository $entityRepository,
         AbstractMediaUrlGenerator $urlGenerator,
-        private EntityRepository $categoryRepository
+        private EntityRepository $categoryRepository,
     ) {
-        parent::__construct($configuration, $salesChannelRepository, $indexOperation, $entityRepository, $urlGenerator);
+        parent::__construct(
+            $configManager,
+            $salesChannelRepository,
+            $indexOperation,
+            $catalogProvider,
+            $entityRepository,
+            $urlGenerator
+        );
     }
 
     public function getEntityType(): string

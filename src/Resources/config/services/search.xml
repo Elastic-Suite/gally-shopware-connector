@@ -7,20 +7,19 @@
             <argument type="service" id="product_manufacturer.repository" />
             <argument type="service" id="property_group.repository" />
         </service>
-        <service id="Gally\ShopwarePlugin\Search\ResultBuilder">
+        <service id="Gally\ShopwarePlugin\Search\Adapter">
+            <argument type="service" id="Gally\Sdk\Service\SearchManager" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
+            <argument type="service" id="language.repository"/>
             <argument type="service" id="Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder" />
         </service>
-        <service id="Gally\ShopwarePlugin\Search\Adapter">
-            <argument type="service" id="Gally\ShopwarePlugin\Api\GraphQlClient" />
-            <argument type="service" id="Gally\ShopwarePlugin\Search\ResultBuilder" />
-        </service>
         <service id="Gally\ShopwarePlugin\Search\SortOptionProvider">
-            <argument type="service" id="Gally\ShopwarePlugin\Api\RestClient" />
+            <argument type="service" id="Gally\Sdk\Service\SearchManager" />
         </service>
 
         <service id="Gally\ShopwarePlugin\Search\ProductListingFeaturesSubscriber">
             <tag name="kernel.event_subscriber"/>
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\Adapter" />
             <argument type="service" id="Gally\ShopwarePlugin\Search\CriteriaBuilder" />
             <argument type="service" id="logger"/>
@@ -32,14 +31,14 @@
             decoration-priority="-60000">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <argument type="service" id="product_sorting.repository"/>
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
         </service>
 
         <service id="Gally\ShopwarePlugin\Search\ProductSearchBuilder"
                  decorates="Shopware\Core\Content\Product\SearchKeyword\ProductSearchBuilderInterface"
                  decoration-priority="-60000">
             <argument type="service" id="Shopware\Elasticsearch\Product\ProductSearchBuilder.inner"/>
-            <argument type="service" id="Gally\ShopwarePlugin\Service\Configuration" />
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
         </service>
 
         <service id="Gally\ShopwarePlugin\Search\CriteriaBuilder">

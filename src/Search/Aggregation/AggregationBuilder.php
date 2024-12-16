@@ -43,7 +43,7 @@ class AggregationBuilder
 
     public function __construct(
         protected EntityRepository $manufacturerRepository,
-        protected EntityRepository $propertyGroupRepository
+        protected EntityRepository $propertyGroupRepository,
     ) {
     }
 
