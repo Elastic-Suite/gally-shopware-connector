@@ -31,6 +31,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\Event\ShopwareEvent;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
 use Shopware\Storefront\Page\Search\SearchPageLoadedEvent;
+use Shopware\Storefront\Page\Suggest\SuggestPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -78,6 +79,10 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             SearchPageLoadedEvent::class => [
                 ['handleSearchResult', 50],
             ],
+            // Listing override for product suggest
+            SuggestPageLoadedEvent::class => [
+                ['handleSuggestResult', 50],
+            ]
         ];
     }
 
@@ -209,6 +214,31 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             }
 
             $event->getPage()->setListing($this->gallyResults->getResultListing($productListing));
+        }
+    }
+
+    public function handleSuggestResult(SuggestPageLoadedEvent $event): void
+    {
+        $context = $event->getSalesChannelContext();
+
+        if ($this->configuration->isActive($context->getSalesChannel()->getId())) {
+            /** @var ProductListingResult $productListing */
+            $productListing = $event->getPage()->getSearchResult();
+
+            if (!$this->gallyResults) {
+                $productListing->addExtension(
+                    'gally-message',
+                    new Message(
+                        'warning',
+                        $this->translator->trans($this->configuration->getBaseUrl()
+                            ? 'gally.listing.emptyResultMessage'
+                            : 'gally.listing.wrongConfiguration')
+                    ));
+
+                return;
+            }
+
+            $event->getPage()->setSearchResult($this->gallyResults->getResultListing($productListing));
         }
     }
 

@@ -36,7 +36,7 @@ class ProductListingLoader extends \Shopware\Core\Content\Product\SalesChannel\L
         Connection $connection,
         EventDispatcherInterface $eventDispatcher,
         AbstractProductCloseoutFilterFactory $productCloseoutFilterFactory,
-        ExtensionDispatcher $extensions,
+        ?ExtensionDispatcher $extensions = null,
     ) {
         parent::__construct(
             $repository,
