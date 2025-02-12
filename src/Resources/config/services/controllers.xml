@@ -6,7 +6,6 @@
         <service id="Gally\ShopwarePlugin\Controller\AdminController" public="true">
             <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer"/>
             <argument type="tagged_iterator" tag="gally.dataprovider" index-by="entity"/>
-            <argument>%kernel.environment%</argument>
             <argument type="tagged_iterator" tag="gally.entity.indexer"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>

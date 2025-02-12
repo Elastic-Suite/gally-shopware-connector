@@ -9,15 +9,12 @@
         </service>
         <service id="Gally\Sdk\Service\StructureSynchonizer">
             <argument type="service" id="Gally\Sdk\Client\Configuration" />
-            <argument>%kernel.environment%</argument>
         </service>
         <service id="Gally\Sdk\Service\IndexOperation">
             <argument type="service" id="Gally\Sdk\Client\Configuration" />
-            <argument>%kernel.environment%</argument>
         </service>
         <service id="Gally\Sdk\Service\SearchManager">
-            <argument type="service" id="Gally\Sdk\Client\Configuration" />
-            <argument>%kernel.environment%</argument>
+            <argument type="service" id="Gally\Sdk\Client\Configuration" /> 
         </service>
     </services>
 </container>

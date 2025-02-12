@@ -11,6 +11,7 @@ export default class GallyAction {
       `/gally/test`,
       {
         'baseUrl': document.getElementById('GallyPlugin.config.baseurl').value,
+        'check_ssl': document.getElementsByName('GallyPlugin.config.checkSsl')[0].checked,
         'user': document.getElementById('GallyPlugin.config.user').value,
         'password': document.getElementById('GallyPlugin.config.password').value,
       }

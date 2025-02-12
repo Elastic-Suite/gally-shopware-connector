@@ -33,6 +33,11 @@ class ConfigManager
         return trim((string) $this->systemConfigService->get('GallyPlugin.config.baseurl'), '/');
     }
 
+    public function checkSSL(): bool
+    {
+        return (bool) $this->systemConfigService->get('GallyPlugin.config.checkSsl');
+    }
+
     public function getUser(): string
     {
         return (string) $this->systemConfigService->get('GallyPlugin.config.user');

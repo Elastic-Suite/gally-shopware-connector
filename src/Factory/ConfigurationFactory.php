@@ -23,6 +23,7 @@ class ConfigurationFactory
     {
         return new Configuration(
             $configManager->getBaseUrl(),
+            $configManager->checkSSL(),
             $configManager->getUser(),
             $configManager->getPassword(),
         );

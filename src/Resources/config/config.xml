@@ -36,6 +36,11 @@
             <label>Gally base url</label>
         </input-field>
 
+        <input-field type="bool">
+            <name>checkSsl</name>
+            <label>Validate the SSL certificate of gally domain</label>
+        </input-field>
+
         <input-field type="text">
             <name>user</name>
             <label>Gally user email</label>

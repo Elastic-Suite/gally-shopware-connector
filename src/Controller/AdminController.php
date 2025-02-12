@@ -45,7 +45,6 @@ class AdminController extends AbstractController
     public function __construct(
         private StructureSynchonizer $synchonizer,
         \IteratorAggregate $providers,
-        private string $environment,
         private iterable $indexers,
     ) {
         $this->providers = iterator_to_array($providers);
@@ -56,8 +55,14 @@ class AdminController extends AbstractController
     {
         $apiParams = json_decode($request->getContent(), true);
         $responseData = ['error' => false];
-        $configuration = new Configuration($apiParams['baseUrl'], $apiParams['user'], $apiParams['password']);
-        $client = new Client($configuration, $this->environment);
+
+        $configuration = new Configuration(
+            $apiParams['baseUrl'],
+            $apiParams['check_ssl'],
+            $apiParams['user'],
+            $apiParams['password']
+        );
+        $client = new Client($configuration);
 
         try {
             $client->get('indices');
