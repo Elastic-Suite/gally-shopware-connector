@@ -142,6 +142,7 @@ class SourceFieldProvider implements ProviderInterface
 
         switch (\is_array($field) ? 'array' : $field::class) {
             case CustomFieldEntity::class:
+
                 $labels = $field->getConfig()['label'] ?? [];
                 /** @var Label $firstLabel */
                 $firstLabel = reset($labels);
@@ -150,7 +151,7 @@ class SourceFieldProvider implements ProviderInterface
                     $this->metadataCache[$entity],
                     $field->getName(),
                     $this->getGallyType($field->getType()),
-                    empty($labels) ? $field->getName() : $firstLabel->getLabel(),
+                    empty($labels) ? $field->getName() : $firstLabel,
                     $this->getLabels($labels),
                 );
 
@@ -211,6 +212,9 @@ class SourceFieldProvider implements ProviderInterface
     private function getGallyType(string $type): string
     {
         switch ($type) {
+            case 'entity':
+            case 'select':
+                return 'select';
             case 'number':
                 return 'float';
             case 'date':

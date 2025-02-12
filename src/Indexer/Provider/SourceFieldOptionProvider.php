@@ -66,10 +66,13 @@ class SourceFieldOptionProvider implements ProviderInterface
                 $sourceField = new SourceField($metadata, $customField->getName(), '', '', []);
                 foreach ($customField->getConfig()['options'] ?? [] as $option) {
                     $labels = [];
+
                     foreach ($option['label'] as $localeCode => $label) {
                         $gallyLocale = str_replace('-', '_', $localeCode);
                         foreach ($this->localizedCatalogsByLocale[$gallyLocale] as $localizedCatalog) {
-                            $labels[] = new Label($localizedCatalog, $label);
+                            if ($label) {
+                                $labels[] = new Label($localizedCatalog, $label);
+                            }
                         }
                     }
 
@@ -77,7 +80,7 @@ class SourceFieldOptionProvider implements ProviderInterface
                         $sourceField,
                         $option['value'],
                         ++$position,
-                        reset($labels)->getLabel(),
+                        empty($labels) ? $option['value'] : reset($labels)->getLabel(),
                         $labels,
                     );
                 }
