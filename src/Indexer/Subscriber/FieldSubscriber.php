@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
 use Gally\Sdk\Service\StructureSynchonizer;
+use Gally\ShopwarePlugin\Indexer\Message\SyncMessage;
 use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider;
 use Shopware\Core\Content\Property\PropertyEvents;
 use Shopware\Core\Content\Property\PropertyGroupEntity;
@@ -26,6 +27,7 @@ use Shopware\Core\System\CustomField\Aggregate\CustomFieldSet\CustomFieldSetEnti
 use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\CustomField\CustomFieldEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Update gally source field when related entity has been updated from shopware side.
@@ -33,11 +35,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class FieldSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private EntityRepository $customFieldRepository,
-        private EntityRepository $customFieldSetRepository,
-        private EntityRepository $propertyGroupRepository,
-        private SourceFieldProvider $sourceFieldProvider,
-        private StructureSynchonizer $synchonizer,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -53,40 +51,16 @@ class FieldSubscriber implements EventSubscriberInterface
     public function onFieldUpdate(EntityWrittenEvent $event)
     {
         foreach ($event->getWriteResults() as $writeResult) {
-            $criteria = new Criteria();
-            $criteria->addFilter(new EqualsFilter('id', $writeResult->getPrimaryKey()));
-
             switch ($writeResult->getEntityName()) {
                 case 'custom_field':
-                    $criteria->addAssociations(['customFieldSet', 'customFieldSet.relations']);
-                    /** @var CustomFieldEntity $field */
-                    $field = $this->customFieldRepository
-                        ->search($criteria, $event->getContext())
-                        ->getEntities()
-                        ->first();
-                    foreach ($field->getCustomFieldSet()->getRelations() as $entity) {
-                        $sourceField = $this->sourceFieldProvider->buildSourceField($field, $entity->getEntityName());
-                        $this->synchonizer->syncSourceField($sourceField);
-                    }
+                    $this->messageBus->dispatch(
+                        new SyncMessage(SyncMessage::ENTITY_CUSTOM_FIELD, $writeResult->getPrimaryKey())
+                    );
                     break;
                 default:
-                    $criteria->addAssociations([
-                        'options',
-                        'translations',
-                        'options.translations',
-                        'translations.language',
-                        'translations.language.locale',
-                        'options.translations.language',
-                        'options.translations.language.locale',
-                    ]);
-                    /** @var PropertyGroupEntity $property */
-                    $property = $this->propertyGroupRepository
-                        ->search($criteria, $event->getContext())
-                        ->getEntities()
-                        ->first();
-
-                    $sourceField = $this->sourceFieldProvider->buildSourceField($property, 'product');
-                    $this->synchonizer->syncSourceField($sourceField);
+                    $this->messageBus->dispatch(
+                        new SyncMessage(SyncMessage::ENTITY_PROPERTY_GROUP, $writeResult->getPrimaryKey())
+                    );
                     break;
             }
         }
@@ -95,20 +69,9 @@ class FieldSubscriber implements EventSubscriberInterface
     public function onFieldSetUpdate(EntityWrittenEvent $event)
     {
         foreach ($event->getWriteResults() as $writeResult) {
-            $criteria = new Criteria();
-            $criteria->addFilter(new EqualsFilter('id', $writeResult->getPrimaryKey()));
-            $criteria->addAssociations(['customFields', 'relations']);
-            /** @var CustomFieldSetEntity $fieldSet */
-            $fieldSet = $this->customFieldSetRepository
-                ->search($criteria, $event->getContext())
-                ->getEntities()
-                ->first();
-            foreach ($fieldSet->getRelations() as $entity) {
-                foreach ($fieldSet->getCustomFields() as $customField) {
-                    $sourceField = $this->sourceFieldProvider->buildSourceField($customField, $entity->getEntityName());
-                    $this->synchonizer->syncSourceField($sourceField);
-                }
-            }
+            $this->messageBus->dispatch(
+                new SyncMessage(SyncMessage::ENTITY_CUSTOM_FIELD_SET, $writeResult->getPrimaryKey())
+            );
         }
     }
 }

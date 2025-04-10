@@ -14,10 +14,11 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\ShopwarePlugin\Indexer\ProductIndexer;
+use Gally\ShopwarePlugin\Indexer\Message\ReindexMessage;
 use Shopware\Core\Content\Product\ProductEvents;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Reindex product on save event.
@@ -25,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ProductSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private ProductIndexer $productIndexer,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -40,6 +41,8 @@ class ProductSubscriber implements EventSubscriberInterface
         foreach ($event->getWriteResults() as $writeResult) {
             $documentsIdsToReindex[] = $writeResult->getPrimaryKey();
         }
-        $this->productIndexer->reindex($event->getContext(), $documentsIdsToReindex);
+        $this->messageBus->dispatch(
+            new ReindexMessage(ReindexMessage::ENTIY_PRODUCT, $documentsIdsToReindex)
+        );
     }
 }

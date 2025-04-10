@@ -14,10 +14,11 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\ShopwarePlugin\Indexer\CategoryIndexer;
+use Gally\ShopwarePlugin\Indexer\Message\ReindexMessage;
 use Shopware\Core\Content\Category\CategoryEvents;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Reindex category on save event.
@@ -25,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CategorySubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private CategoryIndexer $categoryIndexer,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -40,6 +41,8 @@ class CategorySubscriber implements EventSubscriberInterface
         foreach ($event->getWriteResults() as $writeResult) {
             $documentsIdsToReindex[] = $writeResult->getPrimaryKey();
         }
-        $this->categoryIndexer->reindex($event->getContext(), $documentsIdsToReindex);
+        $this->messageBus->dispatch(
+            new ReindexMessage(ReindexMessage::ENTIY_CATEGORY, $documentsIdsToReindex)
+        );
     }
 }
