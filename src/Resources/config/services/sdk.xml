@@ -3,18 +3,26 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <service id="Gally\Sdk\Client\TokenCacheManagerInterface" class="Gally\ShopwarePlugin\Config\TokenCacheManager">
+            <call method="setCache">
+                <argument type="service" id="cache.app" />
+            </call>
+        </service>
         <service id="Gally\Sdk\Client\Configuration" lazy="true">
             <factory class="Gally\ShopwarePlugin\Factory\ConfigurationFactory" method="create"/>
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
         </service>
         <service id="Gally\Sdk\Service\StructureSynchonizer">
             <argument type="service" id="Gally\Sdk\Client\Configuration" />
+            <argument type="service" id="Gally\Sdk\Client\TokenCacheManagerInterface" />
         </service>
         <service id="Gally\Sdk\Service\IndexOperation">
             <argument type="service" id="Gally\Sdk\Client\Configuration" />
+            <argument type="service" id="Gally\Sdk\Client\TokenCacheManagerInterface" />
         </service>
         <service id="Gally\Sdk\Service\SearchManager">
             <argument type="service" id="Gally\Sdk\Client\Configuration" /> 
+            <argument type="service" id="Gally\Sdk\Client\TokenCacheManagerInterface" />
         </service>
     </services>
 </container>
