@@ -22,19 +22,23 @@
             <tag name="gally.dataprovider" entity="sourceFieldOption"/>
         </service>
 
-        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\SalesChannelSubscriber">
+        <service id="Gally\ShopwarePlugin\Indexer\MessageHandler\SyncHandler">
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument type="service" id="sales_channel.repository" />
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
-            <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer" />
-            <tag name="kernel.event_subscriber" />
-        </service>
-        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\FieldSubscriber">
             <argument type="service" id="custom_field.repository" />
             <argument type="service" id="custom_field_set.repository" />
             <argument type="service" id="property_group.repository" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider" />
             <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer" />
+            <tag name="messenger.message_handler" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\SalesChannelSubscriber">
+            <argument type="service" id="messenger.default_bus"/>
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\FieldSubscriber">
+            <argument type="service" id="messenger.default_bus"/>
             <tag name="kernel.event_subscriber" />
         </service>
 
@@ -59,16 +63,22 @@
             <tag name="gally.entity.indexer" priority="30"/>
         </service>
 
-        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ManufacturerSubscriber">
+        <service id="Gally\ShopwarePlugin\Indexer\MessageHandler\ReindexHandler">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" />
+            <tag name="messenger.message_handler" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ManufacturerSubscriber">
+            <argument type="service" id="messenger.default_bus"/>
             <tag name="kernel.event_subscriber" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\Subscriber\CategorySubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" />
+            <argument type="service" id="messenger.default_bus"/>
             <tag name="kernel.event_subscriber" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ProductSubscriber">
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\ProductIndexer" />
+            <argument type="service" id="messenger.default_bus"/>
             <tag name="kernel.event_subscriber" />
         </service>
     </services>
