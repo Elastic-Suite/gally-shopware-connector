@@ -4,7 +4,7 @@
     "homepage": "https://elasticsuite.io",
     "type": "shopware-platform-plugin",
     "license": "OSL-3.0",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "extra": {
         "shopware-plugin-class": "Gally\\ShopwarePlugin\\GallyPlugin",
         "author": "Gally Team",
@@ -19,7 +19,7 @@
     },
     "require": {
         "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
-        "gally/gally-php-rest-sdk": "dev-feat-new-sdk",
+        "gally/gally-php-rest-sdk": "dev-main",
         "shopware/core": "^6.5.8"
     },
     "require-dev": {
