@@ -50,19 +50,38 @@ class CategoryIndexer extends AbstractIndexer
         $criteria->addFilter(new EqualsFilter('active', true));
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
         $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
+        $categories->get($salesChannel->getNavigationCategoryId());
+        $rootCategory = $this->getRootCategory($salesChannel, $language);
         /** @var CategoryEntity $category */
         foreach ($categories as $category) {
-            yield $this->formatCategory($category);
+            yield $this->formatCategory($rootCategory, $category);
         }
     }
 
-    private function formatCategory(CategoryEntity $category): array
+    private function getRootCategory(SalesChannelEntity $salesChannel, LanguageEntity $language): ?CategoryEntity
     {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('id', $salesChannel->getNavigationCategoryId()));
+        $rootCategory = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language))->first();
+
+        return $rootCategory instanceof CategoryEntity ? $rootCategory : null;
+    }
+
+    private function formatCategory(CategoryEntity $rootCategory, CategoryEntity $category): array
+    {
+        $pathFromRoot = trim(
+            str_replace(
+                '|',
+                '/', str_replace($rootCategory->getPath(), '', $category->getPath() ?? '')
+            ) . $category->getId(),
+            '/'
+        );
+
         return [
             'id' => $category->getId(),
-            'parentId' => $category->getParentId(),
-            'level' => $category->getLevel(),
-            'path' => trim(str_replace('|', '/', $category->getPath() ?? '') . $category->getId(), '/'),
+            'parentId' => $category->getId() === $rootCategory->getId() ? null : $category->getParentId(),
+            'level' => $category->getLevel() - $rootCategory->getLevel() + 1,
+            'path' => $pathFromRoot,
             'name' => $category->getTranslation('name'),
         ];
     }
