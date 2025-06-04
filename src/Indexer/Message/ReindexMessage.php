@@ -25,7 +25,8 @@ class ReindexMessage implements AsyncMessageInterface
     public function __construct(
         private readonly string $entityCode,
         private readonly array $documentsIds,
-    ) {}
+    ) {
+    }
 
     public function getEntityCode(): string
     {

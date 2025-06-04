@@ -14,17 +14,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\Sdk\Service\StructureSynchonizer;
-use Gally\ShopwarePlugin\Config\ConfigManager;
-use Gally\ShopwarePlugin\Indexer\Message\ReindexMessage;
 use Gally\ShopwarePlugin\Indexer\Message\SyncMessage;
-use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\System\Language\LanguageEntity;
-use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;

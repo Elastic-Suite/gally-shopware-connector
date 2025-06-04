@@ -82,7 +82,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             // Listing override for product suggest
             SuggestPageLoadedEvent::class => [
                 ['handleSuggestResult', 50],
-            ]
+            ],
         ];
     }
 

@@ -38,7 +38,7 @@ class StructureClean extends StructureSync
         $isDryRun = !$input->getOption('force');
 
         if ($isDryRun) {
-            $output->writeln("<error>Running in dry run mode, add -f to really delete entities from Gally.</error>");
+            $output->writeln('<error>Running in dry run mode, add -f to really delete entities from Gally.</error>');
             $output->writeln('');
         }
 

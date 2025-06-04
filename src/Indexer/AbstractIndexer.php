@@ -28,6 +28,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelCollection;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Abstract pagination and bulk mechanism to index entity data to gally.
@@ -44,6 +45,7 @@ abstract class AbstractIndexer
         protected CatalogProvider $catalogProvider,
         protected EntityRepository $entityRepository,
         protected AbstractMediaUrlGenerator $urlGenerator,
+        protected EventDispatcherInterface $eventDispatcher,
     ) {
     }
 

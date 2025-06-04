@@ -45,7 +45,8 @@ class SyncHandler
         private CatalogProvider $catalogProvider,
         private SourceFieldProvider $sourceFieldProvider,
         private StructureSynchonizer $synchonizer,
-    ) {}
+    ) {
+    }
 
     public function __invoke(SyncMessage $message): void
     {
@@ -63,7 +64,6 @@ class SyncHandler
             case SyncMessage::ENTITY_CUSTOM_FIELD_SET:
                 $this->syncCustomFieldSet($context, $message->getEntityIds());
                 break;
-
         }
     }
 
