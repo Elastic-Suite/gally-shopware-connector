@@ -6,7 +6,7 @@
  *
  * @package   Gally
  * @author    Gally Team <elasticsuite@smile.fr>
- * @copyright 2024-present Smile
+ * @copyright 2022-present Smile
  * @license   Open Software License v. 3.0 (OSL-3.0)
  */
 

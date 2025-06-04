@@ -32,7 +32,8 @@ class ReindexHandler
         private readonly ProductIndexer $productIndexer,
         private readonly CategoryIndexer $categoryIndexer,
         private readonly ManufacturerIndexer $manufacturerIndexer,
-    ) {}
+    ) {
+    }
 
     public function __invoke(ReindexMessage $message): void
     {

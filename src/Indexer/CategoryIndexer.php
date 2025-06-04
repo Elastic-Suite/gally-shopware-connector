@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
+use Gally\ShopwarePlugin\Indexer\Event\IndexerBeforeCategoryLoadEvent;
+use Gally\ShopwarePlugin\Indexer\Event\IndexerFormatCategoryEvent;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
@@ -49,6 +51,10 @@ class CategoryIndexer extends AbstractIndexer
         }
         $criteria->addFilter(new EqualsFilter('active', true));
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
+
+        $event = new IndexerBeforeCategoryLoadEvent($criteria);
+        $this->eventDispatcher->dispatch($event, IndexerBeforeCategoryLoadEvent::NAME);
+
         $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
         /** @var CategoryEntity $category */
         foreach ($categories as $category) {
@@ -58,12 +64,17 @@ class CategoryIndexer extends AbstractIndexer
 
     private function formatCategory(CategoryEntity $category): array
     {
-        return [
+        $data = [
             'id' => $category->getId(),
             'parentId' => $category->getParentId(),
             'level' => $category->getLevel(),
             'path' => trim(str_replace('|', '/', $category->getPath() ?? '') . $category->getId(), '/'),
             'name' => $category->getTranslation('name'),
         ];
+
+        $event = new IndexerFormatCategoryEvent($data, $category);
+        $this->eventDispatcher->dispatch($event, IndexerFormatCategoryEvent::NAME);
+
+        return $event->getData();
     }
 }

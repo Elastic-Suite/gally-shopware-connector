@@ -26,7 +26,8 @@ class SyncMessage implements AsyncMessageInterface
     public function __construct(
         private readonly string $entityCode,
         private readonly string|array $entityIds,
-    ) {}
+    ) {
+    }
 
     public function getEntityCode(): string
     {

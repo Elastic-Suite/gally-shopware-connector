@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer;
 
+use Gally\ShopwarePlugin\Indexer\Event\IndexerBeforeManufacturerLoadEvent;
+use Gally\ShopwarePlugin\Indexer\Event\IndexerFormatManufacturerEvent;
 use Shopware\Core\Content\Product\Aggregate\ProductManufacturer\ProductManufacturerEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
@@ -37,6 +39,10 @@ class ManufacturerIndexer extends AbstractIndexer
         if (!empty($documentIdsToReindex)) {
             $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
         }
+
+        $event = new IndexerBeforeManufacturerLoadEvent($criteria);
+        $this->eventDispatcher->dispatch($event, IndexerBeforeManufacturerLoadEvent::NAME);
+
         $manufacturers = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
         /** @var ProductManufacturerEntity $manufacturer */
         foreach ($manufacturers as $manufacturer) {
@@ -46,7 +52,7 @@ class ManufacturerIndexer extends AbstractIndexer
 
     private function formatManufacturer(ProductManufacturerEntity $manufacturer): array
     {
-        return [
+        $data = [
             'id' => $manufacturer->getId(),
             'name' => $manufacturer->getTranslation('name'),
             'description' => $manufacturer->getTranslation('description'),
@@ -55,5 +61,10 @@ class ManufacturerIndexer extends AbstractIndexer
                 ? $manufacturer->getMedia()->getPath()
                 : '',
         ];
+
+        $event = new IndexerFormatManufacturerEvent($data, $manufacturer);
+        $this->eventDispatcher->dispatch($event, IndexerFormatManufacturerEvent::NAME);
+
+        return $event->getData();
     }
 }

@@ -16,6 +16,8 @@ namespace Gally\ShopwarePlugin\Indexer;
 
 use Gally\Sdk\Service\IndexOperation;
 use Gally\ShopwarePlugin\Config\ConfigManager;
+use Gally\ShopwarePlugin\Indexer\Event\IndexerBeforeProductLoadEvent;
+use Gally\ShopwarePlugin\Indexer\Event\IndexerFormatProductEvent;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
@@ -36,6 +38,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Format and index product entity data to gally.
@@ -51,6 +54,7 @@ class ProductIndexer extends AbstractIndexer
         CatalogProvider $catalogProvider,
         EntityRepository $entityRepository,
         AbstractMediaUrlGenerator $urlGenerator,
+        EventDispatcherInterface $eventDispatcher,
         private EntityRepository $categoryRepository,
     ) {
         parent::__construct(
@@ -59,7 +63,8 @@ class ProductIndexer extends AbstractIndexer
             $indexOperation,
             $catalogProvider,
             $entityRepository,
-            $urlGenerator
+            $urlGenerator,
+            $eventDispatcher,
         );
     }
 
@@ -97,6 +102,9 @@ class ProductIndexer extends AbstractIndexer
         $criteria->addSorting(new FieldSorting('autoIncrement', FieldSorting::ASCENDING));
         $criteria->setOffset(0);
         $criteria->setLimit($batchSize);
+
+        $event = new IndexerBeforeProductLoadEvent($criteria);
+        $this->eventDispatcher->dispatch($event, IndexerBeforeProductLoadEvent::NAME);
 
         $products = $this->entityRepository->search($criteria, $context);
 
@@ -197,6 +205,10 @@ class ProductIndexer extends AbstractIndexer
                 }
             }
         }
+
+        $event = new IndexerFormatProductEvent($data, $product, $children, $context);
+        $this->eventDispatcher->dispatch($event, IndexerFormatProductEvent::NAME);
+        $data = $event->getData();
 
         // Remove empty values
         return array_filter(

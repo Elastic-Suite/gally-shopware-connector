@@ -13,6 +13,7 @@
             <argument type="service" id="custom_field.repository" />
             <argument type="service" id="property_group.repository" />
             <argument type="service" id="translator" />
+            <argument type="service" id="event_dispatcher" />
             <tag name="gally.dataprovider" entity="sourceField"/>
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldOptionProvider">
@@ -41,13 +42,13 @@
             <argument type="service" id="messenger.default_bus"/>
             <tag name="kernel.event_subscriber" />
         </service>
-
         <service id="Gally\ShopwarePlugin\Indexer\AbstractIndexer" abstract="true">
             <argument key="$configManager" type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument key="$salesChannelRepository" type="service" id="sales_channel.repository" />
             <argument key="$indexOperation" type="service" id="Gally\Sdk\Service\IndexOperation" />
             <argument key="$catalogProvider" type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
             <argument key="$urlGenerator" type="service" id="Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator" />
+            <argument key="$eventDispatcher" type="service" id="event_dispatcher" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\CategoryIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="category.repository" />

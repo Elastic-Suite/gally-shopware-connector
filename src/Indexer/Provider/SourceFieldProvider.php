@@ -18,6 +18,7 @@ use Gally\Sdk\Entity\Label;
 use Gally\Sdk\Entity\LocalizedCatalog;
 use Gally\Sdk\Entity\Metadata;
 use Gally\Sdk\Entity\SourceField;
+use Gally\ShopwarePlugin\Indexer\Event\ProvideAdditionalSourceFieldEvent;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupTranslation\PropertyGroupTranslationCollection;
 use Shopware\Core\Content\Property\PropertyGroupCollection;
 use Shopware\Core\Content\Property\PropertyGroupEntity;
@@ -27,6 +28,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\CustomField\CustomFieldCollection;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -91,6 +93,7 @@ class SourceFieldProvider implements ProviderInterface
         private EntityRepository $customFieldRepository,
         private EntityRepository $propertyGroupRepository,
         private TranslatorInterface $translator,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -102,6 +105,9 @@ class SourceFieldProvider implements ProviderInterface
         foreach ($this->catalogProvider->provide($context) as $localizedCatalog) {
             $this->localizedCatalogs[] = $localizedCatalog;
         }
+
+        $additionalSourceFieldEvent = new ProvideAdditionalSourceFieldEvent();
+        $this->eventDispatcher->dispatch($additionalSourceFieldEvent, ProvideAdditionalSourceFieldEvent::NAME);
 
         foreach ($this->entitiesToSync as $entity) {
             // Static fields
@@ -130,6 +136,11 @@ class SourceFieldProvider implements ProviderInterface
                 foreach ($properties as $property) {
                     yield $this->buildSourceField($property, $entity);
                 }
+            }
+
+            // Additional fields
+            foreach ($additionalSourceFieldEvent->getAdditionalSourceFields()[$entity] ?? [] as $data) {
+                yield $this->buildSourceField($data, $entity);
             }
         }
     }

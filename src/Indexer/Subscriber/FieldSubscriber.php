@@ -14,17 +14,9 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer\Subscriber;
 
-use Gally\Sdk\Service\StructureSynchonizer;
 use Gally\ShopwarePlugin\Indexer\Message\SyncMessage;
-use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider;
 use Shopware\Core\Content\Property\PropertyEvents;
-use Shopware\Core\Content\Property\PropertyGroupEntity;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\System\CustomField\Aggregate\CustomFieldSet\CustomFieldSetEntity;
-use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\CustomField\CustomFieldEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
