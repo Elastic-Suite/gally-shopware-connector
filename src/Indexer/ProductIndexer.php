@@ -177,7 +177,7 @@ class ProductIndexer extends AbstractIndexer
         }
 
         foreach ($product->getCustomFields() ?: [] as $code => $value) {
-            $data[$code] = $value;
+            $data[$code] = [$value];
         }
 
         if ($product->getChildCount()) {
