@@ -86,6 +86,7 @@ class ProductIndexer extends AbstractIndexer
         $criteria->addFilter(
             new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH)
         );
+        $criteria->addFilter(new EqualsFilter('parentId', null));
         $criteria->addAssociations(
             [
                 'categories',
@@ -194,8 +195,16 @@ class ProductIndexer extends AbstractIndexer
                 $child = $children->get($childId);
                 $childData = $this->formatProduct($child, $children, $context);
                 $childData['children.sku'] = $childData['sku'];
+                if (array_key_exists('name', $childData)) {
+                    $childData['children.name'] = $childData['name'];
+                }
+                if (array_key_exists('description', $childData)) {
+                    $childData['children.description'] = $childData['description'];
+                }
                 unset($childData['id']);
                 unset($childData['sku']);
+                unset($childData['name']);
+                unset($childData['description']);
                 unset($childData['stock']);
                 unset($childData['price']);
                 unset($childData['free_shipping']);
