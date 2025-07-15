@@ -116,6 +116,11 @@ class ProductIndexer extends AbstractIndexer
             foreach ($products as $product) {
                 $data = $this->formatProduct($product, $children, $context);
 
+                // Remove key from category array
+                if (\array_key_exists('category', $data)) {
+                    $data['category'] = array_values($data['category']);
+                }
+
                 // Keep the first non-null image
                 if (\array_key_exists('image', $data)) {
                     $media = array_filter($data['image']);
@@ -281,7 +286,7 @@ class ProductIndexer extends AbstractIndexer
             }
         }
 
-        return array_values($categories);
+        return $categories;
     }
 
     private function formatManufacturer(ProductEntity $product): array
