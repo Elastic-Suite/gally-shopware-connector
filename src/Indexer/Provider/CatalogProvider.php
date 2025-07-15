@@ -64,7 +64,7 @@ class CatalogProvider implements ProviderInterface
         if (!\array_key_exists($salesChannel->getId(), $this->catalogCache)) {
             $this->catalogCache[$salesChannel->getId()] = new Catalog(
                 $salesChannel->getId(),
-                $salesChannel->getName(),
+                $salesChannel->getTranslation('name') ?: $salesChannel->getName(),
             );
         }
 

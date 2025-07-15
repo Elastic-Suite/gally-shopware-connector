@@ -81,6 +81,7 @@ class ProductIndexer extends AbstractIndexer
         $criteria->addFilter(
             new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH)
         );
+        $criteria->addFilter(new EqualsFilter('parentId', null));
         $criteria->addAssociations(
             [
                 'categories',
@@ -106,6 +107,11 @@ class ProductIndexer extends AbstractIndexer
             /** @var ProductEntity $product */
             foreach ($products as $product) {
                 $data = $this->formatProduct($product, $children, $context);
+
+                // Remove key from category array
+                if (\array_key_exists('category', $data)) {
+                    $data['category'] = array_values($data['category']);
+                }
 
                 // Keep the first non-null image
                 if (\array_key_exists('image', $data)) {
@@ -177,7 +183,7 @@ class ProductIndexer extends AbstractIndexer
         }
 
         foreach ($product->getCustomFields() ?: [] as $code => $value) {
-            $data[$code] = $value;
+            $data[$code] = [$value];
         }
 
         if ($product->getChildCount()) {
@@ -186,8 +192,16 @@ class ProductIndexer extends AbstractIndexer
                 $child = $children->get($childId);
                 $childData = $this->formatProduct($child, $children, $context);
                 $childData['children.sku'] = $childData['sku'];
+                if (array_key_exists('name', $childData)) {
+                    $childData['children.name'] = $childData['name'];
+                }
+                if (array_key_exists('description', $childData)) {
+                    $childData['children.description'] = $childData['description'];
+                }
                 unset($childData['id']);
                 unset($childData['sku']);
+                unset($childData['name']);
+                unset($childData['description']);
                 unset($childData['stock']);
                 unset($childData['price']);
                 unset($childData['free_shipping']);
@@ -260,7 +274,7 @@ class ProductIndexer extends AbstractIndexer
             }
         }
 
-        return array_values($categories);
+        return $categories;
     }
 
     private function formatManufacturer(ProductEntity $product): array
