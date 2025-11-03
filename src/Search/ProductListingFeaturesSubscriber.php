@@ -61,23 +61,19 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
                 ['setDefaultOrder', 200],
                 ['handleListingRequest', 50],
             ],
-            // Criteria building for search page
+            // Listing override for search page and search page update (ajax)
+            SearchPageLoadedEvent::class => [
+                ['handleSearchResult', 50],
+            ],
+            // Criteria building for product suggest
             ProductSuggestCriteriaEvent::class => [
                 ['setAutocompleteContext', 200],
                 ['setDefaultOrder', 200],
                 ['handleListingRequest', 50],
             ],
-            // Listing override for category page
-            NavigationPageLoadedEvent::class => [
-                ['handleNavigationResult', 50],
-            ],
-            // Listing override for category page update (ajax)
+            // Listing override for category and category page update (ajax)
             CmsPageLoadedEvent::class => [
                 ['handleNavigationResult', 50],
-            ],
-            // Listing override for search page and search page update (ajax)
-            SearchPageLoadedEvent::class => [
-                ['handleSearchResult', 50],
             ],
             // Listing override for product suggest
             SuggestPageLoadedEvent::class => [

@@ -38,17 +38,25 @@ class CategoryIndexer extends AbstractIndexer
 
     public function getDocumentsToIndex(SalesChannelEntity $salesChannel, LanguageEntity $language, array $documentIdsToReindex): iterable
     {
+        $rootCategory = $this->getRootCategory($salesChannel, $language);
+        if (!$rootCategory) {
+            // If no navigation root is defined on channel, we can't index data to Gally.
+            return [];
+        }
+
         $criteria = new Criteria();
         if (!empty($documentIdsToReindex)) {
             $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
-        } else {
-            $criteria->addFilter(
-                new OrFilter([
-                    new EqualsFilter('id', $salesChannel->getNavigationCategoryId()),
-                    new ContainsFilter('path', $salesChannel->getNavigationCategoryId()),
-                ])
-            );
         }
+
+        // Ignore categories that are not subcategories of the root category.
+        $criteria->addFilter(
+            new OrFilter([
+                new EqualsFilter('id', $rootCategory->getId()),
+                new ContainsFilter('path', $rootCategory->getId()),
+            ])
+        );
+
         $criteria->addFilter(new EqualsFilter('active', true));
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
 
@@ -56,19 +64,37 @@ class CategoryIndexer extends AbstractIndexer
         $this->eventDispatcher->dispatch($event, IndexerBeforeCategoryLoadEvent::NAME);
 
         $categories = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language));
+        $categories->get($salesChannel->getNavigationCategoryId());
         /** @var CategoryEntity $category */
         foreach ($categories as $category) {
-            yield $this->formatCategory($category);
+            yield $this->formatCategory($rootCategory, $category);
         }
     }
 
-    private function formatCategory(CategoryEntity $category): array
+    private function getRootCategory(SalesChannelEntity $salesChannel, LanguageEntity $language): ?CategoryEntity
     {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('id', $salesChannel->getNavigationCategoryId()));
+        $rootCategory = $this->entityRepository->search($criteria, $this->getContext($salesChannel, $language))->first();
+
+        return $rootCategory instanceof CategoryEntity ? $rootCategory : null;
+    }
+
+    private function formatCategory(CategoryEntity $rootCategory, CategoryEntity $category): array
+    {
+        $pathFromRoot = trim(
+            str_replace(
+                '|',
+                '/', str_replace($rootCategory->getPath() ?? '', '', $category->getPath() ?? '')
+            ) . $category->getId(),
+            '/'
+        );
+
         $data = [
             'id' => $category->getId(),
-            'parentId' => $category->getParentId(),
-            'level' => $category->getLevel(),
-            'path' => trim(str_replace('|', '/', $category->getPath() ?? '') . $category->getId(), '/'),
+            'parentId' => $category->getId() === $rootCategory->getId() ? null : $category->getParentId(),
+            'level' => $category->getLevel() - $rootCategory->getLevel() + 1,
+            'path' => $pathFromRoot,
             'name' => $category->getTranslation('name'),
         ];
 
