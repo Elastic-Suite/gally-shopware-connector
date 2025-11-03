@@ -240,7 +240,7 @@ class ProductIndexer extends AbstractIndexer
         if ($product->getMedia() && $product->getMedia()->count()) {
             $media = $product->getMedia()->getMedia()->first();
             /** @var MediaThumbnailEntity $thumbnail */
-            foreach ($media->getThumbnails() as $thumbnail) {
+            foreach ($media?->getThumbnails() ?? [] as $thumbnail) {
                 if (400 == $thumbnail->getWidth()) {
                     return $thumbnail->getPath();
                 }
