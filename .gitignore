@@ -2,3 +2,6 @@
 /logs/
 .php-cs-fixer.cache
 composer.lock
+**/.tmp/
+**/dist/
+src/Resources/public/**
