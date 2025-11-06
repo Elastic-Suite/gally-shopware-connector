@@ -23,6 +23,7 @@ use Shopware\Storefront\Framework\Routing\RequestTransformer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Twig\Environment;
 
 /**
  * Controller used to fetch more option of a filter.
@@ -36,6 +37,19 @@ class ViewMoreFacetOptionController extends StorefrontController
         private AggregationBuilder $aggregationBuilder,
         private Adapter $adapter,
     ) {
+    }
+
+    /**
+     * Keep this "useless" method for cross compatibility with shopware 6.5.x
+     *
+     * @param Environment $twig
+     * @return void
+     */
+    public function setTwig(Environment $twig): void
+    {
+        if (method_exists(parent::class, 'setTwig')) {
+            parent::setTwig($twig);
+        }
     }
 
     #[Route(path: '/gally/viewMore', name: 'frontend.gally.viewMore', methods: ['POST'], defaults: ['XmlHttpRequest' => true])]
