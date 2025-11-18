@@ -93,6 +93,11 @@ class ProductIndexer extends AbstractIndexer
                 'manufacturer',
                 'prices',
                 'media',
+                'media.media',
+                'media.media.thumbnails',
+                'cover',
+                'cover.media',
+                'cover.media.thumbnails',
                 'customFields',
                 'properties',
                 'properties.group',
@@ -251,11 +256,12 @@ class ProductIndexer extends AbstractIndexer
 
     private function formatMedia(ProductEntity $product): string
     {
-        if ($product->getMedia() && $product->getMedia()->count()) {
-            $media = $product->getMedia()->getMedia()->first();
+        $cover = $product->getCover();
+        if ($cover && $cover->getMedia()) {
+            $media = $cover->getMedia();
             /** @var MediaThumbnailEntity $thumbnail */
-            foreach ($media?->getThumbnails() ?? [] as $thumbnail) {
-                if (400 == $thumbnail->getWidth()) {
+            foreach ($media->getThumbnails() ?? [] as $thumbnail) {
+                if (400 == $thumbnail->getWidth() || 400 == $thumbnail->getHeight()) {
                     return $thumbnail->getPath();
                 }
             }
@@ -311,7 +317,11 @@ class ProductIndexer extends AbstractIndexer
             [
                 'categories',
                 'prices',
-                'media',
+                'media.media',
+                'media.media.thumbnails',
+                'cover',
+                'cover.media',
+                'cover.media.thumbnails',
                 'customFields',
                 'properties',
                 'properties.group',
