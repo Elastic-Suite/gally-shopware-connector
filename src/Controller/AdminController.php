@@ -37,6 +37,7 @@ class AdminController extends AbstractController
         'catalog' => 'syncAllLocalizedCatalogs',
         'sourceField' => 'syncAllSourceFields',
         'sourceFieldOption' => 'syncAllSourceFieldOptions',
+        'recommenderType' => 'syncAllRecommenderTypes',
     ];
 
     /**

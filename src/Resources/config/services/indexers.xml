@@ -22,6 +22,9 @@
             <argument type="service" id="property_group.repository" />
             <tag name="gally.dataprovider" entity="sourceFieldOption"/>
         </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Provider\RecommenderTypeProvider">
+            <tag name="gally.dataprovider" entity="recommenderType"/>
+        </service>
 
         <service id="Gally\ShopwarePlugin\Indexer\MessageHandler\SyncHandler">
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />

@@ -12,13 +12,24 @@
     </imports>
 
     <services>
-        <service id="Gally\ShopwarePlugin\Config\ConfigManager">
+        <service id="Gally\ShopwarePlugin\Config\ConfigManager" public="true">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
         </service>
 
         <service id="Gally\ShopwarePlugin\Subscriber\UpdateConfigSubscriber">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
             <argument type="service" id="Gally\ShopwarePlugin\Config\CacheManager" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Subscriber\ProductRecommendationSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
+            <argument type="service" id="Gally\Sdk\Service\RecommenderManager" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
+            <argument type="service" id="language.repository" />
+            <argument type="service" id="sales_channel.product.repository" />
+            <argument type="service" id="product.repository" />
+            <argument type="service" id="logger" />
             <tag name="kernel.event_subscriber"/>
         </service>
     </services>
