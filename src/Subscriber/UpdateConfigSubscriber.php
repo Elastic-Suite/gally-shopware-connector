@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Subscriber;
 
+use Gally\Sdk\Client\Client;
+use Gally\ShopwarePlugin\Config\CacheManager;
 use Shopware\Core\System\SystemConfig\Event\SystemConfigChangedEvent;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -31,6 +33,7 @@ class UpdateConfigSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private SystemConfigService $configService,
+        private CacheManager $cacheManager,
     ) {
     }
 
@@ -43,9 +46,15 @@ class UpdateConfigSubscriber implements EventSubscriberInterface
 
     public function beforeSystemConfigChange(SystemConfigChangedEvent $event)
     {
-        if ($event->getSalesChannelId()
-            && $event->getValue()
-            && \in_array($event->getKey(), $this->globalConfigs, true)) {
+        if (!\in_array($event->getKey(), $this->globalConfigs, true)) {
+            return;
+        }
+
+        // The cached API token was generated with the credentials being replaced: drop it so
+        // the next call re-authenticates instead of failing (or succeeding) with stale ones.
+        $this->cacheManager->clearCache(Client::API_TOKEN_CACHE_KEY);
+
+        if ($event->getSalesChannelId() && $event->getValue()) {
             $this->configService->set($event->getKey(), $event->getValue());
             $this->configService->set($event->getKey(), null, $event->getSalesChannelId());
         }
