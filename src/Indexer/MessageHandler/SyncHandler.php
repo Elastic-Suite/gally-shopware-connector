@@ -18,7 +18,9 @@ use Gally\Sdk\Service\StructureSynchonizer;
 use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Indexer\Message\SyncMessage;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
+use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldOptionProvider;
 use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider;
+use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Property\PropertyGroupEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -42,8 +44,10 @@ class SyncHandler
         private EntityRepository $customFieldRepository,
         private EntityRepository $customFieldSetRepository,
         private EntityRepository $propertyGroupRepository,
+        private EntityRepository $propertyGroupOptionRepository,
         private CatalogProvider $catalogProvider,
         private SourceFieldProvider $sourceFieldProvider,
+        private SourceFieldOptionProvider $sourceFieldOptionProvider,
         private StructureSynchonizer $synchonizer,
     ) {
     }
@@ -57,6 +61,9 @@ class SyncHandler
                 break;
             case SyncMessage::ENTITY_PROPERTY_GROUP:
                 $this->syncPropertyGroup($context, $message->getEntityIds());
+                break;
+            case SyncMessage::ENTITY_PROPERTY_GROUP_OPTION:
+                $this->syncPropertyGroupOptions($context, $message->getEntityIds());
                 break;
             case SyncMessage::ENTITY_CUSTOM_FIELD:
                 $this->syncCustomField($context, $message->getEntityIds());
@@ -110,6 +117,21 @@ class SyncHandler
 
         $sourceField = $this->sourceFieldProvider->buildSourceField($property, 'product');
         $this->synchonizer->syncSourceField($sourceField);
+    }
+
+    private function syncPropertyGroupOptions(Context $context, string|array $optionIds): void
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('id', $optionIds));
+        $criteria->addAssociations(['translations', 'translations.language', 'translations.language.locale']);
+
+        $sourceFieldOptions = [];
+        /** @var PropertyGroupOptionEntity $option */
+        foreach ($this->propertyGroupOptionRepository->search($criteria, $context)->getEntities() as $option) {
+            $sourceFieldOptions[] = $this->sourceFieldOptionProvider->buildSourceFieldOption($option, $context);
+        }
+
+        $this->synchonizer->syncAllSourceFieldOptions($sourceFieldOptions);
     }
 
     private function syncCustomField(Context $context, string|array $customFieldId)

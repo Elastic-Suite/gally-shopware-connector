@@ -19,6 +19,7 @@ use Gally\Sdk\Entity\LocalizedCatalog;
 use Gally\Sdk\Entity\Metadata;
 use Gally\Sdk\Entity\SourceField;
 use Gally\Sdk\Entity\SourceFieldOption;
+use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Property\PropertyGroupCollection;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -48,9 +49,7 @@ class SourceFieldOptionProvider implements ProviderInterface
      */
     public function provide(Context $context): iterable
     {
-        foreach ($this->catalogProvider->provide($context) as $localizedCatalog) {
-            $this->localizedCatalogsByLocale[$localizedCatalog->getLocale()][] = $localizedCatalog;
-        }
+        $this->ensureLocalizedCatalogsByLocale($context);
 
         foreach ($this->entitiesToSync as $entity) {
             $metadata = new Metadata($entity);
@@ -105,33 +104,60 @@ class SourceFieldOptionProvider implements ProviderInterface
                 $properties = $this->propertyGroupRepository->search($criteria, $context)->getEntities();
 
                 foreach ($properties as $property) {
-                    $sourceField = new SourceField($metadata, 'property_' . $property->getId(), '', '', []);
                     foreach ($property->getOptions() as $option) {
-                        $labels = [];
-                        foreach ($option->getTranslations() as $label) {
-                            $gallyLocale = str_replace('-', '_', $label->getLanguage()->getLocale()->getCode());
-
-                            if (!array_key_exists($gallyLocale, $this->localizedCatalogsByLocale)) {
-                                continue;
-                            }
-
-                            foreach ($this->localizedCatalogsByLocale[$gallyLocale] as $localizedCatalog) {
-                                $labels[] = new Label($localizedCatalog, $label->getName());
-                            }
-                        }
-
-                        yield new SourceFieldOption(
-                            $sourceField,
-                            $option->getId(),
-                            $option->getPosition(),
-                            reset($labels)->getLabel(),
-                            $labels,
-                        );
+                        yield $this->buildSourceFieldOption($option);
                     }
                 }
             }
         }
 
         return [];
+    }
+
+    /**
+     * Build a single SourceFieldOption for a property group option, so it can be synced
+     * incrementally (outside the full provide() bulk pass) when just one option changes.
+     * Requires 'translations', 'translations.language', 'translations.language.locale'
+     * associations loaded on $option.
+     */
+    public function buildSourceFieldOption(PropertyGroupOptionEntity $option, ?Context $context = null): SourceFieldOption
+    {
+        if (null !== $context) {
+            $this->ensureLocalizedCatalogsByLocale($context);
+        }
+
+        $sourceField = new SourceField(new Metadata('product'), 'property_' . $option->getGroupId(), '', '', []);
+
+        $labels = [];
+        foreach ($option->getTranslations() as $label) {
+            $gallyLocale = str_replace('-', '_', $label->getLanguage()->getLocale()->getCode());
+
+            if (!array_key_exists($gallyLocale, $this->localizedCatalogsByLocale)) {
+                continue;
+            }
+
+            foreach ($this->localizedCatalogsByLocale[$gallyLocale] as $localizedCatalog) {
+                $labels[] = new Label($localizedCatalog, $label->getName());
+            }
+        }
+
+        return new SourceFieldOption(
+            $sourceField,
+            $option->getId(),
+            $option->getPosition(),
+            reset($labels)->getLabel(),
+            $labels,
+        );
+    }
+
+    private function ensureLocalizedCatalogsByLocale(Context $context): void
+    {
+        if ([] !== $this->localizedCatalogsByLocale) {
+            return;
+        }
+
+        foreach ($this->catalogProvider->provide($context) as $localizedCatalog) {
+            $this->localizedCatalogsByLocale[$localizedCatalog->getLocale()][] = $localizedCatalog;
+        }
     }
 }
