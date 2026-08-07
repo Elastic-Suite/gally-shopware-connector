@@ -1,0 +1,12 @@
+{% if gally_is_active(context.salesChannel.id) and gally_is_tracking_active(context.salesChannel.id) %}
+    <script>
+        window.gallyEvent.push({
+            eventType: {{ eventType|json_encode }},
+            metadataCode: {{ metadataCode|json_encode }},
+            localizedCatalogCode: {{ gally_localized_catalog_code()|json_encode }}
+            {%- if entityCode is defined and entityCode is not null %},
+            entityCode: {{ entityCode|json_encode }}
+            {%- endif %}
+        });
+    </script>
+{% endif %}

@@ -71,4 +71,9 @@ class ConfigManager
 
         return \is_string($typeCode) && '' !== $typeCode ? $typeCode : null;
     }
+
+    public function isTrackingActive(?string $salesChannelId = null): bool
+    {
+        return (bool) $this->systemConfigService->get('GallyPlugin.config.trackingActive', $salesChannelId);
+    }
 }

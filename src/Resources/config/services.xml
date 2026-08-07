@@ -9,6 +9,7 @@
         <import resource="services/controllers.xml"/>
         <import resource="services/indexers.xml"/>
         <import resource="services/search.xml"/>
+        <import resource="services/tracking.xml"/>
     </imports>
 
     <services>
@@ -42,6 +43,15 @@
             <argument type="service" id="sales_channel.product.repository" />
             <argument type="service" id="logger" />
             <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Twig\GallyExtension">
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
+            <argument type="service" id="router" />
+            <argument type="service" id="request_stack" />
+            <argument type="service" id="language.repository" />
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
+            <tag name="twig.extension" />
         </service>
     </services>
 </container>
