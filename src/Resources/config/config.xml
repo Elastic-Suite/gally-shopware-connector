@@ -64,6 +64,32 @@
             <label>Max number of recommended products on the product page</label>
             <defaultValue>4</defaultValue>
         </input-field>
+
+        <input-field type="int">
+            <name>cartRecommendationMaxSize</name>
+            <label>Max number of recommended products on the cart</label>
+            <defaultValue>4</defaultValue>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>cartRecommendationTypeCode</name>
+            <label>Recommendation type shown on the cart</label>
+            <defaultValue>crosssell</defaultValue>
+            <options>
+                <option>
+                    <id>upsell</id>
+                    <name>Upsell</name>
+                </option>
+                <option>
+                    <id>related</id>
+                    <name>Related</name>
+                </option>
+                <option>
+                    <id>crosssell</id>
+                    <name>Cross-sell</name>
+                </option>
+            </options>
+        </input-field>
     </card>
     <card>
         <title>Batch settings</title>

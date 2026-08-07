@@ -59,4 +59,16 @@ class ConfigManager
     {
         return (int) $this->systemConfigService->get('GallyPlugin.config.productRecommendationMaxSize', $salesChannelId);
     }
+
+    public function getCartRecommendationMaxSize(?string $salesChannelId = null): int
+    {
+        return (int) $this->systemConfigService->get('GallyPlugin.config.cartRecommendationMaxSize', $salesChannelId);
+    }
+
+    public function getCartRecommendationTypeCode(?string $salesChannelId = null): ?string
+    {
+        $typeCode = $this->systemConfigService->get('GallyPlugin.config.cartRecommendationTypeCode', $salesChannelId);
+
+        return \is_string($typeCode) && '' !== $typeCode ? $typeCode : null;
+    }
 }
