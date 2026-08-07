@@ -20,6 +20,7 @@ class SyncMessage implements AsyncMessageInterface
 {
     public const ENTITY_SALES_CHANNEL = 'sales_channel';
     public const ENTITY_PROPERTY_GROUP = 'property_group';
+    public const ENTITY_PROPERTY_GROUP_OPTION = 'property_group_option';
     public const ENTITY_CUSTOM_FIELD = 'custom_field';
     public const ENTITY_CUSTOM_FIELD_SET = 'custom_field_set';
 
