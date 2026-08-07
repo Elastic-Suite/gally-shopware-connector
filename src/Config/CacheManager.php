@@ -14,13 +14,12 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Config;
 
-use Gally\Sdk\Client\TokenCacheManagerInterface;
+use Gally\Sdk\Service\Cache\AbstractCacheManager;
+use Psr\Cache\CacheItemInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 
-class TokenCacheManager implements TokenCacheManagerInterface
+class CacheManager extends AbstractCacheManager
 {
-    private const CACHE_KEY = 'gally_api_token';
-
     private CacheInterface $cache;
 
     public function setCache(CacheInterface $cache): void
@@ -28,12 +27,17 @@ class TokenCacheManager implements TokenCacheManagerInterface
         $this->cache = $cache;
     }
 
-    public function getToken(callable $getToken, bool $useCache = true): string
+    public function doGet(string $cacheKey, callable $callback, ?int $ttl): mixed
     {
-        if (!$useCache) {
-            $this->cache->delete(self::CACHE_KEY);
-        }
+        return $this->cache->get($cacheKey, function (CacheItemInterface $item) use ($callback, $ttl) {
+            $item->expiresAfter($ttl);
 
-        return $this->cache->get(self::CACHE_KEY, $getToken);
+            return $callback($item);
+        });
+    }
+
+    public function doClear(string $cacheKey): void
+    {
+        $this->cache->delete($cacheKey);
     }
 }
