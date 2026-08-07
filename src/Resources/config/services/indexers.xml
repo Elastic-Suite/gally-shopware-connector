@@ -80,6 +80,7 @@
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ProductSubscriber">
             <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="product.repository"/>
             <tag name="kernel.event_subscriber" />
         </service>
     </services>

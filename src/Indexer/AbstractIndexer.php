@@ -51,47 +51,77 @@ abstract class AbstractIndexer
 
     public function reindex(Context $context, array $documentIdsToReindex = []): void
     {
+        $metadata = new Metadata($this->getEntityType());
+
+        foreach ($this->getActiveLocalizedCatalogs($context) as [$salesChannel, $language, $localizedCatalog]) {
+            if (empty($documentIdsToReindex)) {
+                $index = $this->indexOperation->createIndex($metadata, $localizedCatalog);
+            } else {
+                $index = $this->indexOperation->getIndexByName($metadata, $localizedCatalog);
+            }
+
+            $batchSize = $this->configManager->getBatchSize($this->getEntityType(), $salesChannel->getId());
+            $bulk = [];
+            foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
+                if (0 === \count($document)) {
+                    continue;
+                }
+                $bulk[$document['id']] = json_encode($document);
+                if (\count($bulk) >= $batchSize) {
+                    $this->indexOperation->executeBulk($index, $bulk);
+                    $bulk = [];
+                }
+            }
+            if (\count($bulk)) {
+                $this->indexOperation->executeBulk($index, $bulk);
+            }
+
+            if (empty($documentIdsToReindex)) {
+                $this->indexOperation->refreshIndex($index);
+                $this->indexOperation->installIndex($index);
+            }
+        }
+    }
+
+    public function remove(array $documentIdsToRemove): void
+    {
+        if ([] === $documentIdsToRemove) {
+            return;
+        }
+
+        $metadata = new Metadata($this->getEntityType());
+        $context = Context::createDefaultContext();
+
+        foreach ($this->getActiveLocalizedCatalogs($context) as [, , $localizedCatalog]) {
+            $index = $this->indexOperation->getIndexByName($metadata, $localizedCatalog);
+            $this->indexOperation->deleteBulk($index, $documentIdsToRemove);
+        }
+    }
+
+    /**
+     * @return iterable<array{0: SalesChannelEntity, 1: LanguageEntity, 2: LocalizedCatalog}>
+     */
+    private function getActiveLocalizedCatalogs(Context $context): iterable
+    {
         $criteria = new Criteria();
         $criteria->addAssociations(['language', 'languages', 'languages.locale', 'currency', 'domains']);
 
         /** @var SalesChannelCollection $salesChannels */
         $salesChannels = $this->salesChannelRepository->search($criteria, $context)->getEntities();
-        $metadata = new Metadata($this->getEntityType());
 
         /** @var SalesChannelEntity $salesChannel */
         foreach ($salesChannels as $salesChannel) {
-            if ($this->configManager->isActive($salesChannel->getId())) {
-                $languages = [];
-                foreach ($salesChannel->getLanguages() as $language) {
-                    $languages[str_replace('-', '_', $language->getLocale()->getCode())] = $language;
-                }
+            if (!$this->configManager->isActive($salesChannel->getId())) {
+                continue;
+            }
 
-                foreach ($this->getLocalizedCatalogByChannel($context, $salesChannel) as $localizedCatalog) {
-                    if (empty($documentIdsToReindex)) {
-                        $index = $this->indexOperation->createIndex($metadata, $localizedCatalog);
-                    } else {
-                        $index = $this->indexOperation->getIndexByName($metadata, $localizedCatalog);
-                    }
+            $languages = [];
+            foreach ($salesChannel->getLanguages() as $language) {
+                $languages[str_replace('-', '_', $language->getLocale()->getCode())] = $language;
+            }
 
-                    $batchSize = $this->configManager->getBatchSize($this->getEntityType(), $salesChannel->getId());
-                    $bulk = [];
-                    $language = $languages[$localizedCatalog->getLocale()];
-                    foreach ($this->getDocumentsToIndex($salesChannel, $language, $documentIdsToReindex) as $document) {
-                        $bulk[$document['id']] = json_encode($document);
-                        if (\count($bulk) >= $batchSize) {
-                            $this->indexOperation->executeBulk($index, $bulk);
-                            $bulk = [];
-                        }
-                    }
-                    if (\count($bulk)) {
-                        $this->indexOperation->executeBulk($index, $bulk);
-                    }
-
-                    if (empty($documentIdsToReindex)) {
-                        $this->indexOperation->refreshIndex($index);
-                        $this->indexOperation->installIndex($index);
-                    }
-                }
+            foreach ($this->getLocalizedCatalogByChannel($context, $salesChannel) as $localizedCatalog) {
+                yield [$salesChannel, $languages[$localizedCatalog->getLocale()], $localizedCatalog];
             }
         }
     }
