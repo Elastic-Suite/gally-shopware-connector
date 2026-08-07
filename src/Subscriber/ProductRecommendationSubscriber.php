@@ -20,6 +20,7 @@ use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\Product\ProductCollection;
+use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
@@ -101,6 +102,7 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
         $product = $event->getPage()->getProduct();
 
         if ($product->getParentId()) {
+            /** @var ProductEntity|null $parent */
             $parent = $this->productRepository
                 ->search(new Criteria([$product->getParentId()]), $event->getContext())
                 ->first();
@@ -131,6 +133,7 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
 
         // Preserve the order returned by Gally.
         foreach ($skus as $sku) {
+            /** @var ProductEntity $product */
             foreach ($searchResult->getEntities() as $product) {
                 if ($product->getProductNumber() === $sku) {
                     $products->add($product);
