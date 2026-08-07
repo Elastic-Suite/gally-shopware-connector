@@ -1,7 +1,10 @@
 import FilterMultiSelectViewMorePlugin from'./gally/filter-multi-select-view-more.plugin';
 import FilterPropertySelectViewMorePlugin from'./gally/filter-property-select-view-more.plugin';
+import GallyTrackingPlugin from './gally/tracking.plugin';
 
 const PluginManager = window.PluginManager;
+
+PluginManager.register('GallyTracking', GallyTrackingPlugin, '[data-gally-tracking]');
 
 let useAsyncImport = false;
 try {

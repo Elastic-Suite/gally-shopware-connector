@@ -1,0 +1,15 @@
+{% sw_extends '@Storefront/storefront/page/checkout/finish/index.html.twig' %}
+
+{% block page_checkout_main_content %}
+    {{ parent() }}
+
+    {% set gallyOrderPayload = gally_order_tracking_payload(page.order, context) %}
+    {% if gallyOrderPayload.items|length > 0 %}
+        {% sw_include '@GallyPlugin/storefront/utilities/gally-tracking-event.html.twig' with {
+            context: context,
+            eventType: 'order',
+            metadataCode: 'product',
+            payload: gallyOrderPayload,
+        } only %}
+    {% endif %}
+{% endblock %}

@@ -96,4 +96,9 @@ class ConfigManager
 
         return array_values(array_filter(array_map('trim', $rawValue), static fn (string $code) => '' !== $code));
     }
+
+    public function isTrackingActive(?string $salesChannelId = null): bool
+    {
+        return (bool) $this->systemConfigService->get('GallyPlugin.config.trackingActive', $salesChannelId);
+    }
 }
