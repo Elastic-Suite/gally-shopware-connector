@@ -1,0 +1,14 @@
+{% sw_extends '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' %}
+
+{% block component_filter_multi_select_list %}
+    {% if elements|length > 0 and elements|last.id == 'gally-show-more' %}
+        {% block component_filter_multi_select_option_search %}
+            <input type="text"
+                   class="form-control gally-filter-option-search"
+                   placeholder="{{ 'gally.filter.searchOptions'|trans }}"
+                   data-url="{{ url('frontend.gally.viewMore') }}">
+        {% endblock %}
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}

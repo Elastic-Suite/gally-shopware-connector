@@ -63,7 +63,8 @@ class ViewMoreFacetOptionController extends StorefrontController
         $criteria = $this->criteriaBuilder->build($referer, $context);
 
         $field = preg_replace('/^' . CriteriaBuilder::GALLY_FILTER_PREFIX . '/', '', $params['aggregation']);
-        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field, $this->criteriaBuilder->getNavigationId());
+        $optionSearch = \is_string($params['optionSearch'] ?? null) && '' !== $params['optionSearch'] ? $params['optionSearch'] : null;
+        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field, $this->criteriaBuilder->getNavigationId(), $optionSearch);
 
         return $this->renderStorefront(
             '@GallyPlugin/storefront/component/listing/filter-panel-item.html.twig',
