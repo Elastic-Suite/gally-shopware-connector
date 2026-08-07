@@ -38,7 +38,6 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
 {
     public const RECOMMENDATION_TYPES = ['related', 'upsell'];
     public const EXTENSION_NAME = 'gallyRecommendations';
-    public const PRODUCT_COUNT = 4;
 
     public function __construct(
         private ConfigManager $configManager,
@@ -69,6 +68,7 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
         try {
             $localizedCatalog = $this->getCurrentLocalizedCatalog($context);
             $productSku = $this->getProductSku($event);
+            $maxSize = $this->configManager->getProductRecommendationMaxSize($context->getSalesChannelId());
 
             $recommendations = [];
             foreach (self::RECOMMENDATION_TYPES as $type) {
@@ -77,7 +77,7 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
                         $type,
                         $localizedCatalog,
                         [$productSku],
-                        self::PRODUCT_COUNT
+                        $maxSize
                     ),
                     'sku'
                 );

@@ -54,4 +54,9 @@ class ConfigManager
 
         return (int) $this->systemConfigService->get($configKey, $salesChannelId);
     }
+
+    public function getProductRecommendationMaxSize(?string $salesChannelId = null): int
+    {
+        return (int) $this->systemConfigService->get('GallyPlugin.config.productRecommendationMaxSize', $salesChannelId);
+    }
 }

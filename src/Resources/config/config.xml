@@ -57,6 +57,15 @@
         </component>
     </card>
     <card>
+        <title>Recommendations</title>
+
+        <input-field type="int">
+            <name>productRecommendationMaxSize</name>
+            <label>Max number of recommended products on the product page</label>
+            <defaultValue>4</defaultValue>
+        </input-field>
+    </card>
+    <card>
         <title>Batch settings</title>
 
         <input-field type="int">
