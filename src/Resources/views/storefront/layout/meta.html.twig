@@ -1,0 +1,28 @@
+{% sw_extends '@Storefront/storefront/layout/meta.html.twig' %}
+
+{% block layout_head_javascript_tracking %}
+    {{ parent() }}
+    {% block gally_tracking_queue_stub %}
+        {# Defines window.gallyEvent.push as a queue writer before the storefront JS bundle
+           (and the real SDK it imports) has had a chance to load, so early per-page tracking
+           snippets never call an undefined function. Page templates (e.g. product-detail)
+           override `base_head` directly without calling parent(), so this stub must live in
+           the dedicated `layout_head_javascript_tracking` block instead, which every page's
+           meta template inherits unconditionally. #}
+        <script>
+            ;(function (w) {
+                if (w.gallyEvent) { return; }
+                w.gallyEvent = {
+                    push: function (item) {
+                        try {
+                            var raw = localStorage.getItem('gally-event-queue');
+                            var queue = raw ? JSON.parse(raw) : [];
+                            queue.push(item);
+                            localStorage.setItem('gally-event-queue', JSON.stringify(queue));
+                        } catch (e) {}
+                    }
+                };
+            })(window);
+        </script>
+    {% endblock %}
+{% endblock %}

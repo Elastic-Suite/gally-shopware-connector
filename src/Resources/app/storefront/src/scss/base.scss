@@ -18,3 +18,200 @@
   height: auto;
   inset: 0;
 }
+
+// The core .search-suggest-container <ul> is itself absolutely positioned (see Storefront's
+// _search-suggest.scss): a plain flex wrapper around it isn't enough, since the <ul> escapes
+// that wrapper's normal-flow box via its own `position: absolute` and floats independently.
+// .gally-search-suggest-popover takes over that same absolute/centered positioning (values
+// mirrored from core, not reused as Sass variables to avoid depending on core's import order),
+// and resets the nested .search-suggest-container back to a plain flex child below.
+.gally-search-suggest-popover {
+  position: absolute;
+  top: 55px;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  // Side-by-side columns only fit once the popover itself is wide enough (see the 700px
+  // breakpoint below): below that, aside and product results stack instead of squeezing into a
+  // fixed 30/70 split.
+  flex-direction: column;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 10px 25px -15px #000;
+
+  @media (min-width: 768px) {
+    width: 700px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+  }
+
+  .search-suggest-container {
+    position: static;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: auto;
+    border: 0;
+    // The column divider, as a background layer rather than a border: set directly on this
+    // element (not a sibling/pseudo) since it's the one element that reliably paints on top in
+    // every layout state tried here. A background can be shaped/positioned independently of the
+    // box's own edges, which a border can't, so it's inset from the popover's top/bottom here.
+    // Only meaningful once aside/main sit side by side (see the 768px breakpoint above): a
+    // vertical rule would run right through both blocks once they're stacked.
+    @media (min-width: 768px) {
+      background-image: linear-gradient(var(--bs-border-color, #e5e5e5), var(--bs-border-color, #e5e5e5));
+      background-repeat: no-repeat;
+      background-position: left 20px;
+      background-size: 1px calc(100% - 40px);
+    }
+    box-shadow: none;
+    // Core reserves a large bottom margin/padding here for its own rounded-shadow box (48px
+    // combined); not needed once the border/shadow are stripped, and it was eating into the flex
+    // space meant to push .search-suggest-total down to the column's real bottom. A smaller
+    // padding-bottom is kept so "Show all search results" isn't flush against the popover edge.
+    margin-bottom: 0;
+    padding-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+
+    &::after {
+      display: none;
+    }
+
+    // Pins "Show all search results" to the bottom of the column instead of letting it hug
+    // directly under the last product: relevant once the aside column (categories/attributes)
+    // ends up taller than the product list itself.
+    .search-suggest-total {
+      margin-top: auto;
+    }
+  }
+}
+
+// Unwrapped on mobile (display: contents drops this element's own box) so its three sections
+// below become direct flex items of .gally-search-suggest-popover, letting them interleave with
+// .gally-search-suggest-main via `order` instead of always trailing behind it as one block.
+.gally-search-suggest-aside {
+  display: contents;
+
+  @media (min-width: 768px) {
+    display: block;
+    flex: 0 0 30%;
+    max-width: 30%;
+    // Matches core's .search-suggest-container padding-top (16px, its own $spacer), so the first
+    // row in each column starts at the same height.
+    padding: 16px 0 10px;
+  }
+}
+
+.gally-search-suggest-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  // Search term suggestions come first (see .gally-search-suggest-section--terms below), product
+  // results second, on mobile where everything stacks in one column.
+  order: 2;
+  border-top: 1px solid var(--bs-border-color, #e5e5e5);
+
+  @media (min-width: 768px) {
+    border-top: 0;
+  }
+}
+
+.gally-search-suggest-section {
+  padding: 0 15px 10px;
+  margin: 0 15px;
+
+  // Replaces .gally-search-suggest-aside's own top padding, lost once that element stops
+  // generating a box on mobile (see display: contents above).
+  &:first-child {
+    padding-top: 16px;
+
+    @media (min-width: 768px) {
+      padding-top: 0;
+    }
+  }
+
+  & + .gally-search-suggest-section {
+    border-top: 1px solid var(--bs-border-color, #e5e5e5);
+    padding-top: 10px;
+  }
+}
+
+// Mobile stacking order: search terms, then products (.gally-search-suggest-main, order: 2
+// above), then categories, then attributes. Irrelevant on desktop, where these three stay
+// nested inside .gally-search-suggest-aside as a real box (display: block) instead of being
+// flex items of the popover themselves, so `order` has no effect there.
+.gally-search-suggest-section--terms {
+  order: 1;
+}
+
+.gally-search-suggest-section--categories {
+  order: 3;
+}
+
+.gally-search-suggest-section--attributes {
+  order: 4;
+}
+
+.gally-search-suggest-section-title {
+  font-weight: bold;
+  font-size: 0.85rem;
+  padding: 5px 0;
+}
+
+// Separator between the individual attribute groups (Color, Gender, Size...) stacked inside the
+// same "attributes" section, distinct from the border between top-level sections. Negative
+// margin cancels out the section's own left/right padding, so this separator spans the same
+// width as the border between top-level sections instead of being inset an extra 15px each side.
+.search-suggest-attributes + .gally-search-suggest-section-title {
+  border-top: 1px solid var(--bs-border-color, #e5e5e5);
+  margin: 5px -15px 0;
+  padding: 10px 15px 5px;
+}
+
+.search-suggest-terms,
+.search-suggest-categories,
+.search-suggest-attributes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// Matches core's .search-suggest-product-link hover (color shift to brand primary, no
+// underline), instead of the browser-default blue/underline these links would otherwise get.
+.search-suggest-term-link,
+.search-suggest-category-link,
+.search-suggest-attribute-link {
+  display: block;
+  padding: 4px 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--sw-color-brand-primary, #398d8d);
+  }
+}
+
+.search-suggest-term-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  // Core's base .icon > svg rule sets `top: 0.25em; position: relative;`, a nudge meant for
+  // icons sitting inline in running text. It's not needed (and throws off centering) once the
+  // icon is a flex-centered item on its own, as it is here.
+  .icon > svg {
+    top: 0;
+  }
+}
+
+.search-suggest-item-context {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color, #767676);
+}

@@ -17,6 +17,7 @@ namespace Gally\ShopwarePlugin\Search;
 use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Model\Message;
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Cms\Aggregate\CmsBlock\CmsBlockEntity;
 use Shopware\Core\Content\Cms\CmsPageEntity;
 use Shopware\Core\Content\Cms\Events\CmsPageLoadedEvent;
@@ -25,10 +26,13 @@ use Shopware\Core\Content\Product\Events\ProductListingCriteriaEvent;
 use Shopware\Core\Content\Product\Events\ProductSearchCriteriaEvent;
 use Shopware\Core\Content\Product\Events\ProductSuggestCriteriaEvent;
 use Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingResult;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\Event\ShopwareEvent;
+use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
 use Shopware\Storefront\Page\Search\SearchPageLoadedEvent;
 use Shopware\Storefront\Page\Suggest\SuggestPageLoadedEvent;
@@ -37,6 +41,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ProductListingFeaturesSubscriber implements EventSubscriberInterface
 {
+    public const TERM_SUGGESTIONS_EXTENSION = 'gally-term-suggestions';
+    public const CATEGORY_SUGGESTIONS_EXTENSION = 'gally-category-suggestions';
+    public const ATTRIBUTE_SUGGESTIONS_EXTENSION = 'gally-attribute-suggestions';
+    private const CATEGORY_SUGGESTIONS_LIMIT = 5;
+
     private ?Result $gallyResults = null;
 
     public function __construct(
@@ -45,6 +54,7 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
         private CriteriaBuilder $criteriaBuilder,
         private LoggerInterface $logger,
         private TranslatorInterface $translator,
+        private EntityRepository $categoryRepository,
     ) {
     }
 
@@ -235,7 +245,62 @@ class ProductListingFeaturesSubscriber implements EventSubscriberInterface
             }
 
             $event->getPage()->setSearchResult($this->gallyResults->getResultListing($productListing));
+            $event->getPage()->addExtension(
+                self::TERM_SUGGESTIONS_EXTENSION,
+                new ArrayStruct(['terms' => $this->gallyResults->getTermSuggestions()])
+            );
+            $event->getPage()->addExtension(
+                self::ATTRIBUTE_SUGGESTIONS_EXTENSION,
+                new ArrayStruct(['groups' => $this->gallyResults->getAttributeSuggestions()])
+            );
+
+            $categories = [];
+            try {
+                $categories = $this->searchAdapter->searchCategorySuggestions(
+                    $context,
+                    $event->getPage()->getSearchTerm(),
+                    self::CATEGORY_SUGGESTIONS_LIMIT
+                );
+                $categories = $this->addCategoryPaths($categories, $context->getContext());
+            } catch (\RuntimeException $exception) {
+                $this->logger->error($exception->getMessage());
+            }
+            $event->getPage()->addExtension(
+                self::CATEGORY_SUGGESTIONS_EXTENSION,
+                new ArrayStruct(['categories' => $categories])
+            );
         }
+    }
+
+    /**
+     * Adds a readable breadcrumb ("path") to each category suggestion, built from Shopware's own
+     * stored category breadcrumb (names, not Gally's raw id-based "path" field) so suggestions
+     * with an ambiguous or duplicate name can still be told apart.
+     *
+     * @param array<int, array{id: string, name: string}> $categories
+     *
+     * @return array<int, array{id: string, name: string, path: string}>
+     */
+    private function addCategoryPaths(array $categories, Context $context): array
+    {
+        if (!$categories) {
+            return [];
+        }
+
+        $criteria = new Criteria(array_column($categories, 'id'));
+        /** @var array<string, CategoryEntity> $entities */
+        $entities = $this->categoryRepository->search($criteria, $context)->getEntities()->getElements();
+
+        return array_map(
+            static function (array $category) use ($entities): array {
+                // Drop the root navigation category (index 0, the sales channel's internal root) and the last entry (the category's own name, already shown above the path).
+                $breadcrumb = ($entities[$category['id']] ?? null)?->getBreadcrumb() ?? [];
+                $category['path'] = implode(' > ', \array_slice($breadcrumb, 1, -1));
+
+                return $category;
+            },
+            $categories
+        );
     }
 
     /**

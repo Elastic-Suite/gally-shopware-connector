@@ -104,6 +104,10 @@
                                                 type: 'product-slider',
                                             },
                                         } %}
+                                        {% sw_include '@GallyPlugin/storefront/utilities/gally-product-display-event.html.twig' with {
+                                            context: context,
+                                            products: gallyBlock.products,
+                                        } only %}
                                     </div>
                                 {% endfor %}
 
@@ -111,6 +115,7 @@
                                     {% set crossSelling = item.crossSelling %}
                                     {% set products = item.products %}
                                     {% set id = crossSelling.id %}
+                                    {% set gallyRecommenderType = crossSelling.extensions.gallyRecommenderType %}
                                     <div class="tab-pane fade show{% if gallyBlocks|length == 0 and loop.first %} active{% endif %}"
                                          id="cross-selling-tab-{{ id }}-pane"
                                          role="tabpanel"
@@ -143,6 +148,12 @@
                                                 },
                                             } %}
                                         {% endblock %}
+                                        {% if gallyRecommenderType %}
+                                            {% sw_include '@GallyPlugin/storefront/utilities/gally-product-display-event.html.twig' with {
+                                                context: context,
+                                                products: products,
+                                            } only %}
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
