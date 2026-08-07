@@ -1,0 +1,9 @@
+{
+  "name": "@gally/shopware-plugin-storefront",
+  "version": "1.0.0",
+  "license": "OSL-3.0",
+  "private": true,
+  "dependencies": {
+    "@elastic-suite/gally-sdk": "2.3.0"
+  }
+}

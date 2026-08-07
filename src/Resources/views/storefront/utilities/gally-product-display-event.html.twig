@@ -1,0 +1,28 @@
+{#
+    Renders a "display" tracking event listing every product shown in a block (recommendation
+    block, category listing, or search result page), so product impressions get tracked
+    consistently regardless of where they're shown.
+
+    Expects: products (ProductCollection or iterable of product entities), context
+    (SalesChannelContext). contextType/contextCode are optional: Gally only accepts "search" or
+    "category" there (see Tracker/Resources/config/validator/validation.yaml on the Gally side),
+    so recommendation blocks must omit them rather than invent an unsupported value.
+#}
+{% if products and products|length > 0 %}
+    {% set items = [] %}
+    {% for product in products %}
+        {% set items = items|merge([{
+            entityCode: gally_parent_product_number(product),
+            display: { position: loop.index },
+        }]) %}
+    {% endfor %}
+
+    {% sw_include '@GallyPlugin/storefront/utilities/gally-tracking-event.html.twig' with {
+        context: context,
+        eventType: 'display',
+        metadataCode: 'product',
+        contextType: contextType is defined ? contextType : null,
+        contextCode: contextCode is defined ? contextCode : null,
+        payload: { items: items },
+    } only %}
+{% endif %}

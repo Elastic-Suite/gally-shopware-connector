@@ -1,7 +1,10 @@
 import FilterMultiSelectViewMorePlugin from'./gally/filter-multi-select-view-more.plugin';
 import FilterPropertySelectViewMorePlugin from'./gally/filter-property-select-view-more.plugin';
+import GallyTrackingPlugin from './gally/tracking.plugin';
 
 const PluginManager = window.PluginManager;
+
+PluginManager.register('GallyTracking', GallyTrackingPlugin, '[data-gally-tracking]');
 
 // Shopware core's PluginManager.deregister() throws on an unregistered plugin up to 6.6, and
 // only warns from 6.7 on: this probes that exact behavior change to tell them apart.

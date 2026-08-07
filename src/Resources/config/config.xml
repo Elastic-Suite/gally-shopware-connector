@@ -86,6 +86,15 @@
         </input-field>
     </card>
     <card>
+        <title>Tracker</title>
+
+        <input-field type="bool">
+            <name>trackingActive</name>
+            <label>Send tracking events to Gally</label>
+            <defaultValue>true</defaultValue>
+        </input-field>
+    </card>
+    <card>
         <title>Batch settings</title>
 
         <input-field type="int">

@@ -1,0 +1,12 @@
+{% sw_extends '@Storefront/storefront/page/content/product-detail.html.twig' %}
+
+{% block page_content %}
+    {{ parent() }}
+
+    {% sw_include '@GallyPlugin/storefront/utilities/gally-tracking-event.html.twig' with {
+        context: context,
+        eventType: 'view',
+        metadataCode: 'product',
+        entityCode: gally_parent_product_number(page.product)
+    } only %}
+{% endblock %}
