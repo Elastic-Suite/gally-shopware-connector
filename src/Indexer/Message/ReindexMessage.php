@@ -25,6 +25,7 @@ class ReindexMessage implements AsyncMessageInterface
     public function __construct(
         private readonly string $entityCode,
         private readonly array $documentsIds,
+        private readonly bool $remove = false,
     ) {
     }
 
@@ -36,5 +37,10 @@ class ReindexMessage implements AsyncMessageInterface
     public function getDocumentsIds(): array
     {
         return $this->documentsIds;
+    }
+
+    public function isRemove(): bool
+    {
+        return $this->remove;
     }
 }

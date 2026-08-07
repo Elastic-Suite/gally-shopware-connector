@@ -37,8 +37,15 @@ class ReindexHandler
 
     public function __invoke(ReindexMessage $message): void
     {
-        $context = Context::createDefaultContext();
-        $this->getIndexerByEntityCode($message->getEntityCode())->reindex($context, $message->getDocumentsIds());
+        $indexer = $this->getIndexerByEntityCode($message->getEntityCode());
+
+        if ($message->isRemove()) {
+            $indexer->remove($message->getDocumentsIds());
+
+            return;
+        }
+
+        $indexer->reindex(Context::createDefaultContext(), $message->getDocumentsIds());
     }
 
     private function getIndexerByEntityCode(string $entityCode): AbstractIndexer

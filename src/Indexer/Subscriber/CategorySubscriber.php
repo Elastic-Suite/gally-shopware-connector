@@ -32,7 +32,10 @@ class CategorySubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents(): array
     {
-        return [CategoryEvents::CATEGORY_WRITTEN_EVENT => 'reindex'];
+        return [
+            CategoryEvents::CATEGORY_WRITTEN_EVENT => 'reindex',
+            CategoryEvents::CATEGORY_DELETED_EVENT => 'remove',
+        ];
     }
 
     public function reindex(EntityWrittenEvent $event)
@@ -43,6 +46,17 @@ class CategorySubscriber implements EventSubscriberInterface
         }
         $this->messageBus->dispatch(
             new ReindexMessage(ReindexMessage::ENTIY_CATEGORY, $documentsIdsToReindex)
+        );
+    }
+
+    public function remove(EntityWrittenEvent $event)
+    {
+        $documentsIdsToRemove = [];
+        foreach ($event->getWriteResults() as $writeResult) {
+            $documentsIdsToRemove[] = $writeResult->getPrimaryKey();
+        }
+        $this->messageBus->dispatch(
+            new ReindexMessage(ReindexMessage::ENTIY_CATEGORY, $documentsIdsToRemove, remove: true)
         );
     }
 }
