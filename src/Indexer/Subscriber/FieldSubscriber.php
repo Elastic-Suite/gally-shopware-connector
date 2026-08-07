@@ -35,9 +35,26 @@ class FieldSubscriber implements EventSubscriberInterface
     {
         return [
             PropertyEvents::PROPERTY_GROUP_WRITTEN_EVENT => 'onFieldUpdate',
+            PropertyEvents::PROPERTY_GROUP_OPTION_WRITTEN_EVENT => 'onFieldOptionUpdate',
             CustomFieldEvents::CUSTOM_FIELD_WRITTEN_EVENT => 'onFieldUpdate',
             CustomFieldEvents::CUSTOM_FIELD_SET_WRITTEN_EVENT => 'onFieldSetUpdate',
         ];
+    }
+
+    /**
+     * A single write call can save several options at once (e.g. adding many swatches to a
+     * property group from the admin form): batch them into one SyncMessage so SyncHandler can
+     * sync them with a single bulk API call instead of one call per option.
+     */
+    public function onFieldOptionUpdate(EntityWrittenEvent $event)
+    {
+        $optionIds = [];
+        foreach ($event->getWriteResults() as $writeResult) {
+            $optionIds[] = $writeResult->getPrimaryKey();
+        }
+        $this->messageBus->dispatch(
+            new SyncMessage(SyncMessage::ENTITY_PROPERTY_GROUP_OPTION, $optionIds)
+        );
     }
 
     public function onFieldUpdate(EntityWrittenEvent $event)
