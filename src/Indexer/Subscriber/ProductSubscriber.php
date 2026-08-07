@@ -32,7 +32,10 @@ class ProductSubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents(): array
     {
-        return [ProductEvents::PRODUCT_WRITTEN_EVENT => 'reindex'];
+        return [
+            ProductEvents::PRODUCT_WRITTEN_EVENT => 'reindex',
+            ProductEvents::PRODUCT_DELETED_EVENT => 'remove',
+        ];
     }
 
     public function reindex(EntityWrittenEvent $event)
@@ -43,6 +46,17 @@ class ProductSubscriber implements EventSubscriberInterface
         }
         $this->messageBus->dispatch(
             new ReindexMessage(ReindexMessage::ENTIY_PRODUCT, $documentsIdsToReindex)
+        );
+    }
+
+    public function remove(EntityWrittenEvent $event)
+    {
+        $documentsIdsToRemove = [];
+        foreach ($event->getWriteResults() as $writeResult) {
+            $documentsIdsToRemove[] = $writeResult->getPrimaryKey();
+        }
+        $this->messageBus->dispatch(
+            new ReindexMessage(ReindexMessage::ENTIY_PRODUCT, $documentsIdsToRemove, remove: true)
         );
     }
 }

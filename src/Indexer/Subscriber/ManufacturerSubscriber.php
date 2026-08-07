@@ -32,7 +32,10 @@ class ManufacturerSubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents(): array
     {
-        return [ProductEvents::PRODUCT_MANUFACTURER_WRITTEN_EVENT => 'reindex'];
+        return [
+            ProductEvents::PRODUCT_MANUFACTURER_WRITTEN_EVENT => 'reindex',
+            ProductEvents::PRODUCT_MANUFACTURER_DELETED_EVENT => 'remove',
+        ];
     }
 
     public function reindex(EntityWrittenEvent $event)
@@ -43,6 +46,17 @@ class ManufacturerSubscriber implements EventSubscriberInterface
         }
         $this->messageBus->dispatch(
             new ReindexMessage(ReindexMessage::ENTIY_MANUFACTURER, $documentsIdsToReindex)
+        );
+    }
+
+    public function remove(EntityWrittenEvent $event)
+    {
+        $documentsIdsToRemove = [];
+        foreach ($event->getWriteResults() as $writeResult) {
+            $documentsIdsToRemove[] = $writeResult->getPrimaryKey();
+        }
+        $this->messageBus->dispatch(
+            new ReindexMessage(ReindexMessage::ENTIY_MANUFACTURER, $documentsIdsToRemove, remove: true)
         );
     }
 }
