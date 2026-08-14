@@ -3,7 +3,8 @@
 {# Display gally product recommendations before the native Shopware cross-selling block. #}
 {% block block_cross_selling %}
     {% set gallyRecommendations = page.getExtension('gallyRecommendations') %}
-    {% if gallyRecommendations and (gallyRecommendations.get('related')|length > 0 or gallyRecommendations.get('upsell')|length > 0) %}
+    {% set gallyBlocks = gallyRecommendations ? gallyRecommendations.get('blocks') : [] %}
+    {% if gallyBlocks|length > 0 %}
         {% block block_cross_selling_gally_recommendations %}
             <style>
                 .gally-product-recommendations .product-name {
@@ -20,14 +21,14 @@
                 }
             </style>
             <div class="col-12 gally-recommendations">
-                {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations.html.twig' with {
-                    products: gallyRecommendations.get('related'),
-                    title: 'gally.recommendation.customersAlsoBought'|trans
-                } %}
-                {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations.html.twig' with {
-                    products: gallyRecommendations.get('upsell'),
-                    title: 'gally.recommendation.youMayAlsoLike'|trans
-                } %}
+                {% for gallyBlock in gallyBlocks %}
+                    {% if gallyBlock.products|length > 0 %}
+                        {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations.html.twig' with {
+                            products: gallyBlock.products,
+                            title: gallyBlock.code|replace({'_': ' ', '-': ' '})|capitalize
+                        } %}
+                    {% endif %}
+                {% endfor %}
             </div>
         {% endblock %}
     {% endif %}

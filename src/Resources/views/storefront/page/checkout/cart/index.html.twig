@@ -4,12 +4,17 @@
     {{ parent() }}
 
     {% set gallyRecommendations = page.getExtension('gallyRecommendations') %}
-    {% if gallyRecommendations and gallyRecommendations.get('products')|length > 0 %}
+    {% set gallyBlocks = gallyRecommendations ? gallyRecommendations.get('blocks') : [] %}
+    {% if gallyBlocks|length > 0 %}
         <div class="col-12 gally-recommendations">
-            {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations.html.twig' with {
-                products: gallyRecommendations.get('products'),
-                title: 'gally.recommendation.youMayAlsoLike'|trans
-            } %}
+            {% for gallyBlock in gallyBlocks %}
+                {% if gallyBlock.products|length > 0 %}
+                    {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations.html.twig' with {
+                        products: gallyBlock.products,
+                        title: gallyBlock.code|replace({'_': ' ', '-': ' '})|capitalize
+                    } %}
+                {% endif %}
+            {% endfor %}
         </div>
     {% endif %}
 {% endblock %}

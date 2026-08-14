@@ -1,0 +1,16 @@
+{% block gally_index %}
+<sw-page class="gally-index">
+    {% block gally_index_smart_bar_header %}
+        <template #smart-bar-header>
+            <h2 class="gally-index__title">
+                <gally-icon />
+                {{ $tc('gally.general.mainMenuItemGeneral') }}
+            </h2>
+        </template>
+    {% endblock %}
+
+    {% block gally_index_content %}
+        <template #content></template>
+    {% endblock %}
+</sw-page>
+{% endblock %}

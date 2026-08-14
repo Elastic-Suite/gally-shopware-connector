@@ -18,13 +18,16 @@ use Gally\Sdk\Service\StructureSynchonizer;
 use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Indexer\Message\SyncMessage;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
+use Gally\ShopwarePlugin\Indexer\Provider\RecommenderTypeProvider;
 use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldOptionProvider;
 use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider;
+use Gally\ShopwarePlugin\RecommenderType\Entity\GallyRecommenderTypeEntity;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Property\PropertyGroupEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\CustomField\Aggregate\CustomFieldSet\CustomFieldSetEntity;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
@@ -45,9 +48,11 @@ class SyncHandler
         private EntityRepository $customFieldSetRepository,
         private EntityRepository $propertyGroupRepository,
         private EntityRepository $propertyGroupOptionRepository,
+        private EntityRepository $gallyRecommenderTypeRepository,
         private CatalogProvider $catalogProvider,
         private SourceFieldProvider $sourceFieldProvider,
         private SourceFieldOptionProvider $sourceFieldOptionProvider,
+        private RecommenderTypeProvider $recommenderTypeProvider,
         private StructureSynchonizer $synchonizer,
     ) {
     }
@@ -70,6 +75,12 @@ class SyncHandler
                 break;
             case SyncMessage::ENTITY_CUSTOM_FIELD_SET:
                 $this->syncCustomFieldSet($context, $message->getEntityIds());
+                break;
+            case SyncMessage::ENTITY_RECOMMENDER_TYPE:
+                $this->syncRecommenderType($context, $message->getEntityIds());
+                break;
+            case SyncMessage::ENTITY_RECOMMENDER_TYPE_DELETED:
+                $this->synchonizer->syncAllRecommenderTypes($this->recommenderTypeProvider->provide($context), true, false);
                 break;
         }
     }
@@ -165,6 +176,17 @@ class SyncHandler
                 $sourceField = $this->sourceFieldProvider->buildSourceField($customField, $entity->getEntityName());
                 $this->synchonizer->syncSourceField($sourceField);
             }
+        }
+    }
+
+    private function syncRecommenderType(Context $context, string|array $recommenderTypeId): void
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsAnyFilter('id', (array) $recommenderTypeId));
+
+        /** @var GallyRecommenderTypeEntity $recommenderType */
+        foreach ($this->gallyRecommenderTypeRepository->search($criteria, $context)->getEntities() as $recommenderType) {
+            $this->synchonizer->syncRecommenderType($this->recommenderTypeProvider->buildRecommenderType($recommenderType));
         }
     }
 }

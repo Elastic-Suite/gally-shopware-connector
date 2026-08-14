@@ -1,0 +1,42 @@
+{% block gally_recommender_type_detail %}
+<sw-page class="gally-recommender-type-detail">
+    {% block gally_recommender_type_detail_smart_bar_header %}
+        <template #smart-bar-header>
+            <h2>{{ $tc('gally.recommenderType.detail.title') }}</h2>
+        </template>
+    {% endblock %}
+
+    {% block gally_recommender_type_detail_smart_bar_actions %}
+        <template #smart-bar-actions>
+            <sw-button :disabled="isLoading" @click="onCancel">
+                {{ $tc('gally.recommenderType.detail.buttonCancel') }}
+            </sw-button>
+            <sw-button variant="primary" :isLoading="isLoading" @click="onSave">
+                {{ $tc('gally.recommenderType.detail.buttonSave') }}
+            </sw-button>
+        </template>
+    {% endblock %}
+
+    {% block gally_recommender_type_detail_content %}
+        <template #content>
+            <sw-card v-if="recommenderType" :title="$tc('gally.recommenderType.detail.cardTitle')">
+                {% block gally_recommender_type_detail_field_code %}
+                    <sw-text-field
+                        v-model:value="recommenderType.code"
+                        :label="$tc('gally.recommenderType.list.columnCode')"
+                        required
+                    ></sw-text-field>
+                {% endblock %}
+
+                {% block gally_recommender_type_detail_field_label %}
+                    <sw-text-field
+                        v-model:value="recommenderType.label"
+                        :label="$tc('gally.recommenderType.list.columnLabel')"
+                        required
+                    ></sw-text-field>
+                {% endblock %}
+            </sw-card>
+        </template>
+    {% endblock %}
+</sw-page>
+{% endblock %}
