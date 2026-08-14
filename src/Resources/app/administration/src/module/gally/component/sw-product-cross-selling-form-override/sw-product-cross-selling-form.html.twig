@@ -1,0 +1,37 @@
+{% block sw_prduct_cross_selling_form_title_field %}
+<div class="gally-cross-selling-form-title-field">
+    {% block gally_cross_selling_form_enabled_switch %}
+    <mt-switch
+        v-model="gallyEnabled"
+        :label="gallyEnabledLabel"
+        :disabled="!allowEdit"
+        name="sw-field--crossSelling-gally-enabled"
+        bordered
+    />
+    {% endblock %}
+
+    {% block gally_cross_selling_form_recommender_type_select %}
+    <sw-entity-single-select
+        v-if="gallyEnabled"
+        v-model:value="crossSelling.extensions.gallyRecommenderTypeId"
+        entity="gally_recommender_type"
+        label-property="label"
+        :label="$t('gally.recommenderType.crossSelling.inputRecommenderType')"
+        :disabled="!allowEdit"
+    />
+    {% endblock %}
+
+    {% block gally_cross_selling_form_native_title_field %}
+    <mt-text-field
+        v-if="!gallyEnabled"
+        v-model="crossSelling.name"
+        name="sw-field--crossSelling-name"
+        :label="$t('sw-product.crossselling.inputCrossSellingTitle')"
+        required
+        :placeholder="placeholder(crossSelling, 'name', $t('sw-product.crossselling.inputCrossSellingTitlePlaceholder'))"
+        :error="crossSellingNameError"
+        :disabled="!allowEdit"
+    />
+    {% endblock %}
+</div>
+{% endblock %}

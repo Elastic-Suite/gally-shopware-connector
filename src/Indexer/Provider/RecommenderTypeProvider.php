@@ -14,21 +14,35 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Indexer\Provider;
 
+use Gally\ShopwarePlugin\RecommenderType\Entity\GallyRecommenderTypeEntity;
 use Gally\Sdk\Entity\RecommenderType;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 
 /**
- * Provide the recommender types managed by the plugin.
+ * Provide the recommender types managed in the Shopware admin (Catalogues > Gally > Recommendation types).
  */
 class RecommenderTypeProvider implements ProviderInterface
 {
+    public function __construct(
+        private EntityRepository $gallyRecommenderTypeRepository,
+    ) {
+    }
+
     /**
      * @return iterable<RecommenderType>
      */
     public function provide(Context $context): iterable
     {
-        yield new RecommenderType('Upsell', 'upsell');
-        yield new RecommenderType('Related', 'related');
-        yield new RecommenderType('Crosssell', 'crosssell');
+        /** @var GallyRecommenderTypeEntity $recommenderType */
+        foreach ($this->gallyRecommenderTypeRepository->search(new Criteria(), $context)->getEntities() as $recommenderType) {
+            yield $this->buildRecommenderType($recommenderType);
+        }
+    }
+
+    public function buildRecommenderType(GallyRecommenderTypeEntity $recommenderType): RecommenderType
+    {
+        return new RecommenderType($recommenderType->getLabel(), $recommenderType->getCode());
     }
 }

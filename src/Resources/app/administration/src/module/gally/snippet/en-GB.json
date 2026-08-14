@@ -1,4 +1,31 @@
 {
+  "gally": {
+    "general": {
+      "mainMenuItemGeneral": "Gally"
+    },
+    "recommenderType": {
+      "list": {
+        "title": "Gally - Recommendation types",
+        "mainMenuItemGeneral": "Recommendation types",
+        "buttonAdd": "Add recommendation type",
+        "columnCode": "Code",
+        "columnLabel": "Label",
+        "saveSuccess": "Recommendation type saved.",
+        "saveError": "Unable to save the recommendation type."
+      },
+      "detail": {
+        "title": "Gally - Recommendation type",
+        "cardTitle": "Recommendation type",
+        "buttonSave": "Save",
+        "buttonCancel": "Cancel"
+      },
+      "crossSelling": {
+        "inputEnabled": "Enable Gally recommendation",
+        "inputEnabledHint": "Gally recommendation enabled (fills automatically, products below are optional, for particular cases only)",
+        "inputRecommenderType": "Recommendation type"
+      }
+    }
+  },
   "GallyPlugin": {
     "config": {
       "structureSync": "Synchronize catalog structure with gally",

@@ -65,11 +65,36 @@ class ConfigManager
         return (int) $this->systemConfigService->get('GallyPlugin.config.cartRecommendationMaxSize', $salesChannelId);
     }
 
-    public function getCartRecommendationTypeCode(?string $salesChannelId = null): ?string
+    /**
+     * @return string[]
+     */
+    public function getProductRecommendationTypeCodes(?string $salesChannelId = null): array
     {
-        $typeCode = $this->systemConfigService->get('GallyPlugin.config.cartRecommendationTypeCode', $salesChannelId);
+        return $this->parseTypeCodes(
+            $this->systemConfigService->get('GallyPlugin.config.productRecommendationTypeCodes', $salesChannelId)
+        );
+    }
 
-        return \is_string($typeCode) && '' !== $typeCode ? $typeCode : null;
+    /**
+     * @return string[]
+     */
+    public function getCartRecommendationTypeCodes(?string $salesChannelId = null): array
+    {
+        return $this->parseTypeCodes(
+            $this->systemConfigService->get('GallyPlugin.config.cartRecommendationTypeCodes', $salesChannelId)
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    private function parseTypeCodes(mixed $rawValue): array
+    {
+        if (!\is_string($rawValue) || '' === $rawValue) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', $rawValue)), static fn (string $code) => '' !== $code));
     }
 
     public function isTrackingActive(?string $salesChannelId = null): bool

@@ -23,6 +23,8 @@ class SyncMessage implements AsyncMessageInterface
     public const ENTITY_PROPERTY_GROUP_OPTION = 'property_group_option';
     public const ENTITY_CUSTOM_FIELD = 'custom_field';
     public const ENTITY_CUSTOM_FIELD_SET = 'custom_field_set';
+    public const ENTITY_RECOMMENDER_TYPE = 'recommender_type';
+    public const ENTITY_RECOMMENDER_TYPE_DELETED = 'recommender_type_deleted';
 
     public function __construct(
         private readonly string $entityCode,

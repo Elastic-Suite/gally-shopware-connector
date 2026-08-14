@@ -4,6 +4,7 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <imports>
+        <import resource="services/entities.xml"/>
         <import resource="services/sdk.xml"/>
         <import resource="services/commands.xml"/>
         <import resource="services/controllers.xml"/>
@@ -23,12 +24,17 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
+        <service id="Gally\ShopwarePlugin\Service\RecommendationHelper">
+            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
+            <argument type="service" id="language.repository" />
+            <argument type="service" id="product.repository" />
+            <argument type="service" id="sales_channel.product.repository" />
+        </service>
+
         <service id="Gally\ShopwarePlugin\Subscriber\ProductRecommendationSubscriber">
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument type="service" id="Gally\Sdk\Service\RecommenderManager" />
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
-            <argument type="service" id="language.repository" />
-            <argument type="service" id="sales_channel.product.repository" />
+            <argument type="service" id="Gally\ShopwarePlugin\Service\RecommendationHelper" />
             <argument type="service" id="product.repository" />
             <argument type="service" id="logger" />
             <tag name="kernel.event_subscriber"/>
@@ -37,10 +43,16 @@
         <service id="Gally\ShopwarePlugin\Subscriber\CartRecommendationSubscriber">
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument type="service" id="Gally\Sdk\Service\RecommenderManager" />
-            <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
-            <argument type="service" id="language.repository" />
+            <argument type="service" id="Gally\ShopwarePlugin\Service\RecommendationHelper" />
             <argument type="service" id="product.repository" />
-            <argument type="service" id="sales_channel.product.repository" />
+            <argument type="service" id="logger" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Gally\ShopwarePlugin\Subscriber\CrossSellingSubscriber">
+            <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
+            <argument type="service" id="Gally\Sdk\Service\RecommenderManager" />
+            <argument type="service" id="Gally\ShopwarePlugin\Service\RecommendationHelper" />
             <argument type="service" id="logger" />
             <tag name="kernel.event_subscriber"/>
         </service>
