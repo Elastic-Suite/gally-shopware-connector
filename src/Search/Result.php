@@ -95,8 +95,8 @@ class Result
         }
 
         $listing->sort(
-            function (ProductEntity $productA, ProductEntity $productB) use ($gallyOrder) {
-                return $gallyOrder[$productA->getProductNumber()] >= $gallyOrder[$productB->getProductNumber()];
+            function (ProductEntity $productA, ProductEntity $productB) use ($gallyOrder): int {
+                return $gallyOrder[$productA->getProductNumber()] <=> $gallyOrder[$productB->getProductNumber()];
             }
         );
     }
