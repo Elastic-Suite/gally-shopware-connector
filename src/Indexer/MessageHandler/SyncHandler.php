@@ -20,6 +20,7 @@ use Gally\ShopwarePlugin\Indexer\Message\SyncMessage;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldOptionProvider;
 use Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider;
+use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Property\PropertyGroupEntity;
 use Shopware\Core\Framework\Context;
@@ -32,6 +33,7 @@ use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 
 /**
  * Message handler to manage async structure synchronisation request.
@@ -50,28 +52,47 @@ class SyncHandler
         private SourceFieldProvider $sourceFieldProvider,
         private SourceFieldOptionProvider $sourceFieldOptionProvider,
         private StructureSynchonizer $synchonizer,
+        private LoggerInterface $logger,
     ) {
     }
 
     public function __invoke(SyncMessage $message): void
     {
         $context = Context::createDefaultContext();
-        switch ($message->getEntityCode()) {
-            case SyncMessage::ENTITY_SALES_CHANNEL:
-                $this->syncSalesChannel($context, $message->getEntityIds());
-                break;
-            case SyncMessage::ENTITY_PROPERTY_GROUP:
-                $this->syncPropertyGroup($context, $message->getEntityIds());
-                break;
-            case SyncMessage::ENTITY_PROPERTY_GROUP_OPTION:
-                $this->syncPropertyGroupOptions($context, $message->getEntityIds());
-                break;
-            case SyncMessage::ENTITY_CUSTOM_FIELD:
-                $this->syncCustomField($context, $message->getEntityIds());
-                break;
-            case SyncMessage::ENTITY_CUSTOM_FIELD_SET:
-                $this->syncCustomFieldSet($context, $message->getEntityIds());
-                break;
+        try {
+            switch ($message->getEntityCode()) {
+                case SyncMessage::ENTITY_SALES_CHANNEL:
+                    $this->syncSalesChannel($context, $message->getEntityIds());
+                    break;
+                case SyncMessage::ENTITY_PROPERTY_GROUP:
+                    $this->syncPropertyGroup($context, $message->getEntityIds());
+                    break;
+                case SyncMessage::ENTITY_PROPERTY_GROUP_OPTION:
+                    $this->syncPropertyGroupOptions($context, $message->getEntityIds());
+                    break;
+                case SyncMessage::ENTITY_CUSTOM_FIELD:
+                    $this->syncCustomField($context, $message->getEntityIds());
+                    break;
+                case SyncMessage::ENTITY_CUSTOM_FIELD_SET:
+                    $this->syncCustomFieldSet($context, $message->getEntityIds());
+                    break;
+                default:
+                    $this->logger->error(\sprintf('Gally sync error: unknown entity code "%s".', $message->getEntityCode()), [
+                        'entityCode' => $message->getEntityCode(),
+                        'entityIds' => $message->getEntityIds(),
+                    ]);
+            }
+        } catch (\InvalidArgumentException $exception) {
+            // Runs in the background: a configuration error (e.g. an invalid locale) would otherwise only
+            // ever surface as a silent retry/failure in the message queue, since the request that
+            // triggered this sync has already returned successfully. Rethrowing as unrecoverable stops
+            // retries while still routing the message to the failure transport for operational visibility.
+            $this->logger->error(\sprintf('Gally sync error: %s', $exception->getMessage()), [
+                'exception' => $exception,
+                'entityCode' => $message->getEntityCode(),
+                'entityIds' => $message->getEntityIds(),
+            ]);
+            throw new UnrecoverableMessageHandlingException($exception->getMessage(), 0, $exception);
         }
     }
 
