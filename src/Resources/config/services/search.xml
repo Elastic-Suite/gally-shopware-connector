@@ -12,6 +12,7 @@
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider" />
             <argument type="service" id="language.repository"/>
             <argument type="service" id="Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder" />
+            <argument type="service" id="event_dispatcher" />
         </service>
         <service id="Gally\ShopwarePlugin\Search\SortOptionProvider">
             <argument type="service" id="Gally\Sdk\Service\SearchManager" />
