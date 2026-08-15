@@ -33,6 +33,7 @@
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldProvider" />
             <argument type="service" id="Gally\ShopwarePlugin\Indexer\Provider\SourceFieldOptionProvider" />
             <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer" />
+            <argument type="service" id="logger" />
             <tag name="messenger.message_handler" />
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\Subscriber\SalesChannelSubscriber">

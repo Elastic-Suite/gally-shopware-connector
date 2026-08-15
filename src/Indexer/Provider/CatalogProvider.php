@@ -68,11 +68,16 @@ class CatalogProvider implements ProviderInterface
             );
         }
 
+        $locale = str_replace('-', '_', $language->getLocale()->getCode());
+        if (!preg_match('/^[a-z]{2}_[A-Z]{2}$/', $locale)) {
+            throw new \InvalidArgumentException(\sprintf('Invalid locale code "%s" for language "%s": expected format "xx_XX". Check this language\'s configuration in Shopware.', $locale, $language->getName()));
+        }
+
         return new LocalizedCatalog(
             $this->catalogCache[$salesChannel->getId()],
             $salesChannel->getId() . $language->getId(),
             $language->getName(),
-            str_replace('-', '_', $language->getLocale()->getCode()),
+            $locale,
             $salesChannel->getCurrency()->getIsoCode()
         );
     }
