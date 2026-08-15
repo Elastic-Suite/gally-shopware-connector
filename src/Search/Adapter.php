@@ -20,6 +20,7 @@ use Gally\Sdk\GraphQl\Request;
 use Gally\Sdk\Service\SearchManager;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Gally\ShopwarePlugin\Search\Aggregation\AggregationBuilder;
+use Gally\ShopwarePlugin\Search\Event\SearchRequestContextEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
@@ -27,6 +28,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\RangeFilter;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Gally search adapter.
@@ -38,6 +40,7 @@ class Adapter
         private CatalogProvider $catalogProvider,
         private EntityRepository $languageRepository,
         private AggregationBuilder $aggregationBuilder,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -46,6 +49,9 @@ class Adapter
         $sorts = $criteria->getSorting();
         $sort = reset($sorts);
         $currentPage = 0 == $criteria->getOffset() ? 1 : $criteria->getOffset() / $criteria->getLimit() + 1;
+
+        $requestContextEvent = new SearchRequestContextEvent($context, $criteria);
+        $this->eventDispatcher->dispatch($requestContextEvent, SearchRequestContextEvent::NAME);
 
         $request = new Request(
             $this->getCurrentLocalizedCatalog($context),
@@ -59,6 +65,7 @@ class Adapter
             $this->getFiltersFromCriteria($criteria),
             $sort && SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField() ? $sort->getField() : null,
             $sort && SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField() ? strtolower($sort->getDirection()) : null,
+            $requestContextEvent->getPriceGroupId(),
         );
         $response = $this->searchManager->search($request);
 
