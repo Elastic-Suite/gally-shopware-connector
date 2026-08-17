@@ -1,12 +1,15 @@
 
 import HttpClient from 'src/service/http-client.service';
+import ElementLoadingIndicatorUtil from 'src/utility/loading-indicator/element-loading-indicator.util';
+
+const SEARCH_DEBOUNCE_DELAY = 300;
 
 export default class ViewMore {
 
   static client = null;
 
   /**
-   * Bind click event on view more link.
+   * Bind click event on view more link and input event on the option search field.
    *
    * @param filter filter plugin instance
    */
@@ -14,21 +17,39 @@ export default class ViewMore {
     if (this.client === null) {
       this.client = new HttpClient();
     }
-    let link = filter.el.querySelector('.viewMoreLink');
+
+    const link = filter.el.querySelector('.viewMoreLink');
     if (link) {
-      link.addEventListener('click', this.viewMore.bind(this, filter));
+      link.addEventListener('click', this.onViewMoreClick.bind(this, filter));
+    }
+
+    const searchInput = filter.el.querySelector('.gally-filter-option-search');
+    if (searchInput) {
+      let debounceTimer = null;
+      searchInput.addEventListener('input', (event) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => this.onOptionSearchInput(filter, event), SEARCH_DEBOUNCE_DELAY);
+      });
     }
   }
 
-  /**
-   * On click on view more link get all the option from the api.
-   *
-   * @param filter filter plugin instance
-   * @param event object
-   */
-  static viewMore(filter, event) {
+  static onViewMoreClick(filter, event) {
     event.preventDefault();
+    this.fetchOptions(filter, event.target.dataset.url);
+  }
+
+  static onOptionSearchInput(filter, event) {
+    this.fetchOptions(filter, event.target.dataset.url, event.target.value);
+  }
+
+  /**
+   * @param filter filter plugin instance
+   * @param url the gally viewMore endpoint
+   * @param optionSearch optional text to filter the returned options
+   */
+  static fetchOptions(filter, url, optionSearch = '') {
     filter.listing.addLoadingIndicatorClass();
+    ElementLoadingIndicatorUtil.create(filter.el.querySelector('.filter-multi-select-dropdown'));
 
     let filterOptions = {}
     if ('filterPropertySelectOptions' in filter.el.dataset) {
@@ -37,9 +58,14 @@ export default class ViewMore {
       filterOptions = JSON.parse(filter.el.dataset.filterMultiSelectOptions);
     }
 
+    const payload = {aggregation: filterOptions.name};
+    if (optionSearch) {
+      payload.optionSearch = optionSearch;
+    }
+
     this.client.post(
-      event.target.dataset.url,
-      JSON.stringify({aggregation: filterOptions.name}),
+      url,
+      JSON.stringify(payload),
       this.updateFilterElement.bind(this, filter),
       'application/json',
       true
@@ -60,5 +86,6 @@ export default class ViewMore {
     filter._registerEvents();
 
     filter.listing.removeLoadingIndicatorClass();
+    ElementLoadingIndicatorUtil.remove(filter.el.querySelector('.filter-multi-select-dropdown'));
   }
 }

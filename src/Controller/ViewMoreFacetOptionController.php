@@ -63,7 +63,8 @@ class ViewMoreFacetOptionController extends StorefrontController
         $criteria = $this->criteriaBuilder->build($referer, $context);
 
         $field = preg_replace('/^' . CriteriaBuilder::GALLY_FILTER_PREFIX . '/', '', $params['aggregation']);
-        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field, $this->criteriaBuilder->getNavigationId());
+        $optionSearch = \is_string($params['optionSearch'] ?? null) && '' !== $params['optionSearch'] ? $params['optionSearch'] : null;
+        $rawOptions = $this->adapter->viewMoreOption($context, $criteria, $field, $this->criteriaBuilder->getNavigationId(), $optionSearch);
 
         return $this->renderStorefront(
             '@GallyPlugin/storefront/component/listing/filter-panel-item.html.twig',
@@ -81,6 +82,12 @@ class ViewMoreFacetOptionController extends StorefrontController
                     ],
                     $context
                 ),
+                // The "view more"/option search endpoint always returns the full matching set (no further
+                // pagination), so `hasMore` above is always false and the "view more" link correctly
+                // disappears. But the search input itself (gated on `showOptionSearch` in
+                // filter-multi-select.html.twig) must stay visible so the customer can keep refining or
+                // clearing their search after the panel has been refreshed once.
+                'showOptionSearch' => true,
             ]
         );
     }

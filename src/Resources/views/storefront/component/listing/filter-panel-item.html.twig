@@ -8,7 +8,8 @@
                     elements: aggregation.entities,
                     sidebar: sidebar,
                     name: 'g_' ~ aggregation.name,
-                    displayName: 'listing.filterManufacturerDisplayName'|trans|sw_sanitize
+                    displayName: 'listing.filterManufacturerDisplayName'|trans|sw_sanitize,
+                    showOptionSearch: showOptionSearch is defined ? showOptionSearch : false
                 } %}
             {% endif %}
         {% endblock %}
@@ -83,7 +84,8 @@
                 elements: aggregation.options,
                 sidebar: sidebar,
                 name: 'g_' ~ aggregation.field,
-                displayName: aggregation.name|trans|sw_sanitize
+                displayName: aggregation.name|trans|sw_sanitize,
+                showOptionSearch: showOptionSearch is defined ? showOptionSearch : false
             } %}
         {% endblock %}
     {% endif %}
