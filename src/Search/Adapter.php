@@ -78,7 +78,7 @@ class Adapter
         );
     }
 
-    public function viewMoreOption(SalesChannelContext $context, Criteria $criteria, string $aggregationField, ?string $navigationId)
+    public function viewMoreOption(SalesChannelContext $context, Criteria $criteria, string $aggregationField, ?string $navigationId, ?string $optionSearch = null)
     {
         $request = new Request(
             $this->getCurrentLocalizedCatalog($context),
@@ -92,7 +92,7 @@ class Adapter
             $this->getFiltersFromCriteria($criteria),
         );
 
-        return $this->searchManager->viewMoreProductFilterOption($request, $aggregationField);
+        return $this->searchManager->viewMoreProductFilterOption($request, $aggregationField, $optionSearch);
     }
 
     private function getFiltersFromCriteria(Criteria $criteria): array

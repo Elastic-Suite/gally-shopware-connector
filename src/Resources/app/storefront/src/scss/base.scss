@@ -3,4 +3,18 @@
     cursor: pointer;
     padding: 5px 10px;
   }
+
+  .gally-filter-option-search {
+    margin: 5px 10px;
+    width: calc(100% - 20px);
+  }
+}
+
+// The dropdown's height is auto (sized by its content), so the element-loader
+// backdrop's default width/height: 100% resolves to 0x0. Anchor it to all
+// four edges of the dropdown instead, which works regardless of its height.
+.filter-multi-select-dropdown.has-element-loader .element-loader-backdrop {
+  width: auto;
+  height: auto;
+  inset: 0;
 }

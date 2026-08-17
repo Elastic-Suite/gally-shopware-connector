@@ -1,7 +1,8 @@
 {
   "gally": {
     "filter": {
-      "viewMore": "Show more..."
+      "viewMore": "Show more...",
+      "searchOptions": "Search..."
     },
     "listing": {
       "emptyResultMessage": "Have you sync and index your catalog data with gally ?",
