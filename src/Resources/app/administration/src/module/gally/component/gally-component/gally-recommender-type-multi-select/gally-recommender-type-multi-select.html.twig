@@ -1,0 +1,21 @@
+<mt-select
+    v-model="selectedCodes"
+    :label="label"
+    :help-text="helpText"
+    :options="options"
+    :is-loading="isLoading"
+    :placeholder="options.length ? undefined : $t('gally.recommenderType.multiSelect.empty')"
+    enable-multi-selection
+>
+    <template #selection-label-property="{ item }">
+        <span :style="missingCodes.includes(item.value) ? { color: 'var(--color-icon-critical-default)' } : undefined">
+            {{ item.label }}
+        </span>
+    </template>
+
+    <template v-if="missingCodes.length" #hint>
+        <span style="color: var(--color-icon-critical-default)">
+            {{ $t('gally.recommenderType.multiSelect.missingHint', { codes: missingCodes.join(', ') }) }}
+        </span>
+    </template>
+</mt-select>

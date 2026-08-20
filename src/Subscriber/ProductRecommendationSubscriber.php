@@ -14,20 +14,17 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Subscriber;
 
-use Gally\Sdk\Entity\LocalizedCatalog;
-use Gally\Sdk\Service\RecommenderManager;
 use Gally\ShopwarePlugin\Config\ConfigManager;
-use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
+use Gally\ShopwarePlugin\RecommenderType\Entity\GallyRecommenderTypeEntity;
+use Gally\ShopwarePlugin\Service\RecommendationHelper;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Content\Product\ProductCollection;
+use Shopware\Core\Content\Product\Aggregate\ProductCrossSelling\ProductCrossSellingEntity;
+use Shopware\Core\Content\Product\ProductEntity;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Struct\ArrayStruct;
-use Shopware\Core\System\Language\LanguageEntity;
-use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Product\ProductPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -36,17 +33,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class ProductRecommendationSubscriber implements EventSubscriberInterface
 {
-    public const RECOMMENDATION_TYPES = ['related', 'upsell'];
-    public const EXTENSION_NAME = 'gallyRecommendations';
-    public const PRODUCT_COUNT = 4;
-
     public function __construct(
         private ConfigManager $configManager,
-        private RecommenderManager $recommenderManager,
-        private CatalogProvider $catalogProvider,
-        private EntityRepository $languageRepository,
-        private SalesChannelRepository $salesChannelProductRepository,
+        private RecommendationHelper $recommendationHelper,
         private EntityRepository $productRepository,
+        private EntityRepository $productCrossSellingRepository,
         private LoggerInterface $logger,
     ) {
     }
@@ -66,25 +57,26 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
             return;
         }
 
+        $typeCodes = $this->configManager->getProductRecommendationTypeCodes($context->getSalesChannelId());
+        if ([] === $typeCodes) {
+            return;
+        }
+
         try {
-            $localizedCatalog = $this->getCurrentLocalizedCatalog($context);
-            $productSku = $this->getProductSku($event);
+            $referenceProduct = $this->getReferenceProduct($event);
+            $localizedCatalog = $this->recommendationHelper->getCurrentLocalizedCatalog($context);
+            $productSku = $referenceProduct->getProductNumber();
+            $maxSize = $this->configManager->getProductRecommendationMaxSize($context->getSalesChannelId());
 
-            $recommendations = [];
-            foreach (self::RECOMMENDATION_TYPES as $type) {
-                $recommendedSkus = array_column(
-                    $this->recommenderManager->getProductRecommendations(
-                        $type,
-                        $localizedCatalog,
-                        [$productSku],
-                        self::PRODUCT_COUNT
-                    ),
-                    'sku'
-                );
-                $recommendations[$type] = $this->getProductsBySkus($recommendedSkus, $context);
-            }
+            // A type already covered by a native, Gally-enabled cross-selling group on this
+            // product (see CrossSellingSubscriber) is rendered there instead, merged with its
+            // manually assigned products: showing it again here too would duplicate that block.
+            $nativeCodes = $this->getNativeCrossSellingCodes($referenceProduct->getId(), $context->getContext());
+            $typeCodes = array_values(array_diff($typeCodes, $nativeCodes));
 
-            $event->getPage()->addExtension(self::EXTENSION_NAME, new ArrayStruct($recommendations));
+            $blocks = $this->recommendationHelper->buildBlocks($typeCodes, [$productSku], $maxSize, $localizedCatalog, $context);
+
+            $event->getPage()->addExtension(RecommendationHelper::EXTENSION_NAME, new ArrayStruct(['blocks' => $blocks]));
         } catch (\Throwable $exception) {
             // Never break the product page if Gally is not reachable.
             $this->logger->warning(
@@ -94,64 +86,47 @@ class ProductRecommendationSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Gally indexes parent products only, so use the parent sku for variants.
+     * Gally indexes parent products only, and cross-selling groups are always defined on the
+     * parent too, so use it for variants.
      */
-    private function getProductSku(ProductPageLoadedEvent $event): string
+    private function getReferenceProduct(ProductPageLoadedEvent $event): ProductEntity
     {
         $product = $event->getPage()->getProduct();
 
         if ($product->getParentId()) {
+            /** @var ProductEntity|null $parent */
             $parent = $this->productRepository
                 ->search(new Criteria([$product->getParentId()]), $event->getContext())
                 ->first();
 
             if ($parent) {
-                return $parent->getProductNumber();
+                return $parent;
             }
         }
 
-        return $product->getProductNumber();
+        return $product;
     }
 
     /**
-     * @param string[] $skus
+     * @return string[]
      */
-    private function getProductsBySkus(array $skus, SalesChannelContext $context): ProductCollection
+    private function getNativeCrossSellingCodes(string $productId, Context $context): array
     {
-        $products = new ProductCollection();
-        if (empty($skus)) {
-            return $products;
-        }
-
         $criteria = new Criteria();
-        $criteria->addFilter(new EqualsAnyFilter('productNumber', $skus));
-        $criteria->addAssociation('cover.media');
+        $criteria->addFilter(new EqualsFilter('productId', $productId));
+        $criteria->addFilter(new EqualsFilter('active', true));
+        $criteria->addAssociation('gallyRecommenderType');
 
-        $searchResult = $this->salesChannelProductRepository->search($criteria, $context);
-
-        // Preserve the order returned by Gally.
-        foreach ($skus as $sku) {
-            foreach ($searchResult->getEntities() as $product) {
-                if ($product->getProductNumber() === $sku) {
-                    $products->add($product);
-                    break;
-                }
+        $codes = [];
+        /** @var ProductCrossSellingEntity $crossSelling */
+        foreach ($this->productCrossSellingRepository->search($criteria, $context)->getEntities() as $crossSelling) {
+            /** @var GallyRecommenderTypeEntity|null $recommenderType */
+            $recommenderType = $crossSelling->getExtension('gallyRecommenderType');
+            if (null !== $recommenderType) {
+                $codes[] = $recommenderType->getCode();
             }
         }
 
-        return $products;
-    }
-
-    private function getCurrentLocalizedCatalog(SalesChannelContext $context): LocalizedCatalog
-    {
-        $languageCriteria = new Criteria();
-        $languageCriteria->addAssociations(['locale']);
-        $languageCriteria->addFilter(new EqualsFilter('id', $context->getLanguageId()));
-        /** @var LanguageEntity $currentLanguage */
-        $currentLanguage = $this->languageRepository
-            ->search($languageCriteria, $context->getContext())
-            ->first();
-
-        return $this->catalogProvider->buildLocalizedCatalog($context->getSalesChannel(), $currentLanguage);
+        return $codes;
     }
 }

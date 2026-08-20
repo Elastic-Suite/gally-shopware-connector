@@ -1,0 +1,53 @@
+{#
+    Renders Gally recommendation blocks (cart/mini-cart context) as tabs, matching the native
+    product-detail cross-selling look (see cms-element-cross-selling override): one tab per
+    recommendation type, only shown when it actually has products.
+
+    Expects: gallyBlocks (array of {code, name, products} - name is the recommender type's label
+    configured in Gally, falls back to a formatted code if missing), idPrefix (string, unique per include site
+    so ids don't collide when both the offcanvas and the full cart page render on the same
+    document, e.g. mini-cart opened while already on the cart page).
+#}
+{% if gallyBlocks|length > 0 %}
+    <div class="gally-recommendations card card-tabs" data-cross-selling="true">
+        <div class="card-header product-detail-tab-navigation product-cross-selling-tab-navigation">
+            <ul class="nav nav-tabs product-detail-tab-navigation-list" role="tablist">
+                {% for gallyBlock in gallyBlocks %}
+                    <li class="nav-item">
+                        <a class="nav-link product-detail-tab-navigation-link{% if loop.first %} active{% endif %}"
+                           id="{{ idPrefix }}-{{ gallyBlock.code }}"
+                           data-bs-toggle="tab"
+                           href="#{{ idPrefix }}-{{ gallyBlock.code }}-pane"
+                           role="tab"
+                           title="{{ gallyBlock.name }}"
+                           aria-controls="{{ idPrefix }}-{{ gallyBlock.code }}-pane"
+                           aria-selected="true"
+                        >
+                            {{ gallyBlock.name }}
+                            <span class="product-detail-tab-navigation-icon">
+                                {% sw_icon 'arrow-medium-right' style { pack:'solid' } %}
+                            </span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="product-detail-tabs-content card-body">
+            <div class="tab-content">
+                {% for gallyBlock in gallyBlocks %}
+                    <div class="tab-pane fade show{% if loop.first %} active{% endif %}"
+                         id="{{ idPrefix }}-{{ gallyBlock.code }}-pane"
+                         role="tabpanel"
+                         aria-labelledby="{{ idPrefix }}-{{ gallyBlock.code }}"
+                    >
+                        {# No title here: the tab label above already names this recommendation type. #}
+                        {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations-slider.html.twig' with {
+                            products: gallyBlock.products,
+                        } %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endif %}

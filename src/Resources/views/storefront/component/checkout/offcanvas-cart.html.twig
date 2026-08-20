@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/component/checkout/offcanvas-cart.html.twig' %}
+
+{% block component_offcanvas_cart %}
+    {{ parent() }}
+
+    {% set gallyRecommendations = page.getExtension('gallyRecommendations') %}
+    {% set gallyBlocks = gallyRecommendations ? gallyRecommendations.get('blocks')|filter(b => b.products|length > 0) : [] %}
+    {% if gallyBlocks|length > 0 %}
+        <div class="gally-recommendations--offcanvas mt-4 pt-4 border-top">
+            {% sw_include '@GallyPlugin/storefront/component/gally/recommendation-tabs.html.twig' with {
+                gallyBlocks: gallyBlocks,
+                idPrefix: 'gally-offcanvas-tab',
+            } %}
+        </div>
+    {% endif %}
+{% endblock %}

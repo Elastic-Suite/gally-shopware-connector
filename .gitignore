@@ -1,5 +1,6 @@
 /vendor/
 /logs/
+**/node_modules/
 .php-cs-fixer.cache
 composer.lock
 **/.tmp/

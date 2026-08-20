@@ -1,4 +1,33 @@
 {
+  "gally": {
+    "general": {
+      "mainMenuItemGeneral": "Gally"
+    },
+    "notification": {
+      "connectionSucceeded": "Connection to the api succeeded",
+      "invalidCredentials": "Invalid credentials.",
+      "syncSucceeded": "Syncing catalog structure with gally succeeded",
+      "indexSucceeded": "Index catalog data to gally succeeded",
+      "codeRequired": "\"code\" parameter is required."
+    },
+    "recommenderType": {
+      "crossSelling": {
+        "inputEnabled": "Enable Gally recommendation",
+        "inputEnabledHint": "Fills automatically from Gally. Products added below are optional and only override the result for this specific product – broader rules are configured directly in Gally.",
+        "inputRecommenderType": "Recommendation type",
+        "inputRecommenderTypeHint": "Recommendation types are created and managed directly in Gally's admin interface.",
+        "inputRecommenderTypeEmpty": "No recommendation type configured in Gally yet – create one from Gally's admin interface.",
+        "inputRecommenderTypeRequired": "Pick a recommendation type, otherwise this group will save without any Gally recommendations.",
+        "inputRecommenderTypeMissing": "{code} (no longer exists in Gally)",
+        "emptyStateDescription": "Cross-selling recommendations are now powered by Gally and configured directly in Gally's admin interface. You can still add a cross-selling group here to manually associate specific products with this product.",
+        "buttonAddManual": "Add manual cross-selling group"
+      },
+      "multiSelect": {
+        "empty": "No recommendation type configured in Gally yet – create one from Gally's admin interface.",
+        "missingHint": "No longer exists in Gally, so its block never shows on the storefront: {codes}"
+      }
+    }
+  },
   "GallyPlugin": {
     "config": {
       "structureSync": "Synchronize catalog structure with gally",

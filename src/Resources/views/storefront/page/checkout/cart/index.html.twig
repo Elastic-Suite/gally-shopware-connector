@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/page/checkout/cart/index.html.twig' %}
+
+{% block page_checkout_cart %}
+    {{ parent() }}
+
+    {% set gallyRecommendations = page.getExtension('gallyRecommendations') %}
+    {% set gallyBlocks = gallyRecommendations ? gallyRecommendations.get('blocks')|filter(b => b.products|length > 0) : [] %}
+    {% if gallyBlocks|length > 0 %}
+        <div class="col-12 gally-recommendations mt-4 pt-4 border-top">
+            {% sw_include '@GallyPlugin/storefront/component/gally/recommendation-tabs.html.twig' with {
+                gallyBlocks: gallyBlocks,
+                idPrefix: 'gally-cart-tab',
+            } %}
+        </div>
+    {% endif %}
+{% endblock %}

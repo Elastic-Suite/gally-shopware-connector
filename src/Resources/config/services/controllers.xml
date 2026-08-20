@@ -5,6 +5,8 @@
     <services>
         <service id="Gally\ShopwarePlugin\Controller\AdminController" public="true">
             <argument type="service" id="Gally\Sdk\Service\StructureSynchonizer"/>
+            <argument type="service" id="Gally\ShopwarePlugin\Service\RecommenderTypeCatalog"/>
+            <argument type="service" id="gally_recommender_type.repository"/>
             <argument type="tagged_iterator" tag="gally.dataprovider" index-by="entity"/>
             <argument type="tagged_iterator" tag="gally.entity.indexer"/>
             <call method="setContainer">

@@ -1,0 +1,32 @@
+{#
+    Renders a Gally recommendation block as a product slider, matching the native Shopware
+    cross-selling look (used wherever there's no CMS "product-slider" element config to inherit
+    from: product detail tabs pull their own sliderConfig instead, see cms-element-cross-selling).
+
+    Expects: products (ProductCollection), title (string, optional - omit when a tab label
+    already names the block, e.g. from recommendation-tabs.html.twig).
+#}
+{% if products and products|length > 0 %}
+    {% set config = {
+        title: { value: title },
+        border: { value: false },
+        rotate: { value: false },
+        products: { value: products },
+        boxLayout: { value: 'standard' },
+        elMinWidth: { value: '200px' },
+        navigation: { value: true },
+        navigationArrows: { value: 'outside' },
+        displayMode: { value: 'standard' },
+        verticalAlign: { value: center },
+        speed: { value: 300 },
+    } %}
+    {% sw_include '@Storefront/storefront/element/cms-element-product-slider.html.twig' with {
+        sliderConfig: config,
+        element: {
+            data: {
+                products: products,
+            },
+            type: 'product-slider',
+        },
+    } %}
+{% endif %}

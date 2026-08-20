@@ -30,10 +30,13 @@ Shopware.Component.register(
         this.isLoading = true;
         this.gallyAction[this.action]()
           .then(response => {
+            const message = response.data.messageKey
+              ? this.$tc(`gally.notification.${response.data.messageKey}`)
+              : response.data.message;
             if (response.status !== 200 || response.data.error) {
-              this.createNotificationError({message: response.data.message});
+              this.createNotificationError({message});
             } else {
-              this.createNotificationSuccess({message: response.data.message});
+              this.createNotificationSuccess({message});
             }
             this.isLoading = false;
           })
