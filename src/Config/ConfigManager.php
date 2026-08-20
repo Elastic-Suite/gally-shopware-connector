@@ -54,4 +54,46 @@ class ConfigManager
 
         return (int) $this->systemConfigService->get($configKey, $salesChannelId);
     }
+
+    public function getProductRecommendationMaxSize(?string $salesChannelId = null): int
+    {
+        return (int) $this->systemConfigService->get('GallyPlugin.config.productRecommendationMaxSize', $salesChannelId);
+    }
+
+    public function getCartRecommendationMaxSize(?string $salesChannelId = null): int
+    {
+        return (int) $this->systemConfigService->get('GallyPlugin.config.cartRecommendationMaxSize', $salesChannelId);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getProductRecommendationTypeCodes(?string $salesChannelId = null): array
+    {
+        return $this->parseTypeCodes(
+            $this->systemConfigService->get('GallyPlugin.config.productRecommendationTypeCodes', $salesChannelId)
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCartRecommendationTypeCodes(?string $salesChannelId = null): array
+    {
+        return $this->parseTypeCodes(
+            $this->systemConfigService->get('GallyPlugin.config.cartRecommendationTypeCodes', $salesChannelId)
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    private function parseTypeCodes(mixed $rawValue): array
+    {
+        if (!\is_array($rawValue)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', $rawValue), static fn (string $code) => '' !== $code));
+    }
 }

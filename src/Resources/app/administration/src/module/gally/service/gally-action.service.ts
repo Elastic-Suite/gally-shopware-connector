@@ -26,6 +26,14 @@ export default class GallyAction {
     return this.callApi(`/gally/index`)
   }
 
+  recommenderTypes() {
+    return this.callApi(`/gally/recommender-types`)
+  }
+
+  resolveRecommenderType(code: string) {
+    return this.callApi(`/gally/recommender-types/resolve`, { code })
+  }
+
   callApi(path: string, data: object = {}) {
     return this.httpClient.post(
       path,

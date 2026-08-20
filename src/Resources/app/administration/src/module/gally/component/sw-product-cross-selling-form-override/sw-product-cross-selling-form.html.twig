@@ -1,0 +1,46 @@
+{% block sw_prduct_cross_selling_form_title_field %}
+<div
+    class="gally-cross-selling-form-title-field"
+    :class="{ 'gally-cross-selling-form-title-field--needs-attention': gallyNeedsAttention }"
+>
+    {% block gally_cross_selling_form_enabled_switch %}
+    <mt-switch
+        v-model="gallyEnabled"
+        :label="$t('gally.recommenderType.crossSelling.inputEnabled')"
+        :help-text="$t('gally.recommenderType.crossSelling.inputEnabledHint')"
+        :disabled="!allowEdit"
+        name="sw-field--crossSelling-gally-enabled"
+        bordered
+    />
+    {% endblock %}
+
+    {% block gally_cross_selling_form_recommender_type_select %}
+    <mt-select
+        v-if="gallyEnabled"
+        v-model="gallyRecommenderTypeCode"
+        :label="$t('gally.recommenderType.crossSelling.inputRecommenderType')"
+        :help-text="$t('gally.recommenderType.crossSelling.inputRecommenderTypeHint')"
+        :options="gallyRecommenderTypeOptions"
+        :is-loading="gallyRecommenderTypesLoading"
+        :placeholder="gallyRecommenderTypeOptions.length ? undefined : $t('gally.recommenderType.crossSelling.inputRecommenderTypeEmpty')"
+        :disabled="!allowEdit"
+        :error="gallyRecommenderTypeError"
+        required
+        @update:model-value="onGallyRecommenderTypeChanged"
+    />
+    {% endblock %}
+
+    {% block gally_cross_selling_form_native_title_field %}
+    <mt-text-field
+        v-if="!gallyEnabled"
+        v-model="crossSelling.name"
+        name="sw-field--crossSelling-name"
+        :label="$t('sw-product.crossselling.inputCrossSellingTitle')"
+        required
+        :placeholder="placeholder(crossSelling, 'name', $t('sw-product.crossselling.inputCrossSellingTitlePlaceholder'))"
+        :error="crossSellingNameError"
+        :disabled="!allowEdit"
+    />
+    {% endblock %}
+</div>
+{% endblock %}

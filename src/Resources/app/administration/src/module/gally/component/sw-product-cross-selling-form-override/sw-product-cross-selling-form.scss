@@ -1,0 +1,7 @@
+// :has() bubbles this up from the marker div to the mt-card the core template renders around
+// it, without having to fully reproduce (and keep in sync with) that core markup ourselves.
+// !important: mt-card's own scoped border rule (higher specificity via its data-v-* attribute)
+// otherwise wins over this plain class selector regardless of :has().
+.mt-card:has(.gally-cross-selling-form-title-field--needs-attention) {
+    border: 1px solid var(--color-border-critical-default) !important;
+}

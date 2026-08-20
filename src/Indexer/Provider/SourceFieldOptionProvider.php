@@ -70,7 +70,7 @@ class SourceFieldOptionProvider implements ProviderInterface
                     foreach ($option['label'] as $localeCode => $label) {
                         $gallyLocale = str_replace('-', '_', $localeCode);
 
-                        if (!array_key_exists($gallyLocale, $this->localizedCatalogsByLocale)) {
+                        if (!\array_key_exists($gallyLocale, $this->localizedCatalogsByLocale)) {
                             continue;
                         }
 
@@ -111,7 +111,7 @@ class SourceFieldOptionProvider implements ProviderInterface
                         foreach ($option->getTranslations() as $label) {
                             $gallyLocale = str_replace('-', '_', $label->getLanguage()->getLocale()->getCode());
 
-                            if (!array_key_exists($gallyLocale, $this->localizedCatalogsByLocale)) {
+                            if (!\array_key_exists($gallyLocale, $this->localizedCatalogsByLocale)) {
                                 continue;
                             }
 

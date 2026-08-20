@@ -57,6 +57,31 @@
         </component>
     </card>
     <card>
+        <title>Recommendations</title>
+
+        <component name="gally-recommender-type-multi-select">
+            <name>productRecommendationTypeCodes</name>
+            <label>Recommendation types shown on the product page</label>
+        </component>
+
+        <input-field type="int">
+            <name>productRecommendationMaxSize</name>
+            <label>Max number of recommended products per block on the product page</label>
+            <defaultValue>4</defaultValue>
+        </input-field>
+
+        <component name="gally-recommender-type-multi-select">
+            <name>cartRecommendationTypeCodes</name>
+            <label>Recommendation types shown on the cart</label>
+        </component>
+
+        <input-field type="int">
+            <name>cartRecommendationMaxSize</name>
+            <label>Max number of recommended products per block on the cart</label>
+            <defaultValue>4</defaultValue>
+        </input-field>
+    </card>
+    <card>
         <title>Batch settings</title>
 
         <input-field type="int">

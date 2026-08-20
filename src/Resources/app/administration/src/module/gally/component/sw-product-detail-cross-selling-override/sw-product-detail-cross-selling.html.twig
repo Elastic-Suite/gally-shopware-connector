@@ -1,0 +1,34 @@
+{% block sw_product_detail_cross_selling_empty_state_content_empty %}
+<p>{{ $t('gally.recommenderType.crossSelling.emptyStateDescription') }}</p>
+{% endblock %}
+
+{% block sw_product_detail_cross_selling_add %}
+<mt-button
+    v-tooltip="{
+        message: onAddCrossSellingTooltipMessage,
+        disabled: acl.can('product.editor') && isSystemDefaultLanguage,
+        showOnDisabledElements: true
+    }"
+    class="sw-product-detail-cross-selling__add-btn"
+    :disabled="!acl.can('product.editor') || !isSystemDefaultLanguage"
+    variant="secondary"
+    @click="onAddCrossSelling"
+>
+    {{ $t('gally.recommenderType.crossSelling.buttonAddManual') }}
+</mt-button>
+{% endblock %}
+
+{% block sw_product_detail_cross_selling_empty_state_actions_add %}
+<mt-button
+    v-tooltip="{
+        message: onAddCrossSellingTooltipMessage,
+        disabled: acl.can('product.editor') && isSystemDefaultLanguage,
+        showOnDisabledElements: true
+    }"
+    :disabled="isInherited || !acl.can('product.editor') || !isSystemDefaultLanguage"
+    variant="secondary"
+    @click="onAddCrossSelling"
+>
+    {{ $t('gally.recommenderType.crossSelling.buttonAddManual') }}
+</mt-button>
+{% endblock %}
