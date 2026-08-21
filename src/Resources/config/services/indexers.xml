@@ -56,6 +56,8 @@
         <service id="Gally\ShopwarePlugin\Indexer\ProductIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
             <argument key="$entityRepository" type="service" id="product.repository" />
             <argument key="$categoryRepository" type="service" id="category.repository" />
+            <argument key="$ruleConditionRepository" type="service" id="rule_condition.repository" />
+            <argument key="$customerGroupRepository" type="service" id="customer_group.repository" />
             <tag name="gally.entity.indexer" priority="40"/>
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
