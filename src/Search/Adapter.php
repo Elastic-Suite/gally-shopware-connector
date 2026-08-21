@@ -59,6 +59,7 @@ class Adapter
             $this->getFiltersFromCriteria($criteria),
             $sort && SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField() ? $sort->getField() : null,
             $sort && SortOptionProvider::DEFAULT_SEARCH_SORT !== $sort->getField() ? strtolower($sort->getDirection()) : null,
+            $context->getCustomerGroupId(),
         );
         $response = $this->searchManager->search($request);
 
