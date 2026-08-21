@@ -9,6 +9,7 @@
             <argument type="service" id="gally_recommender_type.repository"/>
             <argument type="tagged_iterator" tag="gally.dataprovider" index-by="entity"/>
             <argument type="tagged_iterator" tag="gally.entity.indexer"/>
+            <argument type="service" id="Gally\ShopwarePlugin\Config\CacheManager"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>

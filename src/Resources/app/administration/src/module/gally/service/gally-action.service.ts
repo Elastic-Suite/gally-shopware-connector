@@ -34,6 +34,10 @@ export default class GallyAction {
     return this.callApi(`/gally/recommender-types/resolve`, { code })
   }
 
+  clearCache() {
+    return this.callApi(`/gally/clear-cache`)
+  }
+
   callApi(path: string, data: object = {}) {
     return this.httpClient.post(
       path,

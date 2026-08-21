@@ -17,7 +17,10 @@ namespace Gally\ShopwarePlugin\Controller;
 use Gally\Sdk\Client\Client;
 use Gally\Sdk\Client\Configuration;
 use Gally\Sdk\Entity\RecommenderType;
+use Gally\Sdk\Repository\RecommenderTypeRepository;
+use Gally\Sdk\Service\BundleManager;
 use Gally\Sdk\Service\StructureSynchonizer;
+use Gally\ShopwarePlugin\Config\CacheManager;
 use Gally\ShopwarePlugin\Indexer\AbstractIndexer;
 use Gally\ShopwarePlugin\Indexer\Provider\ProviderInterface;
 use Gally\ShopwarePlugin\RecommenderType\Entity\GallyRecommenderTypeEntity;
@@ -55,6 +58,7 @@ class AdminController extends AbstractController
         private EntityRepository $gallyRecommenderTypeRepository,
         \IteratorAggregate $providers,
         private iterable $indexers,
+        private CacheManager $cacheManager,
     ) {
         $this->providers = iterator_to_array($providers);
     }
@@ -117,6 +121,28 @@ class AdminController extends AbstractController
                 $indexer->reindex($context);
             }
             $responseData['messageKey'] = 'indexSucceeded';
+        } catch (\Exception $exception) {
+            $responseData['error'] = true;
+            $responseData['message'] = $exception->getMessage();
+        }
+
+        return new JsonResponse($responseData);
+    }
+
+    /**
+     * Clear everything the SDK caches locally (auth token, active bundles list, recommender
+     * types list from Gally): lets the admin force a refresh instead of waiting out each cache's
+     * own TTL, e.g. to see a recommender type just created in Gally.
+     */
+    #[Route(path: '/api/gally/clear-cache', name: 'api.gally.clear_cache', methods: ['POST'])]
+    public function clearCache(): JsonResponse
+    {
+        $responseData = ['error' => false];
+        try {
+            $this->cacheManager->clearCache(Client::API_TOKEN_CACHE_KEY);
+            $this->cacheManager->clearCache(BundleManager::BUNDLES_CACHE_KEY);
+            $this->cacheManager->clearCache(RecommenderTypeRepository::RECOMMENDER_TYPES_CACHE_KEY);
+            $responseData['messageKey'] = 'cacheCleared';
         } catch (\Exception $exception) {
             $responseData['error'] = true;
             $responseData['message'] = $exception->getMessage();

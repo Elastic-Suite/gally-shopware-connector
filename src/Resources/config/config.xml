@@ -22,6 +22,10 @@
             <name>index</name>
             <action>index</action>
         </component>
+        <component name="gally-button">
+            <name>clearCache</name>
+            <action>clearCache</action>
+        </component>
     </card>
     <card>
         <title>API setting</title>
