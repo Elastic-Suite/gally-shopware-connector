@@ -46,7 +46,6 @@
         <service id="Gally\ShopwarePlugin\Subscriber\CartRecommendationSubscriber">
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
             <argument type="service" id="Gally\ShopwarePlugin\Service\RecommendationHelper" />
-            <argument type="service" id="product.repository" />
             <argument type="service" id="logger" />
             <tag name="kernel.event_subscriber"/>
         </service>
