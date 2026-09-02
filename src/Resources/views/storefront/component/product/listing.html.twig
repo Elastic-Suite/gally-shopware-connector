@@ -1,12 +1,56 @@
 {% sw_extends '@Storefront/storefront/component/product/listing.html.twig' %}
 
+{# Category and search listing pages share this one core component, so both a
+   view/search event and a display event (impressions of the currently shown products) are
+   wired here once, rather than duplicated in the CMS "product-listing" element and the search
+   page templates that each include it. #}
+
 {% block product_listing %}
+    {{ parent() }}
+
     {% set message = searchResult.extension('gally-message') %}
-    {%  if (message) %}
+    {% if (message) %}
         {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
             type: message.type,
             content: message.content
         } %}
     {% endif %}
-    {{ parent() }}
+
+    {% if gally_is_active(context.salesChannel.id) and gally_is_tracking_active(context.salesChannel.id) %}
+        {% set searchTerm = searchResult.currentFilters.search %}
+        {% set navigationId = searchResult.currentFilters.navigationId %}
+
+        {% if searchTerm %}
+            {% sw_include '@GallyPlugin/storefront/utilities/gally-tracking-event.html.twig' with {
+                context: context,
+                eventType: 'search',
+                metadataCode: 'product',
+                contextType: 'search',
+                contextCode: searchTerm,
+                payload: {
+                    search_query: { is_spellchecked: false, query_text: searchTerm },
+                    product_list: gally_listing_product_list(searchResult),
+                },
+            } only %}
+        {% elseif navigationId %}
+            {% sw_include '@GallyPlugin/storefront/utilities/gally-tracking-event.html.twig' with {
+                context: context,
+                eventType: 'view',
+                metadataCode: 'category',
+                entityCode: navigationId,
+                contextType: 'category',
+                contextCode: navigationId,
+                payload: { product_list: gally_listing_product_list(searchResult) },
+            } only %}
+        {% endif %}
+
+        {% if searchTerm or navigationId %}
+            {% sw_include '@GallyPlugin/storefront/utilities/gally-product-display-event.html.twig' with {
+                context: context,
+                products: searchResult.entities,
+                contextType: searchTerm ? 'search' : 'category',
+                contextCode: searchTerm ?: navigationId,
+            } only %}
+        {% endif %}
+    {% endif %}
 {% endblock %}

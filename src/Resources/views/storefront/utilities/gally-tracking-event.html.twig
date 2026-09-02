@@ -1,0 +1,27 @@
+{% if gally_is_active(context.salesChannel.id) and gally_is_tracking_active(context.salesChannel.id) %}
+    <script>
+        window.gallyEvent.push({
+            eventType: {{ eventType|json_encode|raw }},
+            metadataCode: {{ metadataCode|json_encode|raw }},
+            localizedCatalogCode: {{ gally_localized_catalog_code()|json_encode|raw }}
+            {%- if entityCode is defined and entityCode is not null %},
+            entityCode: {{ entityCode|json_encode|raw }}
+            {%- endif %}
+            {%- if sourceEventType is defined and sourceEventType is not null %},
+            sourceEventType: {{ sourceEventType|json_encode|raw }}
+            {%- endif %}
+            {%- if sourceMetadataCode is defined and sourceMetadataCode is not null %},
+            sourceMetadataCode: {{ sourceMetadataCode|json_encode|raw }}
+            {%- endif %}
+            {%- if contextType is defined and contextType is not null %},
+            contextType: {{ contextType|json_encode|raw }}
+            {%- endif %}
+            {%- if contextCode is defined and contextCode is not null %},
+            contextCode: {{ contextCode|json_encode|raw }}
+            {%- endif %}
+            {%- if payload is defined and payload is not null %},
+            payload: {{ payload|json_encode|json_encode|raw }}
+            {%- endif %}
+        });
+    </script>
+{% endif %}

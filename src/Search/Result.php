@@ -48,6 +48,51 @@ class Result
         return $this->productNumbers;
     }
 
+    /**
+     * Gally's response carries a single termSuggestions object (not a list), scoped to the
+     * entity type that was queried (always "product" here). Each entry in "terms" is itself an
+     * object ({term, resultCount, popularity}), not a plain string.
+     *
+     * @return string[]
+     */
+    public function getTermSuggestions(): array
+    {
+        $terms = $this->response->getTermSuggestions()['terms'] ?? [];
+
+        return array_values(array_filter(array_map(
+            static fn (array $suggestion): ?string => $suggestion['term'] ?? null,
+            $terms
+        )));
+    }
+
+    /**
+     * Raw attribute/facet matches (e.g. Color, Activity) for the search suggest dropdown, read
+     * directly from Gally's aggregations rather than through AggregationBuilder: that class
+     * resolves each field into Shopware-native entities for the listing page's filter sidebar,
+     * which is more than this simple "click to search for this value" suggestion needs.
+     *
+     * @return array<int, array{label: string, options: array<int, array{label: string}>}>
+     */
+    public function getAttributeSuggestions(): array
+    {
+        $suggestions = [];
+        foreach ($this->response->getAggregations() as $aggregation) {
+            if (empty($aggregation['options'])) {
+                continue;
+            }
+
+            $suggestions[] = [
+                'label' => $aggregation['label'],
+                'options' => array_map(
+                    static fn (array $option): array => ['label' => $option['label']],
+                    $aggregation['options']
+                ),
+            ];
+        }
+
+        return $suggestions;
+    }
+
     public function getResultListing(ProductListingResult $listing): ProductListingResult
     {
         $newCriteria = clone $listing->getCriteria();

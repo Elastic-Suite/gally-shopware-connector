@@ -159,11 +159,39 @@ class RecommendationHelper
      */
     public function getProductSkuById(string $productId, \Shopware\Core\Framework\Context $context): ?string
     {
-        $criteria = new Criteria([$productId]);
-        $criteria->addAssociation('parent');
-        /** @var ProductEntity|null $product */
-        $product = $this->productRepository->search($criteria, $context)->get($productId);
+        return $this->getProductSkusById($productId, $context)['parent'] ?? null;
+    }
 
-        return $product?->getParent()?->getProductNumber() ?? $product?->getProductNumber();
+    /**
+     * Same lookup as getProductSkuById(), but also returns the variant's own number: tracking
+     * needs both (Gally's entityCode is always the parent, payload.child_sku is the exact variant
+     * purchased), and it only has a Shopware product id to start from (see AddToCart's native
+     * lineItems[<id>][id] field, read generically regardless of which page/widget submitted it).
+     *
+     * Shopware refuses to resolve the "parent" association inline (addAssociation('parent')
+     * throws ParentAssociationCanNotBeFetched): the parent has to be a separate search, same as
+     * GallyExtension::getParentProductNumber() already does.
+     *
+     * @return array{parent: string, self: string}|null
+     */
+    public function getProductSkusById(string $productId, \Shopware\Core\Framework\Context $context): ?array
+    {
+        /** @var ProductEntity|null $product */
+        $product = $this->productRepository->search(new Criteria([$productId]), $context)->get($productId);
+        if (null === $product) {
+            return null;
+        }
+
+        $parentSku = $product->getProductNumber();
+        if (null !== $product->getParentId()) {
+            /** @var ProductEntity|null $parent */
+            $parent = $this->productRepository->search(new Criteria([$product->getParentId()]), $context)->get($product->getParentId());
+            $parentSku = $parent?->getProductNumber() ?? $parentSku;
+        }
+
+        return [
+            'parent' => $parentSku,
+            'self' => $product->getProductNumber(),
+        ];
     }
 }

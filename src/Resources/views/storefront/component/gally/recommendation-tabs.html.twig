@@ -45,6 +45,10 @@
                         {% sw_include '@GallyPlugin/storefront/component/gally/product-recommendations-slider.html.twig' with {
                             products: gallyBlock.products,
                         } %}
+                        {% sw_include '@GallyPlugin/storefront/utilities/gally-product-display-event.html.twig' with {
+                            context: context,
+                            products: gallyBlock.products,
+                        } only %}
                     </div>
                 {% endfor %}
             </div>

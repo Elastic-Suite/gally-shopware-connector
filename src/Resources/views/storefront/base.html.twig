@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_body_script %}
+    {% if gally_is_active(context.salesChannel.id) and gally_is_tracking_active(context.salesChannel.id) %}
+        {% block gally_tracking_config %}
+            <div data-gally-tracking="true"
+                 data-gally-tracking-options="{{ {
+                     baseUri: gally_tracking_base_url(),
+                     uidCookieMaxAge: 34560000,
+                     vidCookieMaxAge: 1800
+                 }|json_encode|e('html_attr') }}"
+                 data-gally-localized-catalog-code="{{ gally_localized_catalog_code() }}"></div>
+        {% endblock %}
+    {% endif %}
+    {{ parent() }}
+{% endblock %}

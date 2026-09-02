@@ -1,0 +1,96 @@
+{% sw_extends '@Storefront/storefront/layout/header/search-suggest.html.twig' %}
+
+{#
+    Two-column search suggest dropdown: a narrow left column with search term / category /
+    attribute suggestions (each section hidden when empty), and the existing product results
+    (core markup, untouched) as the right column.
+
+    The core .search-suggest-container <ul> is itself absolutely positioned/centered (see
+    _search-suggest.scss), so wrapping it in a plain flex div isn't enough: that div stays in
+    normal flow while the <ul> escapes it via its own `position: absolute`, leaving the aside
+    invisible next to a floating product list. Instead, .gally-search-suggest-popover takes over
+    that same absolute positioning, and the nested .search-suggest-container is reset to a plain
+    flex child (see base.scss) so both columns lay out together in one real box.
+#}
+{% block layout_search_suggest_container %}
+    {% set gallyTermSuggestions = page.getExtension('gally-term-suggestions') %}
+    {% set gallyTerms = gallyTermSuggestions ? gallyTermSuggestions.get('terms') : [] %}
+
+    {% set gallyCategorySuggestions = page.getExtension('gally-category-suggestions') %}
+    {% set gallyCategories = gallyCategorySuggestions ? gallyCategorySuggestions.get('categories') : [] %}
+
+    {% set gallyAttributeSuggestions = page.getExtension('gally-attribute-suggestions') %}
+    {% set gallyAttributeGroups = gallyAttributeSuggestions ? gallyAttributeSuggestions.get('groups') : [] %}
+
+    {% set gallyHasSuggestions = gallyTerms|length > 0 or gallyCategories|length > 0 or gallyAttributeGroups|length > 0 %}
+
+    {% if not gallyHasSuggestions %}
+        {{ parent() }}
+    {% else %}
+        <div class="gally-search-suggest-popover">
+            {% block layout_search_suggest_aside %}
+                <div class="gally-search-suggest-aside">
+                    {% if gallyTerms|length > 0 %}
+                        {% block layout_search_suggest_terms %}
+                            <div class="gally-search-suggest-section gally-search-suggest-section--terms">
+                                <ul class="search-suggest-terms" aria-label="{{ 'gally.search.suggestedSearches'|trans|striptags }}">
+                                    {% for term in gallyTerms %}
+                                        <li class="search-suggest-term js-result" role="option">
+                                            <a href="{{ path('frontend.search.page') }}?search={{ term }}" class="search-suggest-term-link">
+                                                {% sw_icon 'search' style { size: 'xs' } %}
+                                                {{ term }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endblock %}
+                    {% endif %}
+
+                    {% if gallyCategories|length > 0 %}
+                        {% block layout_search_suggest_categories %}
+                            <div class="gally-search-suggest-section gally-search-suggest-section--categories">
+                                <div class="gally-search-suggest-section-title">{{ 'gally.search.suggestedCategories'|trans|striptags }}</div>
+                                <ul class="search-suggest-categories">
+                                    {% for category in gallyCategories %}
+                                        <li class="search-suggest-category js-result" role="option">
+                                            <a href="{{ seoUrl('frontend.navigation.page', { navigationId: category.id }) }}" class="search-suggest-category-link">
+                                                {{ category.name }}
+                                                {% if category.path %}
+                                                    <span class="search-suggest-item-context">{{ category.path }}</span>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endblock %}
+                    {% endif %}
+
+                    {% if gallyAttributeGroups|length > 0 %}
+                        {% block layout_search_suggest_attributes %}
+                            <div class="gally-search-suggest-section gally-search-suggest-section--attributes">
+                                {% for group in gallyAttributeGroups %}
+                                    <div class="gally-search-suggest-section-title">{{ group.label }}</div>
+                                    <ul class="search-suggest-attributes">
+                                        {% for option in group.options %}
+                                            <li class="search-suggest-attribute js-result" role="option">
+                                                <a href="{{ path('frontend.search.page') }}?search={{ option.label }}" class="search-suggest-attribute-link">
+                                                    {{ option.label }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endfor %}
+                            </div>
+                        {% endblock %}
+                    {% endif %}
+                </div>
+            {% endblock %}
+
+            <div class="gally-search-suggest-main">
+                {{ parent() }}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

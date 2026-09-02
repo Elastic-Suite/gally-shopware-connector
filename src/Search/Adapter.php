@@ -78,6 +78,31 @@ class Adapter
         );
     }
 
+    /**
+     * Categories matching the typed term, for the search suggest dropdown. Gally only indexes
+     * categories (not an aggregation of the product catalog), reached through the generic
+     * "documents" endpoint rather than "products" (see Request::getEndpoint()).
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    public function searchCategorySuggestions(SalesChannelContext $context, string $searchTerm, int $limit): array
+    {
+        $request = new Request(
+            $this->getCurrentLocalizedCatalog($context),
+            new Metadata('category'),
+            true,
+            ['id', 'name'],
+            1,
+            $limit,
+            null,
+            $searchTerm,
+            [],
+        );
+
+        /** @var array<int, array{id: string, name: string}> */
+        return $this->searchManager->search($request)->getCollection();
+    }
+
     public function viewMoreOption(SalesChannelContext $context, Criteria $criteria, string $aggregationField, ?string $navigationId, ?string $optionSearch = null)
     {
         $request = new Request(
