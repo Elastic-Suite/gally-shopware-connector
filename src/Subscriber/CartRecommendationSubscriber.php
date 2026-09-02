@@ -19,9 +19,6 @@ use Gally\ShopwarePlugin\Service\RecommendationHelper;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
-use Shopware\Core\Content\Product\ProductEntity;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Checkout\Cart\CheckoutCartPageLoadedEvent;
@@ -36,7 +33,6 @@ class CartRecommendationSubscriber implements EventSubscriberInterface
     public function __construct(
         private ConfigManager $configManager,
         private RecommendationHelper $recommendationHelper,
-        private EntityRepository $productRepository,
         private LoggerInterface $logger,
     ) {
     }
@@ -102,15 +98,9 @@ class CartRecommendationSubscriber implements EventSubscriberInterface
             return [];
         }
 
-        $criteria = new Criteria($productIds);
-        $criteria->addAssociation('parent');
-        $products = $this->productRepository->search($criteria, $context->getContext())->getEntities();
-
         $skus = [];
         foreach ($productIds as $productId) {
-            /** @var ProductEntity|null $product */
-            $product = $products->get($productId);
-            $sku = $product?->getParent()?->getProductNumber() ?? $product?->getProductNumber();
+            $sku = $this->recommendationHelper->getProductSkuById($productId, $context->getContext());
             if (null !== $sku && !\in_array($sku, $skus, true)) {
                 $skus[] = $sku;
             }

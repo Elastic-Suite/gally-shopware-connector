@@ -68,7 +68,9 @@ Shopware.Component.register('gally-recommender-type-multi-select', {
 
     selectedCodes: {
       get() {
-        return this.value;
+        // The config value is null, not undefined, when unset at the current sales-channel
+        // scope (e.g. "All Sales Channels"), so the prop's own array default never kicks in.
+        return this.value || [];
       },
       set(codes) {
         this.$emit('update:value', codes);
