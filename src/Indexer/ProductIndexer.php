@@ -40,6 +40,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -50,6 +51,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class ProductIndexer extends AbstractIndexer
 {
     private ?EntitySearchResult $categoryCollection = null;
+
+    /** @var array<string, array<string, string>> option labels by option value, keyed by custom field name */
+    private array $selectCustomFieldLabels = [];
 
     public function __construct(
         protected ConfigManager $configManager,
@@ -62,6 +66,7 @@ class ProductIndexer extends AbstractIndexer
         private EntityRepository $categoryRepository,
         private EntityRepository $ruleConditionRepository,
         private EntityRepository $customerGroupRepository,
+        private EntityRepository $customFieldRepository,
     ) {
         parent::__construct(
             $configManager,
@@ -83,6 +88,7 @@ class ProductIndexer extends AbstractIndexer
     {
         $context = $this->getContext($salesChannel, $language);
         $this->loadCategoryCollection($context, $salesChannel->getNavigationCategoryId());
+        $this->loadSelectCustomFieldLabels($context, $language);
         $simpleCustomerGroupRules = $this->getSimpleCustomerGroupRules($context);
         $displayGrossByGroupId = [];
         /** @var CustomerGroupEntity $customerGroup */
@@ -172,6 +178,29 @@ class ProductIndexer extends AbstractIndexer
     }
 
     /**
+     * Product custom fields indexed as gally "select" (see SourceFieldProvider::getGallyType()), with the option
+     * labels in the indexed language. Entity custom fields have no option list, their value is used as label.
+     */
+    private function loadSelectCustomFieldLabels(Context $context, LanguageEntity $language): void
+    {
+        $localeCode = $language->getLocale()?->getCode();
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', 'product'));
+        $criteria->addFilter(new EqualsAnyFilter('type', ['select', 'entity']));
+
+        $this->selectCustomFieldLabels = [];
+        /** @var CustomFieldEntity $customField */
+        foreach ($this->customFieldRepository->search($criteria, $context)->getEntities() as $customField) {
+            $labels = [];
+            foreach ($customField->getConfig()['options'] ?? [] as $option) {
+                $optionLabels = $option['label'] ?? [];
+                $labels[(string) $option['value']] = $optionLabels[$localeCode] ?? reset($optionLabels) ?: (string) $option['value'];
+            }
+            $this->selectCustomFieldLabels[$customField->getName()] = $labels;
+        }
+    }
+
+    /**
      * @param array<string, string[]> $simpleCustomerGroupRules
      * @param array<string, bool>     $displayGrossByGroupId
      */
@@ -212,7 +241,21 @@ class ProductIndexer extends AbstractIndexer
         }
 
         foreach ($product->getCustomFields() ?: [] as $code => $value) {
-            if (null !== $value) {
+            if (null === $value) {
+                continue;
+            }
+
+            // Custom fields synced as gally "select" source fields expect {value, label} options.
+            if (\array_key_exists($code, $this->selectCustomFieldLabels)) {
+                $data[$code] = [];
+                foreach ((array) $value as $optionValue) {
+                    $optionValue = (string) $optionValue;
+                    $data[$code][$optionValue] = [
+                        'value' => $optionValue,
+                        'label' => $this->selectCustomFieldLabels[$code][$optionValue] ?? $optionValue,
+                    ];
+                }
+            } else {
                 $data[$code] = [$value];
             }
         }
