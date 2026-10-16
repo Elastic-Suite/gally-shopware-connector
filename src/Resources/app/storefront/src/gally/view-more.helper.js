@@ -9,7 +9,7 @@ export default class ViewMore {
   static client = null;
 
   /**
-   * Bind click event on view more link and input event on the option search field.
+   * Bind click event on the view more/less toggle and input event on the option search field.
    *
    * @param filter filter plugin instance
    */
@@ -18,9 +18,9 @@ export default class ViewMore {
       this.client = new HttpClient();
     }
 
-    const link = filter.el.querySelector('.viewMoreLink');
-    if (link) {
-      link.addEventListener('click', this.onViewMoreClick.bind(this, filter));
+    const toggle = filter.el.querySelector('.gally-view-more-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', this.onToggleClick.bind(this, filter));
     }
 
     const searchInput = filter.el.querySelector('.gally-filter-option-search');
@@ -33,9 +33,15 @@ export default class ViewMore {
     }
   }
 
-  static onViewMoreClick(filter, event) {
+  static onToggleClick(filter, event) {
     event.preventDefault();
-    this.fetchOptions(filter, event.target.dataset.url);
+
+    // The collapsed list is only kept while the list is expanded
+    if (filter.gallyCollapsedList) {
+      this.collapse(filter);
+    } else {
+      this.fetchOptions(filter, event.target.dataset.url);
+    }
   }
 
   static onOptionSearchInput(filter, event) {
@@ -48,6 +54,11 @@ export default class ViewMore {
    * @param optionSearch optional text to filter the returned options
    */
   static fetchOptions(filter, url, optionSearch = '') {
+    // Keep the initial collapsed list, so "show less" can restore it without another request
+    if (!filter.gallyCollapsedList) {
+      filter.gallyCollapsedList = filter.el.querySelector('ul').cloneNode(true);
+    }
+
     filter.listing.addLoadingIndicatorClass();
     ElementLoadingIndicatorUtil.create(filter.el.querySelector('.filter-multi-select-dropdown'));
 
@@ -82,10 +93,63 @@ export default class ViewMore {
     const placeholder = document.createElement("div");
     placeholder.innerHTML = data;
 
-    filter.el.querySelector('ul').replaceWith(placeholder.querySelector('ul'));
+    // The server-rendered list never carries the checked state: restore it from the current selection
+    const currentList = filter.el.querySelector('ul');
+    const checkedIds = new Set([
+      ...filter.selection,
+      ...Array.from(currentList.querySelectorAll(`${filter.options.checkboxSelector}:checked`)).map((checkbox) => checkbox.id),
+    ]);
+    placeholder.querySelectorAll(filter.options.checkboxSelector).forEach((checkbox) => {
+      checkbox.checked = checkedIds.has(checkbox.id);
+    });
+
+    currentList.replaceWith(placeholder.querySelector('ul'));
     filter._registerEvents();
+    this.updateToggleLabel(filter, 'less');
 
     filter.listing.removeLoadingIndicatorClass();
     ElementLoadingIndicatorUtil.remove(filter.el.querySelector('.filter-multi-select-dropdown'));
+  }
+
+  /**
+   * Restore the initial collapsed list, keeping the options checked while expanded.
+   *
+   * @param filter filter plugin instance
+   */
+  static collapse(filter) {
+    const expandedList = filter.el.querySelector('ul');
+    const collapsedList = filter.gallyCollapsedList;
+    const checkboxSelector = filter.options.checkboxSelector;
+
+    // Options checked while expanded must stay checked, even those absent from the collapsed list
+    const checkedCheckboxes = Array.from(expandedList.querySelectorAll(`${checkboxSelector}:checked`));
+    const checkedIds = new Set([...filter.selection, ...checkedCheckboxes.map((checkbox) => checkbox.id)]);
+
+    checkedCheckboxes.forEach((checkbox) => {
+      if (!collapsedList.querySelector(`[id="${checkbox.id}"]`)) {
+        collapsedList.appendChild(checkbox.closest(filter.options.listItemSelector).cloneNode(true));
+      }
+    });
+    collapsedList.querySelectorAll(checkboxSelector).forEach((checkbox) => {
+      checkbox.checked = checkedIds.has(checkbox.id);
+    });
+
+    expandedList.replaceWith(collapsedList);
+    filter.gallyCollapsedList = null;
+    filter.el.querySelector('.gally-filter-option-search').value = '';
+    this.updateToggleLabel(filter, 'more');
+
+    filter._registerEvents();
+  }
+
+  /**
+   * @param filter filter plugin instance
+   * @param state "more" when the list is collapsed, "less" when expanded
+   */
+  static updateToggleLabel(filter, state) {
+    const toggle = filter.el.querySelector('.gally-view-more-toggle');
+    if (toggle) {
+      toggle.textContent = toggle.dataset[state === 'more' ? 'labelMore' : 'labelLess'];
+    }
   }
 }
