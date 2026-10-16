@@ -31,8 +31,7 @@
         <service id="Gally\ShopwarePlugin\Search\SortingListingProcessor"
             decorates="Shopware\Core\Content\Product\SalesChannel\Listing\Processor\SortingListingProcessor"
             decoration-priority="-60000">
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
-            <argument type="service" id="product_sorting.repository"/>
+            <argument type="service" id="Gally\ShopwarePlugin\Search\SortingListingProcessor.inner"/>
             <argument type="service" id="Gally\ShopwarePlugin\Config\ConfigManager" />
         </service>
 
