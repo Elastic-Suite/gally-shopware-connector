@@ -3,9 +3,15 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
+        <!-- Dedicated pool: cache.app is an array adapter in dev (never persisted across requests) -->
+        <service id="gally.cache" class="Symfony\Component\Cache\Adapter\FilesystemAdapter">
+            <argument>gally</argument>
+            <argument>0</argument>
+            <argument>%kernel.cache_dir%/gally</argument>
+        </service>
         <service id="Gally\ShopwarePlugin\Config\CacheManager">
             <call method="setCache">
-                <argument type="service" id="cache.app" />
+                <argument type="service" id="gally.cache" />
             </call>
         </service>
         <service id="Gally\Sdk\Client\Configuration" lazy="true">
