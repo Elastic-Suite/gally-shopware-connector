@@ -31,6 +31,8 @@ class CatalogProvider implements ProviderInterface
 {
     private array $catalogCache = [];
 
+    private array $currencyIsoCodeCache = [];
+
     public function __construct(
         private ConfigManager $configManager,
         private EntityRepository $salesChannelRepository,
@@ -78,7 +80,25 @@ class CatalogProvider implements ProviderInterface
             $salesChannel->getId() . $language->getId(),
             $language->getName(),
             $locale,
-            $salesChannel->getCurrency()->getIsoCode()
+            $this->getCurrencyIsoCode($salesChannel)
         );
+    }
+
+    // The sales channel of a SalesChannelContext does not always carry its currency association (e.g. Shopware 6.7.15+)
+    private function getCurrencyIsoCode(SalesChannelEntity $salesChannel): string
+    {
+        if ($salesChannel->getCurrency()) {
+            return $salesChannel->getCurrency()->getIsoCode();
+        }
+
+        if (!\array_key_exists($salesChannel->getId(), $this->currencyIsoCodeCache)) {
+            $criteria = new Criteria([$salesChannel->getId()]);
+            $criteria->addAssociation('currency');
+            /** @var SalesChannelEntity $loadedSalesChannel */
+            $loadedSalesChannel = $this->salesChannelRepository->search($criteria, Context::createDefaultContext())->first();
+            $this->currencyIsoCodeCache[$salesChannel->getId()] = $loadedSalesChannel->getCurrency()->getIsoCode();
+        }
+
+        return $this->currencyIsoCodeCache[$salesChannel->getId()];
     }
 }

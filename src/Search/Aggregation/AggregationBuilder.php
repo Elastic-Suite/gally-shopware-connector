@@ -14,11 +14,10 @@ declare(strict_types=1);
 
 namespace Gally\ShopwarePlugin\Search\Aggregation;
 
-use Shopware\Core\Content\Product\Aggregate\ProductManufacturer\ProductManufacturerEntity;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionCollection;
-use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Property\PropertyGroupEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\AggregationResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\AggregationResultCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\MaxResult;
@@ -26,6 +25,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 /**
@@ -39,7 +39,7 @@ class AggregationBuilder
     public const STOCK_STATUS_AGGREGATION = 'stock__status';
     public const RATING_AGGREGATION = 'rating_avg';
 
-    private const SHOW_MORE_OPTION = 'gally-show-more';
+    public const HAS_MORE_EXTENSION = 'gallyHasMore';
 
     public function __construct(
         protected EntityRepository $manufacturerRepository,
@@ -59,12 +59,9 @@ class AggregationBuilder
                     $criteria = new Criteria();
                     $criteria->addFilter(new EqualsAnyFilter('id', array_column($data['options'], 'value')));
                     $manufacturers = $this->manufacturerRepository->search($criteria, $context->getContext())->getEntities();
-                    if ($data['hasMore']) {
-                        $showMore = new ProductManufacturerEntity();
-                        $showMore->setId(self::SHOW_MORE_OPTION);
-                        $manufacturers->add($showMore);
-                    }
-                    $aggregationCollection->add(new EntityResult($data['field'], $manufacturers));
+                    $aggregation = new EntityResult($data['field'], $manufacturers);
+                    $this->markHasMore($aggregation, $data['hasMore']);
+                    $aggregationCollection->add($aggregation);
                 } elseif (self::PRICE_AGGREGATION === $data['field']) {
                     $minPrice = reset($data['options'])['value'];
                     $maxPrice = end($data['options'])['value'];
@@ -90,28 +87,30 @@ class AggregationBuilder
                         $options->add($property->getOptions()->get($optionId));
                     }
 
-                    if ($data['hasMore']) {
-                        $showMore = new PropertyGroupOptionEntity();
-                        $showMore->setId(self::SHOW_MORE_OPTION);
-                        $options->add($showMore);
-                    }
                     $property->setOptions($options);
 
-                    $aggregationCollection->add(new EntityResult($data['field'], $properties));
+                    $aggregation = new EntityResult($data['field'], $properties);
+                    $this->markHasMore($aggregation, $data['hasMore']);
+                    $aggregationCollection->add($aggregation);
                 } else {
                     foreach ($data['options'] as $bucket) {
                         $buckets[] = new AggregationOption($bucket['label'], $bucket['value'], (int) $bucket['count']);
                     }
 
-                    if ($data['hasMore']) {
-                        $buckets[] = new AggregationOption(self::SHOW_MORE_OPTION, self::SHOW_MORE_OPTION, 0);
-                    }
-
-                    $aggregationCollection->add(new Aggregation($data['label'], $data['field'], $data['type'], $buckets));
+                    $aggregation = new Aggregation($data['label'], $data['field'], $data['type'], $buckets);
+                    $this->markHasMore($aggregation, $data['hasMore']);
+                    $aggregationCollection->add($aggregation);
                 }
             }
         }
 
         return $aggregationCollection;
+    }
+
+    private function markHasMore(AggregationResult $aggregation, bool $hasMore): void
+    {
+        if ($hasMore) {
+            $aggregation->addExtension(self::HAS_MORE_EXTENSION, new ArrayStruct());
+        }
     }
 }

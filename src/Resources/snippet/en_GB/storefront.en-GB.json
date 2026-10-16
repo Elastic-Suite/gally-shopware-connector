@@ -2,6 +2,7 @@
   "gally": {
     "filter": {
       "viewMore": "Show more...",
+      "viewLess": "Show less...",
       "searchOptions": "Search..."
     },
     "listing": {

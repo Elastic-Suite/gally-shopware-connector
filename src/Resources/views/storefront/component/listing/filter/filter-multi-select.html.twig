@@ -1,7 +1,7 @@
 {% sw_extends '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' %}
 
 {% block component_filter_multi_select_list %}
-    {% if (elements|length > 0 and elements|last.id == 'gally-show-more') or (showOptionSearch is defined and showOptionSearch) %}
+    {% if (hasMore is defined and hasMore) or (showOptionSearch is defined and showOptionSearch) %}
         {% block component_filter_multi_select_option_search %}
             <input type="text"
                    class="form-control gally-filter-option-search"
@@ -11,4 +11,13 @@
     {% endif %}
 
     {{ parent() }}
+
+    {% if hasMore is defined and hasMore %}
+        {% block component_filter_multi_select_view_more_toggle %}
+            <a class="gally-view-more-toggle"
+               data-url="{{ url('frontend.gally.viewMore') }}"
+               data-label-more="{{ 'gally.filter.viewMore'|trans }}"
+               data-label-less="{{ 'gally.filter.viewLess'|trans }}">{{ 'gally.filter.viewMore'|trans }}</a>
+        {% endblock %}
+    {% endif %}
 {% endblock %}

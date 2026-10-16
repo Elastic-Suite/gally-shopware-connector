@@ -15,33 +15,37 @@ declare(strict_types=1);
 namespace Gally\ShopwarePlugin\Search;
 
 use Gally\ShopwarePlugin\Config\ConfigManager;
-use Shopware\Core\Content\Product\SalesChannel\Listing\Processor\SortingListingProcessor as BaseSortingListingProcessor;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Content\Product\SalesChannel\Listing\Processor\AbstractListingProcessor;
+use Shopware\Core\Content\Product\SalesChannel\Listing\ProductListingResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\HttpFoundation\Request;
 
-class SortingListingProcessor extends BaseSortingListingProcessor
+class SortingListingProcessor extends AbstractListingProcessor
 {
-    private ConfigManager $configManager;
-
     public function __construct(
-        SystemConfigService $systemConfigService,
-        EntityRepository $sortingRepository,
-        ConfigManager $configManager,
+        private readonly AbstractListingProcessor $decorated,
+        private readonly ConfigManager $configManager,
     ) {
-        parent::__construct($systemConfigService, $sortingRepository);
-        $this->configManager = $configManager;
+    }
+
+    public function getDecorated(): AbstractListingProcessor
+    {
+        return $this->decorated;
     }
 
     public function prepare(Request $request, Criteria $criteria, SalesChannelContext $context): void
     {
         if (!$this->configManager->isActive($context->getSalesChannelId())) {
-            parent::prepare($request, $criteria, $context);
+            $this->decorated->prepare($request, $criteria, $context);
         }
 
         // For gally sort criteria is managed in
         // @see \Gally\ShopwarePlugin\Search\CriteriaBuilder::handleSorting
+    }
+
+    public function process(Request $request, ProductListingResult $result, SalesChannelContext $context): void
+    {
+        $this->decorated->process($request, $result, $context);
     }
 }
