@@ -1,6 +1,11 @@
 import template from './sw-product-cross-selling-form.html.twig';
 import './sw-product-cross-selling-form.scss';
 
+// The form remounts after a failed save (the card list re-renders), and an unsaved group is still new:
+// without this, the merchant's choice would be reset to the default on every remount.
+// Only for new groups: persisted ones always derive the state from the stored recommender type.
+const gallyEnabledByCrossSellingId = new Map();
+
 Shopware.Component.override('sw-product-cross-selling-form', {
   template: template,
 
@@ -21,6 +26,8 @@ Shopware.Component.override('sw-product-cross-selling-form', {
       gallyRecommenderTypeCode: null,
       gallyRecommenderTypes: [],
       gallyRecommenderTypesLoading: false,
+      // Name prefilled from the picked type, to tell it apart from a name typed by the merchant
+      gallyPrefilledName: null,
     };
   },
 
@@ -87,7 +94,13 @@ Shopware.Component.override('sw-product-cross-selling-form', {
 
         // New groups default to Gally; existing ones keep whatever was persisted.
         const recommenderTypeId = this.crossSelling.gallyRecommenderTypeId;
-        this.gallyEnabled = this.crossSelling.isNew() || !!recommenderTypeId;
+        if (!this.crossSelling.isNew()) {
+          gallyEnabledByCrossSellingId.delete(this.crossSelling.id);
+        }
+
+        this.gallyEnabled = this.crossSelling.isNew() && gallyEnabledByCrossSellingId.has(this.crossSelling.id)
+          ? gallyEnabledByCrossSellingId.get(this.crossSelling.id)
+          : this.crossSelling.isNew() || !!recommenderTypeId;
         this.gallyRecommenderTypeCode = null;
 
         if (this.gallyEnabled) {
@@ -105,6 +118,10 @@ Shopware.Component.override('sw-product-cross-selling-form', {
     },
 
     gallyEnabled(value) {
+      if (this.crossSelling?.isNew()) {
+        gallyEnabledByCrossSellingId.set(this.crossSelling.id, value);
+      }
+
       if (value) {
         this.fetchGallyRecommenderTypes();
       } else if (this.crossSelling) {
@@ -130,9 +147,15 @@ Shopware.Component.override('sw-product-cross-selling-form', {
     },
 
     onGallyRecommenderTypeChanged(code) {
-      // Storefront display name comes from Gally while this group is Gally-enabled
-      // (CrossSellingSubscriber overrides it there, at render time, without touching the
-      // database): crossSelling.name is left untouched here, whatever it already was.
+      // The name field is hidden while Gally-enabled, but Shopware still requires it: prefill it with the
+      // type name (the storefront shows the Gally type name anyway, see CrossSellingSubscriber), without
+      // overwriting a name the merchant typed.
+      const recommenderType = this.gallyRecommenderTypes.find((type) => type.code === code);
+      if (recommenderType && (!this.crossSelling.name || this.crossSelling.name === this.gallyPrefilledName)) {
+        this.crossSelling.name = recommenderType.name;
+        this.gallyPrefilledName = recommenderType.name;
+      }
+
       this.gallyAction.resolveRecommenderType(code)
         .then((response) => {
           if (response.data.error) {
