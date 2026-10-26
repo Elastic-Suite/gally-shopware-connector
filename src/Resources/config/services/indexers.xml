@@ -62,6 +62,7 @@
             <argument key="$ruleConditionRepository" type="service" id="rule_condition.repository" />
             <argument key="$customerGroupRepository" type="service" id="customer_group.repository" />
             <argument key="$customFieldRepository" type="service" id="custom_field.repository" />
+            <argument key="$productStreamBuilder" type="service" id="Shopware\Core\Content\ProductStream\Service\ProductStreamBuilder" />
             <tag name="gally.entity.indexer" priority="40"/>
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >

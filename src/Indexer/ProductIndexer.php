@@ -21,6 +21,7 @@ use Gally\ShopwarePlugin\Indexer\Event\IndexerFormatProductEvent;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerGroup\CustomerGroupEntity;
 use Shopware\Core\Checkout\Customer\Rule\CustomerGroupRule;
+use Shopware\Core\Content\Category\CategoryDefinition;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator;
@@ -28,6 +29,8 @@ use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceEntity;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\ProductAvailableFilter;
+use Shopware\Core\Content\ProductStream\Service\AbstractProductStreamBuilder;
+use Shopware\Core\Content\ProductStream\Service\ProductStreamBuilderInterface;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Rule\Aggregate\RuleCondition\RuleConditionEntity;
 use Shopware\Core\Framework\Context;
@@ -38,6 +41,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\Filter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\CustomField\CustomFieldEntity;
@@ -51,6 +55,15 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class ProductIndexer extends AbstractIndexer
 {
     private ?EntitySearchResult $categoryCollection = null;
+
+    /** @var array<string, array<string, CategoryEntity>> */
+    private array $categoriesByStreamId = [];
+
+    /** @var array<string, Filter[]> filters of the dynamic product groups used by the categories, keyed by stream id */
+    private array $streamFilters = [];
+
+    /** @var array<string, string[]> dynamic product groups matched by the products of the current batch, keyed by product id */
+    private array $streamIdsByProductId = [];
 
     /** @var array<string, array<string, string>> option labels by option value, keyed by custom field name */
     private array $selectCustomFieldLabels = [];
@@ -70,6 +83,7 @@ class ProductIndexer extends AbstractIndexer
         private EntityRepository $ruleConditionRepository,
         private EntityRepository $customerGroupRepository,
         private EntityRepository $customFieldRepository,
+        private ProductStreamBuilderInterface|AbstractProductStreamBuilder $productStreamBuilder,
     ) {
         parent::__construct(
             $configManager,
@@ -91,6 +105,7 @@ class ProductIndexer extends AbstractIndexer
     {
         $context = $this->getContext($salesChannel, $language);
         $this->loadCategoryCollection($context, $salesChannel->getNavigationCategoryId());
+        $this->loadStreamFilters($context);
         $this->loadCustomFields($context, $language);
         $simpleCustomerGroupRules = $this->getSimpleCustomerGroupRules($context);
         $displayGrossByGroupId = [];
@@ -137,6 +152,7 @@ class ProductIndexer extends AbstractIndexer
 
         while ($products->count()) {
             $children = $this->getChildren($products, $context);
+            $this->loadStreamIdsByProductId(array_values(array_merge($products->getIds(), $children->getIds())), $context);
 
             /** @var ProductEntity $product */
             foreach ($products as $product) {
@@ -178,6 +194,67 @@ class ProductIndexer extends AbstractIndexer
         );
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
         $this->categoryCollection = $this->categoryRepository->search($criteria, $context);
+
+        // Categories filled by a dynamic product group, keyed by stream id.
+        $this->categoriesByStreamId = [];
+        /** @var CategoryEntity $category */
+        foreach ($this->categoryCollection as $category) {
+            if (CategoryDefinition::PRODUCT_ASSIGNMENT_TYPE_PRODUCT_STREAM === $category->getProductAssignmentType()
+                && null !== $category->getProductStreamId()
+            ) {
+                $this->categoriesByStreamId[$category->getProductStreamId()][$category->getId()] = $category;
+            }
+        }
+    }
+
+    /**
+     * Build once per catalog the filters of the dynamic product groups used by the categories, the same way the
+     * native category listing does (see ProductListingRoute).
+     */
+    private function loadStreamFilters(Context $context): void
+    {
+        $this->streamFilters = [];
+        foreach (array_keys($this->categoriesByStreamId) as $streamId) {
+            try {
+                $criteria = new Criteria();
+                if ($this->productStreamBuilder instanceof AbstractProductStreamBuilder) {
+                    $this->productStreamBuilder->enrichCriteria($criteria, $streamId, $context);
+                } else {
+                    $criteria->addFilter(...$this->productStreamBuilder->buildFilters($streamId, $context));
+                }
+                $this->streamFilters[$streamId] = $criteria->getFilters();
+            } catch (\Throwable) {
+                // Invalid or empty dynamic product group: its categories get no product.
+            }
+        }
+    }
+
+    /**
+     * Evaluate the dynamic product groups on a product batch (parents and variants), with inheritance like the
+     * storefront, in the language of the indexed catalog.
+     *
+     * @param string[] $productIds
+     */
+    private function loadStreamIdsByProductId(array $productIds, Context $context): void
+    {
+        $this->streamIdsByProductId = [];
+        foreach ($this->streamFilters as $streamId => $filters) {
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsAnyFilter('id', $productIds), ...$filters);
+
+            try {
+                $matchedIds = $context->enableInheritance(
+                    fn (Context $context): array => $this->entityRepository->searchIds($criteria, $context)->getIds()
+                );
+            } catch (\Throwable) {
+                // Filter on a field that no longer exists (deleted custom field...): the group matches no product.
+                continue;
+            }
+
+            foreach ($matchedIds as $productId) {
+                $this->streamIdsByProductId[$productId][] = $streamId;
+            }
+        }
     }
 
     /**
@@ -459,10 +536,21 @@ class ProductIndexer extends AbstractIndexer
     private function formatCategories(ProductEntity $product): array
     {
         $categories = [];
-        /** @var array<string, string> $categoryIds */
-        $categoryIds = $product->getCategories() ? $product->getCategories()->getIds() : [];
-        /** @var CategoryEntity $productCategory */
-        foreach ($product->getCategories() ?? [] as $productCategory) {
+        /** @var array<string, CategoryEntity> $productCategories */
+        $productCategories = $product->getCategories() ? $product->getCategories()->getElements() : [];
+
+        // Like Shopware, ignore manual assignments to a category filled by a dynamic product group.
+        $productCategories = array_filter(
+            $productCategories,
+            fn (CategoryEntity $category) => CategoryDefinition::PRODUCT_ASSIGNMENT_TYPE_PRODUCT_STREAM !== $category->getProductAssignmentType()
+        );
+
+        // Categories assigned through a dynamic product group.
+        foreach ($this->streamIdsByProductId[$product->getId()] ?? [] as $streamId) {
+            $productCategories += $this->categoriesByStreamId[$streamId] ?? [];
+        }
+
+        foreach ($productCategories as $productCategory) {
             $categoryPath = $productCategory->getPath() ?: '';
             foreach (array_merge([$productCategory->getId()], explode('|', $categoryPath)) as $categoryId) {
                 /** @var CategoryEntity|null $category */
@@ -472,7 +560,7 @@ class ProductIndexer extends AbstractIndexer
                         'id' => $category->getId(),
                         'category_uid' => $category->getId(),
                         'name' => $category->getName(),
-                        'is_parent' => !\array_key_exists($category->getId(), $categoryIds),
+                        'is_parent' => !\array_key_exists($category->getId(), $productCategories),
                     ];
                 }
             }
