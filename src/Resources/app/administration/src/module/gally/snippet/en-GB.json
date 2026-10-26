@@ -27,6 +27,12 @@
         "empty": "No recommendation type configured in Gally yet – create one from Gally's admin interface.",
         "missingHint": "No longer exists in Gally, so its block never shows on the storefront: {codes}"
       }
+    },
+    "productStream": {
+      "priceWarning": {
+        "title": "Price conditions in categories with Gally",
+        "message": "When this dynamic product group is assigned to a category, Gally evaluates its price conditions on the default product price only: customer-specific prices (customer group, rules, currency) can't be taken into account in the category listing. Other uses of the group (product sliders, product exports...) keep Shopware's native behavior. To filter a category on price, create a virtual category directly in Gally's admin interface instead."
+      }
     }
   },
   "GallyPlugin": {
