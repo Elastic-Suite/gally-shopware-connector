@@ -55,6 +55,9 @@ class ProductIndexer extends AbstractIndexer
     /** @var array<string, array<string, string>> option labels by option value, keyed by custom field name */
     private array $selectCustomFieldLabels = [];
 
+    /** @var array<string, true> names of json custom fields */
+    private array $jsonCustomFields = [];
+
     public function __construct(
         protected ConfigManager $configManager,
         EntityRepository $salesChannelRepository,
@@ -88,7 +91,7 @@ class ProductIndexer extends AbstractIndexer
     {
         $context = $this->getContext($salesChannel, $language);
         $this->loadCategoryCollection($context, $salesChannel->getNavigationCategoryId());
-        $this->loadSelectCustomFieldLabels($context, $language);
+        $this->loadCustomFields($context, $language);
         $simpleCustomerGroupRules = $this->getSimpleCustomerGroupRules($context);
         $displayGrossByGroupId = [];
         /** @var CustomerGroupEntity $customerGroup */
@@ -178,19 +181,27 @@ class ProductIndexer extends AbstractIndexer
     }
 
     /**
-     * Product custom fields indexed as gally "select" (see SourceFieldProvider::getGallyType()), with the option
-     * labels in the indexed language. Entity custom fields have no option list, their value is used as label.
+     * Product custom fields that need a specific format:
+     *  - indexed as gally "select" (see SourceFieldProvider::getGallyType()), with the option labels in the indexed
+     *    language. Entity custom fields have no option list, their value is used as label.
+     *  - json, indexed as gally "text": objects can't be sent to a text field, they are sent json encoded.
      */
-    private function loadSelectCustomFieldLabels(Context $context, LanguageEntity $language): void
+    private function loadCustomFields(Context $context, LanguageEntity $language): void
     {
         $localeCode = $language->getLocale()?->getCode();
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', 'product'));
-        $criteria->addFilter(new EqualsAnyFilter('type', ['select', 'entity']));
+        $criteria->addFilter(new EqualsAnyFilter('type', ['select', 'entity', 'json']));
 
         $this->selectCustomFieldLabels = [];
+        $this->jsonCustomFields = [];
         /** @var CustomFieldEntity $customField */
         foreach ($this->customFieldRepository->search($criteria, $context)->getEntities() as $customField) {
+            if ('json' === $customField->getType()) {
+                $this->jsonCustomFields[$customField->getName()] = true;
+                continue;
+            }
+
             $labels = [];
             foreach ($customField->getConfig()['options'] ?? [] as $option) {
                 $optionLabels = $option['label'] ?? [];
@@ -255,6 +266,8 @@ class ProductIndexer extends AbstractIndexer
                         'label' => $this->selectCustomFieldLabels[$code][$optionValue] ?? $optionValue,
                     ];
                 }
+            } elseif (\array_key_exists($code, $this->jsonCustomFields)) {
+                $data[$code] = [\is_string($value) ? $value : json_encode($value)];
             } else {
                 $data[$code] = [$value];
             }
