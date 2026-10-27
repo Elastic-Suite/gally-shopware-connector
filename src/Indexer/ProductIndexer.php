@@ -19,6 +19,7 @@ use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Indexer\Event\IndexerBeforeProductLoadEvent;
 use Gally\ShopwarePlugin\Indexer\Event\IndexerFormatProductEvent;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
+use Gally\ShopwarePlugin\Service\ProductStreamResolver;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerGroup\CustomerGroupEntity;
 use Shopware\Core\Checkout\Customer\Rule\CustomerGroupRule;
 use Shopware\Core\Content\Category\CategoryDefinition;
@@ -29,8 +30,6 @@ use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceEntity;
 use Shopware\Core\Content\Product\Aggregate\ProductVisibility\ProductVisibilityDefinition;
 use Shopware\Core\Content\Product\ProductEntity;
 use Shopware\Core\Content\Product\SalesChannel\ProductAvailableFilter;
-use Shopware\Core\Content\ProductStream\Service\AbstractProductStreamBuilder;
-use Shopware\Core\Content\ProductStream\Service\ProductStreamBuilderInterface;
 use Shopware\Core\Content\Property\Aggregate\PropertyGroupOption\PropertyGroupOptionEntity;
 use Shopware\Core\Content\Rule\Aggregate\RuleCondition\RuleConditionEntity;
 use Shopware\Core\Framework\Context;
@@ -83,7 +82,7 @@ class ProductIndexer extends AbstractIndexer
         private EntityRepository $ruleConditionRepository,
         private EntityRepository $customerGroupRepository,
         private EntityRepository $customFieldRepository,
-        private ProductStreamBuilderInterface|AbstractProductStreamBuilder $productStreamBuilder,
+        private ProductStreamResolver $productStreamResolver,
     ) {
         parent::__construct(
             $configManager,
@@ -212,30 +211,23 @@ class ProductIndexer extends AbstractIndexer
     }
 
     /**
-     * Build once per catalog the filters of the dynamic product groups used by the categories, the same way the
-     * native category listing does (see ProductListingRoute).
+     * Build once per catalog the filters of the dynamic product groups used by the categories.
      */
     private function loadStreamFilters(Context $context): void
     {
         $this->streamFilters = [];
         foreach (array_keys($this->categoriesByStreamId) as $streamId) {
-            try {
-                $criteria = new Criteria();
-                if ($this->productStreamBuilder instanceof AbstractProductStreamBuilder) {
-                    $this->productStreamBuilder->enrichCriteria($criteria, $streamId, $context);
-                } else {
-                    $criteria->addFilter(...$this->productStreamBuilder->buildFilters($streamId, $context));
-                }
-                $this->streamFilters[$streamId] = $criteria->getFilters();
-            } catch (\Throwable) {
-                // Invalid or empty dynamic product group: its categories get no product.
+            // An invalid or empty dynamic product group has no filter: its categories get no product.
+            $filters = $this->productStreamResolver->getFilters($streamId, $context);
+            if (null !== $filters) {
+                $this->streamFilters[$streamId] = $filters;
             }
         }
     }
 
     /**
-     * Evaluate the dynamic product groups on a product batch (parents and variants), with inheritance like the
-     * storefront, in the language of the indexed catalog.
+     * Evaluate the dynamic product groups on a product batch (parents and variants), in the language of the
+     * indexed catalog.
      *
      * @param string[] $productIds
      */
@@ -243,17 +235,10 @@ class ProductIndexer extends AbstractIndexer
     {
         $this->streamIdsByProductId = [];
         foreach ($this->streamFilters as $streamId => $filters) {
-            $criteria = new Criteria();
-            $criteria->addFilter(new EqualsAnyFilter('id', $productIds), ...$filters);
-
-            try {
-                $matchedIds = $context->enableInheritance(
-                    fn (Context $context): array => $this->entityRepository->searchIds($criteria, $context)->getIds()
-                );
-            } catch (\Throwable) {
-                // Filter on a field that no longer exists (deleted custom field...): the group matches no product.
-                continue;
-            }
+            $matchedIds = $this->productStreamResolver->searchProductIds(
+                [new EqualsAnyFilter('id', $productIds), ...$filters],
+                $context
+            );
 
             foreach ($matchedIds as $productId) {
                 $this->streamIdsByProductId[$productId][] = $streamId;
