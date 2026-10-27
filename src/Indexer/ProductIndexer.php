@@ -117,7 +117,11 @@ class ProductIndexer extends AbstractIndexer
         $batchSize = 1000;
         $criteria = new Criteria();
         if (!empty($documentIdsToReindex)) {
-            $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
+            // Only parent products are indexed: a saved variant reindexes its parent.
+            $criteria->addFilter(new OrFilter([
+                new EqualsAnyFilter('id', $documentIdsToReindex),
+                new EqualsAnyFilter('children.id', $documentIdsToReindex),
+            ]));
         }
         $criteria->addFilter(
             new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH)
