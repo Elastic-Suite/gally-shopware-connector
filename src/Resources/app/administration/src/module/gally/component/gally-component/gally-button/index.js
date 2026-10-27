@@ -26,9 +26,28 @@ Shopware.Component.register(
         return {isLoading: false}
     },
     methods: {
+      getCurrentConfig() {
+        let systemConfig = this.$parent;
+        while (systemConfig && !(systemConfig.actualConfigData && 'currentSalesChannelId' in systemConfig)) {
+          systemConfig = systemConfig.$parent;
+        }
+        // Unsaved form values live in sw-system-config; a null value means inherited from the global scope
+        const getValue = (key) => {
+          const salesChannelValue = systemConfig.actualConfigData[systemConfig.currentSalesChannelId]?.[`GallyPlugin.config.${key}`];
+          return salesChannelValue ?? systemConfig.actualConfigData.null?.[`GallyPlugin.config.${key}`];
+        };
+
+        return {
+          baseUrl: getValue('baseurl'),
+          checkSsl: !!getValue('checkSsl'),
+          user: getValue('user'),
+          password: getValue('password'),
+        };
+      },
       runAction() {
         this.isLoading = true;
-        this.gallyAction[this.action]()
+        const params = this.action === 'test' ? [this.getCurrentConfig()] : [];
+        this.gallyAction[this.action](...params)
           .then(response => {
             const message = response.data.messageKey
               ? this.$tc(`gally.notification.${response.data.messageKey}`)

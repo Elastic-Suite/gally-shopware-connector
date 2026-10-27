@@ -6,14 +6,14 @@ export default class GallyAction {
   ) {
   }
 
-  test() {
+  test(config: { baseUrl: string, checkSsl: boolean, user: string, password: string }) {
     return this.callApi(
       `/gally/test`,
       {
-        'baseUrl': document.getElementById('GallyPlugin.config.baseurl').value,
-        'check_ssl': document.getElementsByName('GallyPlugin.config.checkSsl')[0].checked,
-        'user': document.getElementById('GallyPlugin.config.user').value,
-        'password': document.getElementById('GallyPlugin.config.password').value,
+        'baseUrl': config.baseUrl,
+        'check_ssl': config.checkSsl,
+        'user': config.user,
+        'password': config.password,
       }
     )
   }
