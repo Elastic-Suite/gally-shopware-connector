@@ -61,6 +61,8 @@
             <argument key="$categoryRepository" type="service" id="category.repository" />
             <argument key="$ruleConditionRepository" type="service" id="rule_condition.repository" />
             <argument key="$customerGroupRepository" type="service" id="customer_group.repository" />
+            <argument key="$customFieldRepository" type="service" id="custom_field.repository" />
+            <argument key="$productStreamResolver" type="service" id="Gally\ShopwarePlugin\Service\ProductStreamResolver" />
             <tag name="gally.entity.indexer" priority="40"/>
         </service>
         <service id="Gally\ShopwarePlugin\Indexer\ManufacturerIndexer" parent="Gally\ShopwarePlugin\Indexer\AbstractIndexer" >
@@ -85,6 +87,12 @@
         <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ProductSubscriber">
             <argument type="service" id="messenger.default_bus"/>
             <argument type="service" id="product.repository"/>
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Gally\ShopwarePlugin\Indexer\Subscriber\ProductStreamSubscriber">
+            <argument type="service" id="messenger.default_bus"/>
+            <argument type="service" id="Gally\ShopwarePlugin\Service\ProductStreamResolver"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
             <tag name="kernel.event_subscriber" />
         </service>
     </services>

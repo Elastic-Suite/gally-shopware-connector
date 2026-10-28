@@ -19,8 +19,10 @@ use Gally\ShopwarePlugin\Config\ConfigManager;
 use Gally\ShopwarePlugin\Indexer\Event\IndexerBeforeProductLoadEvent;
 use Gally\ShopwarePlugin\Indexer\Event\IndexerFormatProductEvent;
 use Gally\ShopwarePlugin\Indexer\Provider\CatalogProvider;
+use Gally\ShopwarePlugin\Service\ProductStreamResolver;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerGroup\CustomerGroupEntity;
 use Shopware\Core\Checkout\Customer\Rule\CustomerGroupRule;
+use Shopware\Core\Content\Category\CategoryDefinition;
 use Shopware\Core\Content\Category\CategoryEntity;
 use Shopware\Core\Content\Media\Aggregate\MediaThumbnail\MediaThumbnailEntity;
 use Shopware\Core\Content\Media\Core\Application\AbstractMediaUrlGenerator;
@@ -38,8 +40,10 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\ContainsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\Filter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\System\CustomField\CustomFieldEntity;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -50,6 +54,21 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class ProductIndexer extends AbstractIndexer
 {
     private ?EntitySearchResult $categoryCollection = null;
+
+    /** @var array<string, array<string, CategoryEntity>> */
+    private array $categoriesByStreamId = [];
+
+    /** @var array<string, Filter[]> filters of the dynamic product groups used by the categories, keyed by stream id */
+    private array $streamFilters = [];
+
+    /** @var array<string, string[]> dynamic product groups matched by the products of the current batch, keyed by product id */
+    private array $streamIdsByProductId = [];
+
+    /** @var array<string, array<string, string>> option labels by option value, keyed by custom field name */
+    private array $selectCustomFieldLabels = [];
+
+    /** @var array<string, true> names of json custom fields */
+    private array $jsonCustomFields = [];
 
     public function __construct(
         protected ConfigManager $configManager,
@@ -62,6 +81,8 @@ class ProductIndexer extends AbstractIndexer
         private EntityRepository $categoryRepository,
         private EntityRepository $ruleConditionRepository,
         private EntityRepository $customerGroupRepository,
+        private EntityRepository $customFieldRepository,
+        private ProductStreamResolver $productStreamResolver,
     ) {
         parent::__construct(
             $configManager,
@@ -83,6 +104,8 @@ class ProductIndexer extends AbstractIndexer
     {
         $context = $this->getContext($salesChannel, $language);
         $this->loadCategoryCollection($context, $salesChannel->getNavigationCategoryId());
+        $this->loadStreamFilters($context);
+        $this->loadCustomFields($context, $language);
         $simpleCustomerGroupRules = $this->getSimpleCustomerGroupRules($context);
         $displayGrossByGroupId = [];
         /** @var CustomerGroupEntity $customerGroup */
@@ -93,7 +116,11 @@ class ProductIndexer extends AbstractIndexer
         $batchSize = 1000;
         $criteria = new Criteria();
         if (!empty($documentIdsToReindex)) {
-            $criteria->addFilter(new EqualsAnyFilter('id', $documentIdsToReindex));
+            // Only parent products are indexed: a saved variant reindexes its parent.
+            $criteria->addFilter(new OrFilter([
+                new EqualsAnyFilter('id', $documentIdsToReindex),
+                new EqualsAnyFilter('children.id', $documentIdsToReindex),
+            ]));
         }
         $criteria->addFilter(
             new ProductAvailableFilter($salesChannel->getId(), ProductVisibilityDefinition::VISIBILITY_SEARCH)
@@ -128,6 +155,7 @@ class ProductIndexer extends AbstractIndexer
 
         while ($products->count()) {
             $children = $this->getChildren($products, $context);
+            $this->loadStreamIdsByProductId(array_values(array_merge($products->getIds(), $children->getIds())), $context);
 
             /** @var ProductEntity $product */
             foreach ($products as $product) {
@@ -169,6 +197,84 @@ class ProductIndexer extends AbstractIndexer
         );
         $criteria->addSorting(new FieldSorting('level', FieldSorting::ASCENDING));
         $this->categoryCollection = $this->categoryRepository->search($criteria, $context);
+
+        // Categories filled by a dynamic product group, keyed by stream id.
+        $this->categoriesByStreamId = [];
+        /** @var CategoryEntity $category */
+        foreach ($this->categoryCollection as $category) {
+            if (CategoryDefinition::PRODUCT_ASSIGNMENT_TYPE_PRODUCT_STREAM === $category->getProductAssignmentType()
+                && null !== $category->getProductStreamId()
+            ) {
+                $this->categoriesByStreamId[$category->getProductStreamId()][$category->getId()] = $category;
+            }
+        }
+    }
+
+    /**
+     * Build once per catalog the filters of the dynamic product groups used by the categories.
+     */
+    private function loadStreamFilters(Context $context): void
+    {
+        $this->streamFilters = [];
+        foreach (array_keys($this->categoriesByStreamId) as $streamId) {
+            // An invalid or empty dynamic product group has no filter: its categories get no product.
+            $filters = $this->productStreamResolver->getFilters($streamId, $context);
+            if (null !== $filters) {
+                $this->streamFilters[$streamId] = $filters;
+            }
+        }
+    }
+
+    /**
+     * Evaluate the dynamic product groups on a product batch (parents and variants), in the language of the
+     * indexed catalog.
+     *
+     * @param string[] $productIds
+     */
+    private function loadStreamIdsByProductId(array $productIds, Context $context): void
+    {
+        $this->streamIdsByProductId = [];
+        foreach ($this->streamFilters as $streamId => $filters) {
+            $matchedIds = $this->productStreamResolver->searchProductIds(
+                [new EqualsAnyFilter('id', $productIds), ...$filters],
+                $context
+            );
+
+            foreach ($matchedIds as $productId) {
+                $this->streamIdsByProductId[$productId][] = $streamId;
+            }
+        }
+    }
+
+    /**
+     * Product custom fields that need a specific format:
+     *  - indexed as gally "select" (see SourceFieldProvider::getGallyType()), with the option labels in the indexed
+     *    language. Entity custom fields have no option list, their value is used as label.
+     *  - json, indexed as gally "text": objects can't be sent to a text field, they are sent json encoded.
+     */
+    private function loadCustomFields(Context $context, LanguageEntity $language): void
+    {
+        $localeCode = $language->getLocale()?->getCode();
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', 'product'));
+        $criteria->addFilter(new EqualsAnyFilter('type', ['select', 'entity', 'json']));
+
+        $this->selectCustomFieldLabels = [];
+        $this->jsonCustomFields = [];
+        /** @var CustomFieldEntity $customField */
+        foreach ($this->customFieldRepository->search($criteria, $context)->getEntities() as $customField) {
+            if ('json' === $customField->getType()) {
+                $this->jsonCustomFields[$customField->getName()] = true;
+                continue;
+            }
+
+            $labels = [];
+            foreach ($customField->getConfig()['options'] ?? [] as $option) {
+                $optionLabels = $option['label'] ?? [];
+                $labels[(string) $option['value']] = $optionLabels[$localeCode] ?? reset($optionLabels) ?: (string) $option['value'];
+            }
+            $this->selectCustomFieldLabels[$customField->getName()] = $labels;
+        }
     }
 
     /**
@@ -212,7 +318,23 @@ class ProductIndexer extends AbstractIndexer
         }
 
         foreach ($product->getCustomFields() ?: [] as $code => $value) {
-            if (null !== $value) {
+            if (null === $value) {
+                continue;
+            }
+
+            // Custom fields synced as gally "select" source fields expect {value, label} options.
+            if (\array_key_exists($code, $this->selectCustomFieldLabels)) {
+                $data[$code] = [];
+                foreach ((array) $value as $optionValue) {
+                    $optionValue = (string) $optionValue;
+                    $data[$code][$optionValue] = [
+                        'value' => $optionValue,
+                        'label' => $this->selectCustomFieldLabels[$code][$optionValue] ?? $optionValue,
+                    ];
+                }
+            } elseif (\array_key_exists($code, $this->jsonCustomFields)) {
+                $data[$code] = [\is_string($value) ? $value : json_encode($value)];
+            } else {
                 $data[$code] = [$value];
             }
         }
@@ -403,10 +525,21 @@ class ProductIndexer extends AbstractIndexer
     private function formatCategories(ProductEntity $product): array
     {
         $categories = [];
-        /** @var array<string, string> $categoryIds */
-        $categoryIds = $product->getCategories() ? $product->getCategories()->getIds() : [];
-        /** @var CategoryEntity $productCategory */
-        foreach ($product->getCategories() ?? [] as $productCategory) {
+        /** @var array<string, CategoryEntity> $productCategories */
+        $productCategories = $product->getCategories() ? $product->getCategories()->getElements() : [];
+
+        // Like Shopware, ignore manual assignments to a category filled by a dynamic product group.
+        $productCategories = array_filter(
+            $productCategories,
+            fn (CategoryEntity $category) => CategoryDefinition::PRODUCT_ASSIGNMENT_TYPE_PRODUCT_STREAM !== $category->getProductAssignmentType()
+        );
+
+        // Categories assigned through a dynamic product group.
+        foreach ($this->streamIdsByProductId[$product->getId()] ?? [] as $streamId) {
+            $productCategories += $this->categoriesByStreamId[$streamId] ?? [];
+        }
+
+        foreach ($productCategories as $productCategory) {
             $categoryPath = $productCategory->getPath() ?: '';
             foreach (array_merge([$productCategory->getId()], explode('|', $categoryPath)) as $categoryId) {
                 /** @var CategoryEntity|null $category */
@@ -416,7 +549,7 @@ class ProductIndexer extends AbstractIndexer
                         'id' => $category->getId(),
                         'category_uid' => $category->getId(),
                         'name' => $category->getName(),
-                        'is_parent' => !\array_key_exists($category->getId(), $categoryIds),
+                        'is_parent' => !\array_key_exists($category->getId(), $productCategories),
                     ];
                 }
             }

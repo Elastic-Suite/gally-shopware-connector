@@ -5,6 +5,7 @@ import './component/gally-component/gally-recommender-type-multi-select';
 import './component/gally-component/gally-system-config';
 import './component/sw-product-cross-selling-form-override';
 import './component/sw-product-detail-cross-selling-override';
+import './component/sw-product-stream-detail-override';
 import GallyAction from './service/gally-action.service'
 
 Shopware.Service().register('gally-action', (container) => {
